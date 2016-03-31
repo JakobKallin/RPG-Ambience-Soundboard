@@ -1,0 +1,115 @@
+$background-color: hsl(0, 0%, 10%);
+$background-highlight-color: hsl(0, 0%, 15%);
+$border-color: hsl(0, 0%, 25%);
+$body-text-color: hsl(0, 0%, 75%);
+$decorative-text-color: hsl(0, 0%, 100%);
+$subtle-text-color: hsl(0, 0%, 40%);
+$body-text-font: Georgia, serif;
+$decorative-text-font: Constantia, Georgia, serif;
+
+$black: black;
+$white: white;
+
+$highlighted-background-color: hsl(220, 50%, 20%);
+$highlighted-border-color: hsl(220, 50%, 50%);
+
+@mixin flex(
+    $direction,
+    $horizontal: start,
+    $vertical: start,
+    $horizontal-spacing: false,
+    $vertical-spacing: false,
+    $multiline: false
+) {
+    display: flex;
+    flex-direction: $direction;
+    
+    @if $horizontal == start {
+        $horizontal: flex-start;
+    }
+    @if $vertical == start {
+        $vertical: flex-start;
+    }
+    
+    @if $horizontal == end {
+        $horizontal: flex-end;
+    }
+    @if $vertical == end {
+        $vertical: flex-end;
+    }
+    
+    @if $direction == row {
+        justify-content: $horizontal;
+        align-items: $vertical;
+    }
+    @else if $direction == column {
+        justify-content: $vertical;
+        align-items: $horizontal;
+    }
+    
+    @if $multiline {
+        flex-wrap: wrap;
+        align-content: flex-start;
+    }
+    
+    @if $horizontal-spacing {
+        @if $multiline {
+            & > * {
+                margin-left: $horizontal-spacing / 2;
+                margin-right: $horizontal-spacing / 2;
+            }
+        }
+        @else {
+            & > * + * {
+                margin-left: $horizontal-spacing;
+            }
+        }
+    }
+    
+    @if $vertical-spacing {
+        @if $multiline {
+            & > * {
+                margin-top: $vertical-spacing / 2;
+                margin-bottom: $vertical-spacing / 2;
+            }
+        }
+        @else {
+            & > * + * {
+                margin-top: $vertical-spacing;
+            }
+        }
+    }
+}
+
+@mixin heading {
+    font-size: 2rem;
+    font-family: $decorative-text-font;
+    color: $decorative-text-color;
+}
+
+@mixin box {
+    background-color: $background-color;
+    border: 1px solid $border-color;
+}
+
+@mixin box-button {
+    @include reset-control;
+    @include box;
+    &:hover, &:focus {
+        background-color: $background-highlight-color;
+    }
+    &:active {
+        background-color: $highlighted-background-color;
+        border-color: $highlighted-border-color;
+        color: $white;
+    }
+}
+
+@mixin reset-control {
+    border: 0;
+    padding: 0;
+    color: inherit;
+    background-color: transparent;
+    font-family: inherit;
+    font-size: inherit;
+}

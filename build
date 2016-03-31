@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+import sys
+import os
+import shutil
+import subprocess
+import time
+from tempfile import TemporaryDirectory as create_temp_dir
+from pathlib import Path
+
+def write_file(path, contents):
+    with open(path, 'wb') as f:
+        f.write(contents)
+
+if len(sys.argv) != 3:
+    print('Usage: build source_dir output_dir')
+    sys.exit(1)
+
+source_dir = Path(sys.argv[1])
+output_dir = Path(sys.argv[2])
+
+print('Compilation starting at %s...' % time.strftime('%H:%M'))
+
+with create_temp_dir() as temp_dir_str:
+    temp_dir = Path(temp_dir_str)
+    print('Replace: ' + str(source_dir) + ' => ' + str(temp_dir))
+    subprocess.call(['rsync', '--recursive', '--delete', str(source_dir) + '/.', str(temp_dir)])
+    
+    # TODO: Only compile changed Sass files.
+    print('SASS: ' + str(temp_dir / 'css'))
+    subprocess.Popen(['sass', '--update', str(temp_dir / 'css'), '--cache-location', '/tmp/sass-cache']).communicate()
+    
+    es6_files = []
+    for es6_source_path in source_dir.glob('**/*.es6'):
+        js_relative_path = es6_source_path.relative_to(source_dir).with_suffix('.js')
+        js_output_path = output_dir / js_relative_path
+        js_temp_path = temp_dir / js_relative_path
+        output_exists = js_output_path.exists()
+        output_newer = output_exists and js_output_path.stat().st_mtime >= es6_source_path.stat().st_mtime
+        compile_needed = not output_exists or not output_newer
+        es6_files.append({
+            'es6_source_path': es6_source_path,
+            'js_output_path': js_output_path,
+            'js_temp_path': js_temp_path,
+            'compile_needed': compile_needed
+        })
+    
+    for f in es6_files:
+        if not f['js_temp_path'].parent.exists():
+            os.makedirs(str(f['js_temp_path'].parent))
+        
+        if f['compile_needed']:
+            print('Compile: ' + str(f['es6_source_path']) + ' => ' + str(f['js_temp_path']))
+            js = subprocess.check_output(['babel', '--source-maps', 'inline', str(f['es6_source_path'])])
+            write_file(str(f['js_temp_path']), js)
+        else:
+            print('Copy: ' + str(f['js_output_path']) + ' => ' + str(f['js_temp_path']))
+            shutil.copy2(str(f['js_output_path']), str(f['js_temp_path']))
+    
+    def compile_bundle(main_path, bundle_name):
+        bundle_temp_path = temp_dir / bundle_name
+        bundle_output_path = output_dir / bundle_name
+        compilation_needed = any(map(lambda f: f['compile_needed'], es6_files))
+        bundle_exists = bundle_output_path.exists()
+        if compilation_needed or not bundle_exists:
+            print('Bundle: ' + str(bundle_temp_path))
+            js, error = subprocess.Popen(['browserify', str(main_path), '--debug'], env=dict(
+                os.environ, NODE_PATH=str(temp_dir / 'libraries')
+            ), stdout=subprocess.PIPE).communicate()
+            write_file(str(bundle_temp_path), js)
+        else:
+            print('Copy: ' + str(bundle_output_path) + ' => ' + str(bundle_temp_path))
+            shutil.copy2(str(bundle_output_path), str(bundle_temp_path))
+    
+    compile_bundle(temp_dir / 'source' / 'main.js', 'bundle.js')
+    compile_bundle(temp_dir / 'source' / 'prototype.js', 'bundle.prototype.js')
+    
+    print('Replace: ' + str(output_dir) + ' => ' + str(temp_dir))
+    subprocess.call(['rsync', '--recursive', '--delete', str(temp_dir) + '/.', str(output_dir)])
+    
+    print('Compilation done!')
+    print('-----------------')

@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>RPG Ambience Soundboard</title>
+        <link rel="stylesheet" href="css/soundboard.css">
+        <script src="/bundle.prototype.js"></script>
+        <!-- <script src="/bundle.js"></script> -->
+    </head>
+    <body>
+        <div class="page page-soundboard scene-view-ungrouped" id="soundboard">
+            <div class="content">
+                <div id="options">
+                    <select id="adventures">
+                        <option data-repeat="10">Some Adventure</option>
+                    </select>
+                </div>
+                <div class="scene-view ungrouped" hidden>
+                    <ul class="scene-list">
+                        <li class="scene" id="scene-template" data-repeat="10">
+                            <button type="button" class="scene-button">
+                                <div class="scene-preview"></div>
+                                <div class="scene-title">Wizard's Library in the Evil Forest</div>
+                            </button>
+                        </li>
+                        <li class="scene placeholder" data-repeat="0"></li>
+                    </ul>
+                </div>
+                <div class="scene-view grouped">
+                    <h2 class="group-title">Background</h2>
+                    <ul class="scene-list">
+                        <li class="scene" id="scene-template" data-repeat="5">
+                            <button type="button" class="scene-button">
+                                <div class="scene-preview"></div>
+                                <div class="scene-title">Wizard's Library in the Evil Forest</div>
+                            </button>
+                        </li>
+                        <li class="scene placeholder" data-repeat="0"></li>
+                    </ul>
+                    <h2 class="group-title">One-shots</h2>
+                    <ul class="scene-list">
+                        <li class="scene" id="scene-template" data-repeat="9">
+                            <button type="button" class="scene-button">
+                                <div class="scene-preview"></div>
+                                <div class="scene-title">Wizard's Library in the Evil Forest</div>
+                            </button>
+                        </li>
+                        <li class="scene placeholder" data-repeat="0"></li>
+                    </ul>
+                </div>
+                <div>
+                    <button type="button" class="stop-button">Stop All</button>
+                </div>
+            </div>
+        </div>
+        <div class="page page-splash" id="splash">
+            <div class="center">
+                <p>Loading RPG Ambience Soundboard…</p>
+            </div>
+        </div>
+        <div class="page page-google-drive" id="google-drive">
+            <div class="center">
+                <p>To get started, please sign in to Google Drive</p>
+                <button type="button">
+                    <img src="/images/google-drive.png" alt="">
+                    <span>Sign in to Google Drive</span>
+                </button>
+            </div>
+        </div>
+    </body>
+</html>

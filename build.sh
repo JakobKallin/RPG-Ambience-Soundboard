@@ -20,11 +20,13 @@ function compile {
     do
         JS="${ES6%.*}.js"
         echo "Compile: ${ES6#$TARGET} => ${JS#$TARGET}"
-        babel "$ES6" > "$JS"
+        babel --source-maps inline "$ES6" > "$JS"
     done
     
+    NODE_PATH="$TARGET/libraries" browserify "$TARGET/source/main.js" -o "$TARGET/bundle.js" --debug
+    
     # Compile SCSS to CSS
-    sass --update $TARGET/css:$TARGET/css
+    sass --update --force $TARGET/css:$TARGET/css
 }
 
 if [ "$#" -ne 2 ]

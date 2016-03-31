@@ -1,0 +1,172 @@
+@import 'reset';
+@import 'defs';
+
+html, body, .page {
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+}
+
+html {
+    font-family: $body-text-font;
+    line-height: 1.25;
+    color: $body-text-color;
+    background-color: $background-color;
+}
+
+.page {
+    @include flex(column);
+}
+
+.center:not(.vertical):not(.horizontal) {
+    margin: auto;
+}
+
+.center.vertical {
+    margin-top: auto;
+    margin-right: auto;
+}
+
+.center.horizontal {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.page-splash {
+    padding: 1rem;
+    text-align: center;
+    
+    p {
+        position: relative;
+        @include heading;
+    }
+    
+    p:before {
+        content: "";
+        position: absolute;
+        left: -3rem;
+        top: 0;
+        width: 2rem;
+        height: 2rem;
+        background-image: url("/images/loading.svg");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center center;
+        animation-duration: 0.75s;
+        animation-name: spin;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
+    }
+
+    @keyframes spin {
+        from {
+            transform: rotate3d(0, 0, 1, 0);
+        }
+
+        to {
+            transform: rotate3d(0, 0, 1, 1turn);
+        }
+    }
+}
+
+.page-google-drive {
+    padding: 1rem;
+    text-align: center;
+    
+    p {
+        @include heading;
+    }
+    
+    button {
+        @include box-button;
+        margin-top: 1.5rem;
+        padding: 1.5rem;
+        font-size: 1.5rem;
+        color: $white;
+        
+        img {
+            display: block;
+            width: 7rem;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 1rem;
+        }
+    }
+}
+
+.page-soundboard {
+    .content {
+        flex: 1;
+        @include flex(column,
+            $horizontal: stretch,
+            $vertical-spacing: 1rem
+        );
+        overflow: auto;
+        padding: 1rem;
+    }
+    
+    #options {
+        text-align: center;
+    }
+    
+    .scene-view {
+        flex: 1;
+    }
+    
+    .scene-list {
+        margin: -0.5rem;
+        @include flex(row,
+            $multiline: true,
+            $horizontal: center,
+            $vertical: start,
+            $horizontal-spacing: 1rem,
+            $vertical-spacing: 1rem
+        );
+    }
+    
+    .scene {
+        min-width: 10rem;
+        flex: 1;
+    }
+    
+    .scene-button {
+        @include box-button;
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .stop-button {
+        width: 100%;
+        padding: 0.5rem;
+        text-align: center;
+        font-size: 1.5rem;
+    }
+    
+    .scene-preview {
+        height: 5rem;
+        background-color: $black;
+        background-image: url("http://blog.rpg-ambience.com/media/mage-library.jpg");
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center center;
+    }
+    
+    .scene-title {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        padding: 0.5rem;
+    }
+    
+    .group-title {
+        font-family: $decorative-text-font;
+        color: $white;
+        text-align: center;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+        &:first-child {
+            margin-top: 0;
+        }
+    }
+}
