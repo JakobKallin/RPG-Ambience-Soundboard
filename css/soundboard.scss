@@ -106,11 +106,24 @@ html {
     }
     
     #options {
+        position: relative;
         text-align: center;
+        
+        & > * {
+            vertical-align: middle;
+        }
+        
+        .zoom {
+            position: absolute;
+            right: 0;
+            top: 0;
+        }
     }
     
     .scene-view {
         flex: 1;
+        overflow-x: hidden;
+        overflow-y: auto;
     }
     
     .scene-list {
@@ -144,7 +157,8 @@ html {
     }
     
     .scene-preview {
-        height: 5rem;
+        width: 100%;
+        padding-top: 56.25%;
         background-color: $black;
         background-image: url("http://blog.rpg-ambience.com/media/mage-library.jpg");
         background-size: cover;
@@ -170,3 +184,20 @@ html {
         }
     }
 }
+
+.zoom-1 { .scene { min-width: 5rem; } }
+.zoom-2 { .scene { min-width: 6rem; } }
+.zoom-3 { .scene { min-width: 7rem; } }
+.zoom-4 { .scene { min-width: 8rem; } }
+.zoom-5 { .scene { min-width: 9rem; } }
+.zoom-6 { .scene { min-width: 10rem; } }
+.zoom-7 { .scene { min-width: 11rem; } }
+.zoom-8 { .scene { min-width: 12rem; } }
+.zoom-9 { .scene { min-width: 13rem; } }
+.zoom-10 { .scene { min-width: 14rem; } }
+.zoom-11 { .scene { min-width: 15rem; } }
+.zoom-12 { .scene { min-width: 16rem; } }
+.zoom-13 { .scene { min-width: 17rem; } }
+.zoom-14 { .scene { min-width: 18rem; } }
+.zoom-15 { .scene { min-width: 19rem; } }
+.zoom-16 { .scene { min-width: 20rem; } }

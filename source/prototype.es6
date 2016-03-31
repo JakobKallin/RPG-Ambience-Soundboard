@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
         select: pages.map(page => ({ option: page.id }))
     });
     pageMenu.style.position = 'fixed';
-    pageMenu.style.right = '0';
+    pageMenu.style.left = '0';
     pageMenu.style.top = '0';
     pageMenu.style.margin = '1rem';
     document.body.appendChild(pageMenu);
@@ -29,6 +29,19 @@ document.addEventListener('DOMContentLoaded', () => {
             node.parentNode.insertBefore(clone, node.nextSibling);
         });
         node.remove();
+    });
+    
+    dom.all('[data-zoom]').forEach(node => {
+        dom.on(node, 'input', update);
+        function update() {
+            const min = Number(node.min);
+            const max = Number(node.max);
+            const value = Number(node.value);
+            R.range(min, max + 1).forEach(level => {
+                const className = 'zoom-' + level;
+                document.documentElement.classList.toggle(className, level === value);
+            });
+        }
     });
     
     function insertNumber(node, number) {
