@@ -44,6 +44,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    (() => {
+        let url = '/boom.wav';
+        const req = new XMLHttpRequest();
+        req.responseType = 'blob';
+        req.open('GET', url);
+        req.onload = () => {
+            url = URL.createObjectURL(req.response);
+        };
+        req.send();
+        
+        dom.all('[data-sound]').forEach(node => {
+            dom.on(node, 'click', () => {
+                new Audio(url).play();
+            });
+        });
+    })();
+    
     function insertNumber(node, number) {
         [].slice.call(node.childNodes).forEach(child => {
             if (child.nodeType === 1) { // element

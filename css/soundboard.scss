@@ -15,7 +15,7 @@ html {
 }
 
 .page {
-    @include flex(column);
+    @include flex(column, $horizontal: stretch);
 }
 
 .center:not(.vertical):not(.horizontal) {
@@ -138,8 +138,8 @@ html {
     }
     
     .scene {
-        min-width: 10rem;
         flex: 1;
+        min-width: 10rem;
     }
     
     .scene-button {
