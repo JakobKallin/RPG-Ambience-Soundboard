@@ -1,5 +1,13 @@
 @import 'reset';
 @import 'defs';
+@import 'font-awesome/variables';
+
+@font-face {
+    font-family: 'FontAwesome';
+    src: url('/fonts/fontawesome-webfont.woff2?v=#{$fa-version}') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
 
 html, body, .page {
     width: 100%;
@@ -106,17 +114,95 @@ html {
     }
     
     #options {
+        flex-shrink: 0;
+        @include flex(row, $vertical: center);
         position: relative;
-        text-align: center;
         
         & > * {
             vertical-align: middle;
+        }
+        
+        select, button {
+            height: 2rem;
+            padding: 0.25rem;
+        }
+        
+        label > * {
+            vertical-align: middle;
+        }
+        
+        .menu-button {
+            &:before {
+                font-family: Fontawesome;
+                content: $fa-var-bars " ";
+                vertical-align: middle;
+            }
+        }
+        
+        .menu {
+            position: absolute;
+            left: 0;
+            top: 100%;
+            @include box;
+            padding: 1rem;
+            color: $white;
+            box-shadow: 0.5rem 0.5rem hsla(0, 0%, 0%, 0.5);
+            
+            ul {
+                @include flex(column, $vertical-spacing: 0.5rem);
+            }
+            
+            .zoom {
+                position: static;
+            }
+        }
+        
+        .other-menu {
+            padding-left: 1rem;
+        }
+        
+        @media (max-width: 40em) {
+            .other-menu {
+                display: none;
+            }
+        }
+        
+        @media (min-width: 40em) {
+            .menu {
+                display: none;
+            }
         }
         
         .zoom {
             position: absolute;
             right: 0;
             top: 0;
+            
+            & > * {
+                vertical-align: middle;
+            }
+        }
+        
+        .zoom-slider {
+            margin-left: 0.5rem;
+            margin-right: 0.5rem;
+        }
+        
+        .zoom-in, .zoom-out {
+            width: 2rem;
+            height: 2rem;
+        }
+        
+        .zoom-in:before, .zoom-out:before {
+            font-family: FontAwesome;
+        }
+        
+        .zoom-out:before {
+            content: $fa-var-search-minus;
+        }
+        
+        .zoom-in:before {
+            content: $fa-var-search-plus;
         }
     }
     

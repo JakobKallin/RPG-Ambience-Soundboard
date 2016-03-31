@@ -1,28 +1,29 @@
 * {
-	box-sizing: border-box;
-	margin: 0;
-	padding: 0;
-	line-height: inherit;
-	font-weight: inherit;
-	text-decoration: inherit;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    line-height: inherit;
+    font-weight: inherit;
+    text-decoration: inherit;
 }
 
 a {
-	color: inherit;
+    color: inherit;
 }
 
 button,
 input,
-select {
-	cursor: pointer;
-	font-size: inherit;
-	font-family: inherit;
+select,
+label {
+    cursor: pointer;
+    font-size: inherit;
+    font-family: inherit;
 }
 
 li {
-	display: block;
+    display: block;
 }
 
 [hidden] {
-	display: none !important;
+    display: none !important;
 }

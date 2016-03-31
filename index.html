@@ -12,10 +12,52 @@
         <div class="page page-soundboard scene-view-ungrouped" id="soundboard">
             <div class="content">
                 <div id="options">
-                    <select id="adventures">
-                        <option data-repeat="10">Some Adventure</option>
-                    </select>
-                    <input type="range" min="1" max="16" step="1" value="6" class="zoom" data-zoom>
+                    <button type="button" class="menu-button">Menu</button>
+                    <div class="menu">
+                        <ul>
+                            <li class="adventure">
+                                <select>
+                                    <option data-repeat="10">Some Adventure</option>
+                                </select>
+                            </li>
+                            <li>
+                                <label>
+                                    <input type="checkbox">
+                                    <span>Group by layer</span>
+                                </label>
+                            </li>
+                            <li>
+                                <label>
+                                    <input type="checkbox">
+                                    <span>Show images</span>
+                                </label>
+                            </li>
+                            <li>
+                                <label>
+                                    <input type="checkbox">
+                                    <span>Show names</span>
+                                </label>
+                            </li>
+                            <li class="zoom">
+                                <button type="button" class="zoom-out"></button>
+                                <input type="range" min="1" max="16" step="1" value="6" class="zoom-slider" data-zoom>
+                                <button type="button" class="zoom-in"></button>
+                            </li>
+                            <li class="fullscreen">
+                                <button type="button">Enter Fullscreen</button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="other-menu">
+                        <select class="adventure">
+                            <option data-repeat="10">Some Adventure</option>
+                        </select>
+                        <div class="zoom">
+                            <button type="button" class="zoom-out"></button>
+                            <input type="range" min="1" max="16" step="1" value="6" class="zoom-slider" data-zoom>
+                            <button type="button" class="zoom-in"></button>
+                        </div>
+                    </div>
                 </div>
                 <div class="scene-view ungrouped" hidden>
                     <ul class="scene-list">

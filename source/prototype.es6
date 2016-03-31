@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
         select: pages.map(page => ({ option: page.id }))
     });
     pageMenu.style.position = 'fixed';
-    pageMenu.style.left = '0';
+    pageMenu.style.left = '50%';
     pageMenu.style.top = '0';
     pageMenu.style.margin = '1rem';
     document.body.appendChild(pageMenu);
