@@ -3,22 +3,23 @@ import * as dom from './dom.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const pages = dom.all('body > .page').sort((a, b) => a.id.localeCompare(b.id));
-    const pageMenu = createElement({
-        select: pages.map(page => ({ option: page.id }))
-    });
-    pageMenu.style.position = 'fixed';
-    pageMenu.style.left = '50%';
-    pageMenu.style.top = '0';
-    pageMenu.style.margin = '1rem';
-    document.body.appendChild(pageMenu);
-    
     const firstPageName = location.hash.substring(1);
     const firstPage = pages.filter(p => p.id === firstPageName)[0];
     showPage(firstPage ? pages.indexOf(firstPage) : 0);
-    pageMenu.addEventListener('change', () => {
-        const index = pageMenu.selectedIndex;
-        showPage(index);
-        history.pushState('', null, '#' + pages[index].id);
+    
+    dom.on(document, 'keydown', event => {
+        const pageNames = pages.map(p => p.id)
+        const currentName = location.hash.substring(1);
+        const currentIndex = pageNames.indexOf(currentName);
+        
+        if (event.keyCode === 37) {
+            const nextIndex = currentIndex === 0 ? pageNames.length - 1 : currentIndex - 1;
+            showPage(nextIndex);
+        }
+        else if (event.keyCode === 39) {
+            const nextIndex = (currentIndex + 1) % pageNames.length;
+            showPage(nextIndex);
+        }
     });
     
     dom.all('[data-repeat]').forEach(node => {
@@ -99,9 +100,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function showPage(target) {
-        pageMenu.selectedIndex = target;
         pages.forEach((p, i) => {
             p.hidden = i !== target;
         });
+        history.pushState('', null, '#' + pages[target].id);
     }
 });
