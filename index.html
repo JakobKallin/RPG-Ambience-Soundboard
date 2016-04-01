@@ -1,5 +1,5 @@
 <!doctype html>
-<html>
+<html class="zoom-10">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,7 +12,7 @@
         <div class="page page-soundboard scene-view-ungrouped" id="soundboard">
             <div class="content">
                 <div id="options">
-                    <button type="button" class="menu-button">Menu</button>
+                    <button type="button" class="menu-button" data-menu>Menu</button>
                     <div class="menu">
                         <ul>
                             <li class="adventure">
@@ -63,6 +63,7 @@
                     <ul class="scene-list">
                         <li class="scene" id="scene-template" data-repeat="10">
                             <button type="button" class="scene-button" data-sound>
+                                <progress value="0.25">25%</progress>
                                 <div class="scene-preview"></div>
                                 <div class="scene-title">Wizard's Library in the Evil Forest</div>
                             </button>
@@ -73,18 +74,20 @@
                 <div class="scene-view grouped">
                     <h2 class="group-title">Background</h2>
                     <ul class="scene-list">
-                        <li class="scene" id="scene-template" data-repeat="10">
+                        <li class="scene error" id="scene-template" data-repeat="10">
                             <button type="button" class="scene-button" data-sound>
+                                <progress value="0.25">25%</progress>
                                 <div class="scene-preview"></div>
                                 <div class="scene-title">Wizard's Library in the Evil Forest</div>
                             </button>
                         </li>
                         <li class="scene placeholder" data-repeat="0"></li>
                     </ul>
-                    <h2 class="group-title">One-shots</h2>
+                    <h2 class="group-title">Foreground</h2>
                     <ul class="scene-list">
                         <li class="scene" id="scene-template" data-repeat="15">
                             <button type="button" class="scene-button" data-sound>
+                                <progress value="0.25">25%</progress>
                                 <div class="scene-preview"></div>
                                 <div class="scene-title">Wizard's Library in the Evil Forest</div>
                             </button>
@@ -109,6 +112,20 @@
                     <img src="/images/google-drive.png" alt="">
                     <span>Sign in to Google Drive</span>
                 </button>
+            </div>
+        </div>
+        <div class="page page-welcome" id="welcome">
+            <div class="center">
+                <h2>Welcome to RPG Ambience Soundboard!</h2>
+                <p>This app works like <a href="http://rpg-ambience.com/">RPG Ambience</a>, with a few exceptions:</p>
+                <ul>
+                    <li>You can only play audio, not display images or text.</li>
+                    <li>You cannot create or edit adventures. (You must use <a href="http://rpg-ambience.com/">RPG Ambience</a> for that.)</li> 
+                </ul>
+                <p>RPG Ambience Soundboard is <a href="">currently in beta</a>.</p>
+                <form method="get" action="/" class="start">
+                    <button type="submit" class="start">Start!</a>
+                </form>
             </div>
         </div>
     </body>

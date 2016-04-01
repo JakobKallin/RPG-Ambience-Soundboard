@@ -44,6 +44,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    dom.all('[data-menu]').forEach(button => {
+        dom.on(button, 'click', () => document.documentElement.classList.toggle('menu'));
+    });
+    
     (() => {
         let url = '/boom.wav';
         const req = new XMLHttpRequest();

@@ -77,6 +77,35 @@ html {
     }
 }
 
+.page-welcome {
+    padding: 1rem;
+    
+    h2 {
+        @include heading;
+        text-align: center;
+    }
+    
+    li {
+        display: list-item;
+        margin-left: 2rem;
+        margin-right: 2rem;
+    }
+    
+    ul, p {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .start {
+        text-align: center;
+    }
+    
+    .start button {
+        font-size: 1.5rem;
+        padding: 0.5rem;
+    }
+}
+
 .page-google-drive {
     padding: 1rem;
     text-align: center;
@@ -143,13 +172,14 @@ html {
             position: absolute;
             left: 0;
             top: 100%;
+            z-index: 1000;
             @include box;
             padding: 1rem;
             color: $white;
             box-shadow: 0.5rem 0.5rem hsla(0, 0%, 0%, 0.5);
             
             ul {
-                @include flex(column, $vertical-spacing: 0.5rem);
+                @include flex(column, $vertical-spacing: 1rem);
             }
             
             .zoom {
@@ -163,12 +193,6 @@ html {
         
         @media (max-width: 40em) {
             .other-menu {
-                display: none;
-            }
-        }
-        
-        @media (min-width: 40em) {
-            .menu {
                 display: none;
             }
         }
@@ -217,22 +241,63 @@ html {
         @include flex(row,
             $multiline: true,
             $horizontal: center,
-            $vertical: start,
-            $horizontal-spacing: 1rem,
-            $vertical-spacing: 1rem
+            $vertical: start
         );
     }
     
     .scene {
-        flex: 1;
-        min-width: 10rem;
+        min-width: (100% / 3);
+        padding: 0.5rem;
+    }
+    
+    @media (min-width: 20em) {
+        .scene { min-width: (100% / 4); }
+    }
+    
+    @media (min-width: 40em) {
+        .scene { min-width: (100% / 10); }
+    }
+    
+    @media (min-width: 60em) {
+        .scene { min-width: (100% / 12); }
+    }
+
+    @media (min-width: 80em) {
+        .scene { min-width: 0; }
     }
     
     .scene-button {
+        position: relative;
         @include box-button;
         display: block;
         width: 100%;
         height: 100%;
+    }
+    
+    .scene.error .scene-button:before {
+        position: absolute;
+        right: 0;
+        top: 0;
+        width: 1rem;
+        height: 1rem;
+        content: $fa-var-exclamation-triangle;
+        font-family: FontAwesome;
+        line-height: 1rem;
+        padding: 0.5rem;
+        color: $white;
+        background-color: hsl(0, 75%, 50%);
+    }
+    
+    .scene progress {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        box-shadow: 0 0.25rem hsla(0, 0%, 0%, 0.5);
+    }
+    
+    .scene:not(.loading) progress {
+        display: none;
     }
     
     .stop-button {
@@ -271,19 +336,23 @@ html {
     }
 }
 
-.zoom-1 { .scene { min-width: 5rem; } }
-.zoom-2 { .scene { min-width: 6rem; } }
-.zoom-3 { .scene { min-width: 7rem; } }
-.zoom-4 { .scene { min-width: 8rem; } }
-.zoom-5 { .scene { min-width: 9rem; } }
-.zoom-6 { .scene { min-width: 10rem; } }
-.zoom-7 { .scene { min-width: 11rem; } }
-.zoom-8 { .scene { min-width: 12rem; } }
-.zoom-9 { .scene { min-width: 13rem; } }
-.zoom-10 { .scene { min-width: 14rem; } }
-.zoom-11 { .scene { min-width: 15rem; } }
-.zoom-12 { .scene { min-width: 16rem; } }
-.zoom-13 { .scene { min-width: 17rem; } }
-.zoom-14 { .scene { min-width: 18rem; } }
-.zoom-15 { .scene { min-width: 19rem; } }
-.zoom-16 { .scene { min-width: 20rem; } }
+html:not(.menu) .menu {
+    display: none;
+}
+
+.zoom-16 { .scene { width: 100%; } }
+.zoom-15 { .scene { width: (100% / 2); } }
+.zoom-14 { .scene { width: (100% / 3); } }
+.zoom-13 { .scene { width: (100% / 4); } }
+.zoom-12 { .scene { width: (100% / 5); } }
+.zoom-11 { .scene { width: (100% / 6); } }
+.zoom-10 { .scene { width: (100% / 7); } }
+.zoom-9 { .scene { width: (100% / 8); } }
+.zoom-8 { .scene { width: (100% / 9); } }
+.zoom-7 { .scene { width: (100% / 10); } }
+.zoom-6 { .scene { width: (100% / 11); } }
+.zoom-5 { .scene { width: (100% / 12); } }
+.zoom-4 { .scene { width: (100% / 13); } }
+.zoom-3 { .scene { width: (100% / 14); } }
+.zoom-2 { .scene { width: (100% / 15); } }
+.zoom-1 { .scene { width: (100% / 16); } }
