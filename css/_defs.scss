@@ -113,3 +113,8 @@ $highlighted-border-color: hsl(220, 50%, 50%);
     font-family: inherit;
     font-size: inherit;
 }
+
+@mixin icon($text) {
+    font-family: FontAwesome;
+    content: $text;
+}

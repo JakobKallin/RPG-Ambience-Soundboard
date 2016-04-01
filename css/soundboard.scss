@@ -144,7 +144,10 @@ html {
     
     #options {
         flex-shrink: 0;
-        @include flex(row, $vertical: center);
+        @include flex(row,
+            $vertical: center,
+            $horizontal-spacing: 1rem
+        );
         position: relative;
         
         & > * {
@@ -152,7 +155,6 @@ html {
         }
         
         select, button {
-            height: 2rem;
             padding: 0.25rem;
         }
         
@@ -187,8 +189,45 @@ html {
             }
         }
         
-        .other-menu {
-            padding-left: 1rem;
+        .error {
+            padding: 0.5rem;
+            color: $white;
+            background-color: hsl(0, 65%, 40%);
+            
+            > * {
+                vertical-align: middle;
+            }
+            
+            .message, .retry {
+                display: inline;
+            }
+            
+            .retry {
+                @include reset-control;
+                color: hsl(60, 100%, 50%);
+                margin-left: 0.5rem;
+                &:before {
+                    @include icon($fa-var-refresh " ");
+                    vertical-align: middle;
+                }
+                span {
+                    vertical-align: middle;
+                    text-decoration: underline;
+                }
+            }
+            
+            .close {
+                margin-left: 1rem;
+                @include reset-control;
+                font-size: 0;
+                color: hsl(0, 65%, 15%);
+                
+                &:before {
+                    font-size: 1.5rem;
+                    line-height: 1;
+                    @include icon($fa-var-times);
+                }
+            }
         }
         
         @media (max-width: 40em) {
@@ -231,9 +270,17 @@ html {
     }
     
     .scene-view {
+        position: relative;
         flex: 1;
-        overflow-x: hidden;
+        @include flex(column);
+        overflow: auto;
+    }
+    
+    .scene-view .grouped,
+    .scene-view .ungrouped {
+        flex: 1;
         overflow-y: auto;
+        overflow-x: hidden;
     }
     
     .scene-list {
