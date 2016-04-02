@@ -7,7 +7,7 @@ export default function(appId) {
     const urls = {
         files: 'https://www.googleapis.com/drive/v2/files',
         client: 'https://apis.google.com/js/client.js',
-        scope: 'https://www.googleapis.com/auth/drive.file'
+        scope: 'https://www.googleapis.com/auth/drive'
     };
     
     function downloadMetadata(id) {
@@ -18,6 +18,15 @@ export default function(appId) {
     function downloadContents(id) {
         const url = urls.files + '/' + id + '?alt=media';
         return request('GET', url);
+    }
+    
+    function downloadBlob(id) {
+        const url = urls.files + '/' + id + '?alt=media';
+        return request('GET', url, {responseType: 'blob'});
+    }
+    
+    function downloadPreview(id) {
+        return downloadMetadata(id).then(metadata => metadata.thumbnailLink);
     }
     
     function search(options) {
@@ -48,13 +57,15 @@ export default function(appId) {
         });
     }
     
-    function request(method, url) {
+    function request(method, url, options) {
+        options = options || {};
         return authenticate()
         .then(function(token) {
             return http(method, url, {
                 headers: {
                     'Authorization': 'Bearer ' + token
-                }
+                },
+                responseType: options.responseType || ''
             });
         });
     }
@@ -123,10 +134,12 @@ export default function(appId) {
     function http(method, url, options) {
         options = options || {};
         options.headers = options.headers || {};
+        options.responseType = options.responseType || '';
         
         return new Promise(function(resolve, reject) {
             const xhr = new XMLHttpRequest();
             xhr.open(method, url);
+            xhr.responseType = options.responseType;
             
             Object.keys(options.headers).forEach(function(key) {
                 const value = options.headers[key];
@@ -134,7 +147,9 @@ export default function(appId) {
             });
             
             xhr.addEventListener('load', function() {
-                var response = responseFromRequest(xhr);
+                var response = options.responseType
+                    ? xhr.response
+                    : responseFromRequest(xhr);
                 resolve(response);
             });
             xhr.addEventListener('error', function(e) { reject(e); });
@@ -158,7 +173,9 @@ export default function(appId) {
     return {
         download: {
             metadata: downloadMetadata,
-            contents: downloadContents
+            contents: downloadContents,
+            blob: downloadBlob,
+            preview: downloadPreview
         },
         search: search
     };

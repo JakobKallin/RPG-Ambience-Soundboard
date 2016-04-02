@@ -59,6 +59,12 @@ export function replicate(table, container, order, mapping, state) {
         };
     }
     
+    R.mapObjIndexed((node, key) => {
+        if (!(key in table)) {
+            node.remove();
+        }
+    }, state.nodes);
+    
     const keys = Object.keys(table);
     const nodes = R.sortBy(key => order(table[key]), keys).map(key => {
         const value = table[key];
@@ -83,21 +89,43 @@ export function replicate(table, container, order, mapping, state) {
 
 function map(selectors, ancestor) {
     R.mapObjIndexed((value, selector) => {
-        all(selector, ancestor).forEach(node => {
-            if (typeof value === 'object') {
+        const matching = all(selector, ancestor).concat(
+            ancestor.matches(selector) ? [ancestor] : []
+        );
+        matching.forEach(node => {
+            if (typeof value === 'function') {
+                value(node);
+            }
+            else if (typeof value === 'object') {
                 R.mapObjIndexed((attrValue, attrName) => {
-                    if (attrName === 'class') {
+                    if (attrName === 'text') {
+                        if (node.textContent !== attrValue) {
+                            node.textContent = attrValue;
+                        }
+                    }
+                    else if (attrName === 'class') {
                         R.mapObjIndexed((active, className) => {
                             node.classList.toggle(className, active);
                         }, attrValue);
                     }
+                    else if (attrName === 'style') {
+                        R.mapObjIndexed((cssValue, cssKey) => {
+                            if (node.style[cssKey] !== cssValue) {
+                                node.style[cssKey] = cssValue;
+                            }
+                        }, attrValue);
+                    }
                     else {
-                        node.setAttribute(attrValue, attrName);
+                        if (node.getAttribute(attrName) !== attrValue) {
+                            node.setAttribute(attrName, attrValue);
+                        }
                     }
                 }, value);
             }
             else {
-                node.textContent = value;
+                if (node.textContent !== value) {
+                    node.textContent = value;
+                }
             }
         });
     }, selectors);

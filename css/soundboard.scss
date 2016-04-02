@@ -145,7 +145,7 @@ html {
     #options {
         flex-shrink: 0;
         @include flex(row,
-            $vertical: center,
+            $vertical: stretch,
             $horizontal-spacing: 1rem
         );
         position: relative;
@@ -155,7 +155,8 @@ html {
         }
         
         select, button {
-            padding: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            height: 2.5rem;
         }
         
         label > * {
@@ -176,6 +177,7 @@ html {
             top: 100%;
             z-index: 1000;
             @include box;
+            margin: 0 !important; // Reset flex margin
             padding: 1rem;
             color: $white;
             box-shadow: 0.5rem 0.5rem hsla(0, 0%, 0%, 0.5);
@@ -190,34 +192,27 @@ html {
         }
         
         .error {
-            padding: 0.5rem;
+            @include flex(row,
+                $vertical: center,
+                $horizontal-spacing: 0.5rem
+            );
+            padding: 0 0.5rem;
             color: $white;
             background-color: hsl(0, 65%, 40%);
             
-            > * {
-                vertical-align: middle;
-            }
-            
-            .message, .retry {
-                display: inline;
-            }
-            
             .retry {
-                @include reset-control;
-                color: hsl(60, 100%, 50%);
-                margin-left: 0.5rem;
+                height: auto;
                 &:before {
                     @include icon($fa-var-refresh " ");
                     vertical-align: middle;
                 }
                 span {
                     vertical-align: middle;
-                    text-decoration: underline;
                 }
             }
             
             .close {
-                margin-left: 1rem;
+                height: auto;
                 @include reset-control;
                 font-size: 0;
                 color: hsl(0, 65%, 15%);
@@ -254,6 +249,7 @@ html {
         .zoom-in, .zoom-out {
             width: 2rem;
             height: 2rem;
+            padding: 0;
         }
         
         .zoom-in:before, .zoom-out:before {
@@ -272,7 +268,9 @@ html {
     .scene-view {
         position: relative;
         flex: 1;
-        @include flex(column);
+        @include flex(column,
+            $horizontal: stretch
+        );
         overflow: auto;
     }
     
@@ -358,7 +356,6 @@ html {
         width: 100%;
         padding-top: 56.25%;
         background-color: $black;
-        background-image: url("http://blog.rpg-ambience.com/media/mage-library.jpg");
         background-size: cover;
         background-repeat: no-repeat;
         background-position: center center;

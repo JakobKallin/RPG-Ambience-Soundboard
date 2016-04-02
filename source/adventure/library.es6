@@ -18,7 +18,18 @@ export default function(backend) {
         });
     }
     
+    function download(id) {
+        return backend.download.blob(id)
+        .then(blob => URL.createObjectURL(blob));
+    }
+    
+    function preview(id) {
+        return backend.download.preview(id);
+    }
+    
     return {
-        list: list
+        list: list,
+        download: download,
+        preview: preview
     };
 };
