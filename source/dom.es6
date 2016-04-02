@@ -51,7 +51,7 @@ export function toggleClass(node, table) {
 //     });
 // }
 
-export function replicate(table, container, order, mapping, state) {
+export function replicate(table, container, options, mapping, state) {
     if (!state) {
         state = {
             template: container.removeChild(container.firstElementChild),
@@ -66,11 +66,14 @@ export function replicate(table, container, order, mapping, state) {
     }, state.nodes);
     
     const keys = Object.keys(table);
+    const order = options.sort || R.identity;
+    const filter = options.filter || (() => true);
     const nodes = R.sortBy(key => order(table[key]), keys).map(key => {
         const value = table[key];
         const instance = key in state.nodes
             ? state.nodes[key]
             : state.template.cloneNode(true);
+        instance.hidden = !filter(value);
         map(mapping(value), instance);
         state.nodes[key] = instance;
         return instance;
@@ -83,7 +86,7 @@ export function replicate(table, container, order, mapping, state) {
     });
     
     return (table) => {
-        return replicate(table, container, order, mapping, state);
+        return replicate(table, container, options, mapping, state);
     };
 }
 
