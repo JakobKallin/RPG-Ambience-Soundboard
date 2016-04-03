@@ -19,7 +19,7 @@ window.addEventListener('DOMContentLoaded', () => {
                 const adventure = adventures[id];
                 adventure.scenes.forEach(scene => {
                     if (scene.image.file && !(scene.image.file.id in thumbnails)) {
-                        thumbnails[scene.image.file.id] = library.download(scene.image.file.id)
+                        thumbnails[scene.image.file.id] = library.preview(scene.image.file.id)
                         .then(url => soundboard.thumbnailLoaded(scene.image.file.id, url));
                     }
                 });

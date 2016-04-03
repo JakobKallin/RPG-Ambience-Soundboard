@@ -69,12 +69,12 @@ export function replicate(table, container, options, mapping, state) {
     const order = options.sort || R.identity;
     const filter = options.filter || (() => true);
     const nodes = R.sortBy(key => order(table[key]), keys).map(key => {
-        const value = table[key];
+        const object = table[key];
         const instance = key in state.nodes
             ? state.nodes[key]
             : state.template.cloneNode(true);
-        instance.hidden = !filter(value);
-        map(mapping(value), instance);
+        instance.hidden = !filter(object);
+        map(mapping, object, instance);
         state.nodes[key] = instance;
         return instance;
     });
@@ -90,46 +90,51 @@ export function replicate(table, container, options, mapping, state) {
     };
 }
 
-function map(selectors, ancestor) {
-    R.mapObjIndexed((value, selector) => {
+function map(selectors, object, ancestor) {
+    R.mapObjIndexed((values, selector) => {
+        if (typeof values !== 'object') {
+            values = { text: values };
+        }
+        
         const matching = all(selector, ancestor).concat(
             ancestor.matches(selector) ? [ancestor] : []
         );
+        
         matching.forEach(node => {
-            if (typeof value === 'function') {
-                value(node);
-            }
-            else if (typeof value === 'object') {
-                R.mapObjIndexed((attrValue, attrName) => {
-                    if (attrName === 'text') {
-                        if (node.textContent !== attrValue) {
-                            node.textContent = attrValue;
-                        }
+            R.mapObjIndexed((createValue, key) => {
+                if (key === 'text') {
+                    const value = createValue(object);
+                    if (node.textContent !== value) {
+                        node.textContent = value;
                     }
-                    else if (attrName === 'class') {
-                        R.mapObjIndexed((active, className) => {
-                            node.classList.toggle(className, active);
-                        }, attrValue);
-                    }
-                    else if (attrName === 'style') {
-                        R.mapObjIndexed((cssValue, cssKey) => {
-                            if (node.style[cssKey] !== cssValue) {
-                                node.style[cssKey] = cssValue;
-                            }
-                        }, attrValue);
-                    }
-                    else {
-                        if (node.getAttribute(attrName) !== attrValue) {
-                            node.setAttribute(attrName, attrValue);
-                        }
-                    }
-                }, value);
-            }
-            else {
-                if (node.textContent !== value) {
-                    node.textContent = value;
                 }
-            }
+                else if (key === 'class') {
+                    R.mapObjIndexed((active, className) => {
+                        node.classList.toggle(className, active(object));
+                    }, createValue);
+                }
+                else if (key === 'style') {
+                    R.mapObjIndexed((createCssValue, cssKey) => {
+                        const cssValue = createCssValue(object);
+                        if (node.style[cssKey] !== cssValue) {
+                            node.style[cssKey] = cssValue;
+                        }
+                    }, createValue);
+                }
+                else if (key === 'on') {
+                    R.mapObjIndexed((callback, eventName) => {
+                        if (!node['on' + eventName]) {
+                            node['on' + eventName] = () => callback(object, node);
+                        }
+                    }, createValue);
+                }
+                else {
+                    const value = createValue(object);
+                    if (node[key] !== value) {
+                        node[key] = value;
+                    }
+                }
+            }, values);
         });
     }, selectors);
 }

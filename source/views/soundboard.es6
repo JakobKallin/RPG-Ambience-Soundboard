@@ -9,9 +9,12 @@ export default function(options) {
     })));
     const thumbnails = {};
     
-    dom.replicate(adventures, dropdown, { sort: a => a.title }, adventure => ({
-        'option': { text: adventure.title, value: adventure.id }
-    }));
+    dom.replicate(adventures, dropdown, { sort: a => a.title }, {
+        'option': {
+            text: adventure => adventure.title,
+            value: adventure => adventure.id
+        }
+    });
     
     const render = dom.replicate(
         scenes,
@@ -20,21 +23,18 @@ export default function(options) {
             sort: scene => scene.name,
             filter: scene => selectedAdventure().scenes.includes(scene)
         },
-        scene => ({
-            '.scene': { class: { loaded: !scene.image.file || scene.image.file.id in thumbnails } },
-            '.scene-title': scene.name || String.fromCharCode(160),
-            '.scene-button': button => {
-                if (!button.onclick) button.onclick = options.playSound;
-            },
-            '.scene-preview-image': image => {
-                image.hidden = !scene.image.file;
-                if (!image.onload) image.onload = () => image.classList.add('loaded');
-                if (!image.onloadstart) image.onloadstart = () => console.log(image.tagName);
-                image.src = scene.image.file && scene.image.file.id in thumbnails
+        {
+            '.scene': { class: { loaded: scene => !scene.image.file || scene.image.file.id in thumbnails } },
+            '.scene-title': scene => scene.name || String.fromCharCode(160),
+            '.scene-button': { on: { click: options.playSound } },
+            '.scene-preview-image': {
+                hidden: scene => !scene.image.file,
+                on: { load: (scene, image) => image.classList.add('loaded') },
+                src: scene => scene.image.file && scene.image.file.id in thumbnails
                     ? thumbnails[scene.image.file.id]
-                    : '';
+                    : ''
             }
-        })
+        }
     );
     
     dropdown.addEventListener('change', showCurrentAdventure);
