@@ -7,13 +7,26 @@ window.addEventListener('DOMContentLoaded', () => {
     const library = Library(GoogleDrive('907013371139'));
     showPage('loading');
     const thumbnails = {};
+    const tracks = {};
+    const audio = new Audio();
     
     library.list().then(function(adventures) {
         const soundboard = SoundboardView({
             adventures: adventures,
             dropdown: document.getElementById('adventure'),
-            playSound: function(url) {
-                new Audio('/boom.wav').play();
+            playScene: function playScene(scene) {
+                if (scene.sound.tracks) {
+                    const id = scene.sound.tracks[0].id;
+                    if (tracks[id]) {
+                        audio.src = tracks[id];
+                        audio.play();
+                    }
+                    else {
+                        library.download(id)
+                        .then(url => tracks[id] = url)
+                        .then(() => playScene(scene));
+                    }
+                }
             },
             adventureSelected: id => {
                 const adventure = adventures[id];

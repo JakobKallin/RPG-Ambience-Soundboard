@@ -26,7 +26,8 @@ export default function(options) {
         {
             '.scene': { class: { loaded: scene => !scene.image.file || scene.image.file.id in thumbnails } },
             '.scene-title': scene => scene.name || String.fromCharCode(160),
-            '.scene-button': { on: { click: options.playSound } },
+            '.scene-hotkey': scene => scene.key || '',
+            '.scene-button': { on: { click: options.playScene } },
             '.scene-preview-image': {
                 hidden: scene => !scene.image.file,
                 on: { load: (scene, image) => image.classList.add('loaded') },

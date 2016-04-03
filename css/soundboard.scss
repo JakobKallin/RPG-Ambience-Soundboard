@@ -378,11 +378,21 @@ html {
         opacity: 1;
     }
     
-    .scene-title {
+    .scene-label {
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
         padding: 0.5rem;
+    }
+    
+    .scene-hotkey {
+        color: $subtle-text-color;
+    }
+    .scene-hotkey:not(:empty):before {
+        content: "(";
+    }
+    .scene-hotkey:not(:empty):after {
+        content: ")";
     }
     
     .group-title {
