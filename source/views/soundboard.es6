@@ -7,7 +7,7 @@ export default function(options) {
     const scenes = R.fromPairs(R.unnest(R.values(adventures).map(adventure => {
         return adventure.scenes.map((scene, i) => [adventure.id + '/' + i, scene]);
     })));
-    const library = options.library;
+    const thumbnails = {};
     
     dom.replicate(adventures, dropdown, { sort: a => a.title }, adventure => ({
         'option': { text: adventure.title, value: adventure.id }
@@ -21,19 +21,18 @@ export default function(options) {
             filter: scene => selectedAdventure().scenes.includes(scene)
         },
         scene => ({
+            '.scene': { class: { loaded: !scene.image.file || scene.image.file.id in thumbnails } },
             '.scene-title': scene.name || String.fromCharCode(160),
             '.scene-button': button => {
-                if (button.dataset.foo) {
-                    button.addEventListener('click', options.playSound);
-                }
-                button.dataset.foo = true;
+                if (!button.onclick) button.onclick = options.playSound;
             },
-            '.scene-preview': {
-                style: {
-                    backgroundImage: scene.image.file
-                        ? 'url("' + scene.image.file.thumbnail + '")'
-                        : ''
-                }
+            '.scene-preview-image': image => {
+                image.hidden = !scene.image.file;
+                if (!image.onload) image.onload = () => image.classList.add('loaded');
+                if (!image.onloadstart) image.onloadstart = () => console.log(image.tagName);
+                image.src = scene.image.file && scene.image.file.id in thumbnails
+                    ? thumbnails[scene.image.file.id]
+                    : '';
             }
         })
     );
@@ -51,14 +50,13 @@ export default function(options) {
     
     function showAdventure(adventure) {
         render(scenes);
-        adventure.scenes.forEach(scene => {
-            if (scene.image.file && !scene.image.file.thumbnail) {
-                library.preview(scene.image.file.id)
-                .then(url => {
-                    scene.image.file.thumbnail = url;
-                    render(scenes);
-                });
-            }
-        });
+        options.adventureSelected(adventure.id);
     }
+    
+    return {
+        thumbnailLoaded: (id, url) => {
+            thumbnails[id] = url;
+            render(scenes);
+        }
+    };
 };
