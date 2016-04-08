@@ -49,6 +49,17 @@ document.addEventListener('DOMContentLoaded', () => {
         dom.on(button, 'click', () => document.documentElement.classList.toggle('menu'));
     });
     
+    dom.all('[data-gradual]').forEach(parent => {
+        const children = [].slice.call(parent.children).reverse();
+        children.forEach(child => child.remove());
+        children.forEach((child, i) => {
+            setTimeout(
+                () => parent.insertBefore(child, parent.firstElementChild),
+                (i + 1) * 250
+            );
+        });
+    });
+    
     (() => {
         let url = '/boom.wav';
         const req = new XMLHttpRequest();

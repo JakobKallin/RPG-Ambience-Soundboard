@@ -1,13 +1,17 @@
 export default function(backend) {
-    function list() {
+    function list(signal) {
+        signal.adventureListDownloadStarted();
         return backend.search({
             mimeType: 'application/json',
             extension: 'ambience'
         })
         .then(function(ids) {
+            signal.adventureListDownloadFinished(ids.length);
             const adventures = {};
             return Promise.all(ids.map(function(id) {
+                signal.adventureDownloadStarted(id);
                 return backend.download.contents(id).then(function(adventure) {
+                    signal.adventureDownloadFinished(id);
                     adventure.id = id;
                     adventures[id] = adventure;
                 });

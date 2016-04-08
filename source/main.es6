@@ -1,16 +1,35 @@
 import Library from './adventure/library.js';
 import GoogleDrive from './storage/google-drive.js';
+import SplashView from './views/splash.js';
 import SoundboardView from './views/soundboard.js';
 import * as dom from './dom.js';
 
 window.addEventListener('DOMContentLoaded', () => {
     const library = Library(GoogleDrive('907013371139'));
-    showPage('loading');
+    showPage('splash');
     const thumbnails = {};
     const tracks = {};
     const audio = new Audio();
     
-    library.list().then(function(adventures) {
+    const splash = SplashView(document.getElementById('splash'));
+    let adventureLimit = 1;
+    let adventureCount = 0;
+    const signalProgress = {
+        adventureListDownloadStarted: () => splash.event('Downloading adventure list…'),
+        adventureListDownloadFinished: count => {
+            splash.event('Finished downloading adventure list');
+            splash.event('Downloading adventures…');
+            adventureLimit = count;
+        },
+        adventureDownloadStarted: id => id,
+        adventureDownloadFinished: id => {
+            splash.event('Finished downloading adventure ' + id);
+            adventureCount += 1;
+            splash.progress(adventureCount / adventureLimit);
+        }
+    };
+    
+    library.list(signalProgress).then(function(adventures) {
         const soundboard = SoundboardView({
             adventures: adventures,
             dropdown: document.getElementById('adventure'),

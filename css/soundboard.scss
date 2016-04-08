@@ -44,36 +44,45 @@ html {
     padding: 1rem;
     text-align: center;
     
+    .center {
+        position: relative;
+    }
+    
     p {
         position: relative;
         @include heading;
     }
     
-    p:before {
-        content: "";
-        position: absolute;
-        left: -3rem;
-        top: 0;
-        width: 2rem;
-        height: 2rem;
-        background-image: url("/images/loading.svg");
-        background-size: contain;
-        background-repeat: no-repeat;
-        background-position: center center;
-        animation-duration: 0.75s;
-        animation-name: spin;
-        animation-iteration-count: infinite;
-        animation-timing-function: linear;
+    progress {
+        display: block;
+        width: 100%;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
     }
-
-    @keyframes spin {
-        from {
-            transform: rotate3d(0, 0, 1, 0);
+    
+    .events {
+        position: absolute;
+        left: 0;
+        top: 100%;
+        width: 100%;
+        text-align: center;
+        color: $subtle-text-color;
+        
+        > * + * {
+            margin-top: 0.25rem;
         }
-
-        to {
-            transform: rotate3d(0, 0, 1, 1turn);
-        }
+        
+        :nth-child(1) { opacity: 1; }
+        :nth-child(2) { opacity: 0.9; }
+        :nth-child(3) { opacity: 0.8; }
+        :nth-child(4) { opacity: 0.7; }
+        :nth-child(5) { opacity: 0.6; }
+        :nth-child(6) { opacity: 0.5; }
+        :nth-child(7) { opacity: 0.4; }
+        :nth-child(8) { opacity: 0.3; }
+        :nth-child(9) { opacity: 0.2; }
+        :nth-child(10) { opacity: 0.1; }
+        :nth-child(n+10) { display: none; }
     }
 }
 
