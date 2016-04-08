@@ -20,9 +20,9 @@ export default function(appId) {
         return request('GET', url);
     }
     
-    function downloadBlob(id) {
+    function downloadBlob(id, progress) {
         const url = urls.files + '/' + id + '?alt=media';
-        return request('GET', url, {responseType: 'blob'});
+        return request('GET', url, {responseType: 'blob', progress: progress});
     }
     
     function downloadPreview(id) {
@@ -65,7 +65,8 @@ export default function(appId) {
                 headers: {
                     'Authorization': 'Bearer ' + token
                 },
-                responseType: options.responseType || ''
+                responseType: options.responseType || '',
+                progress: options.progress
             });
         });
     }
@@ -154,6 +155,14 @@ export default function(appId) {
             });
             xhr.addEventListener('error', function(e) { reject(e); });
             xhr.addEventListener('abort', function(e) { reject(e); });
+            
+            if (options.progress) {
+                xhr.addEventListener('progress', e => {
+                    if (e.lengthComputable) {
+                        options.progress(e.loaded / e.total);
+                    }
+                });
+            }
             
             xhr.send();
         });

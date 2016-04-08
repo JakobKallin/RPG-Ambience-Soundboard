@@ -22,8 +22,8 @@ export default function(backend) {
         });
     }
     
-    function download(id) {
-        return backend.download.blob(id)
+    function download(id, progress) {
+        return backend.download.blob(id, progress)
         .then(blob => URL.createObjectURL(blob));
     }
     

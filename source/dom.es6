@@ -39,23 +39,12 @@ export function toggleClass(node, table) {
     });
 }
 
-// export function replicate(values, template, container, callback) {
-//     clear(container);
-//     if ( !Array.isArray(values) ) {
-//         values = [values];
-//     }
-//     values.forEach((value, index) => {
-//         const instance = template.cloneNode(true);
-//         container.appendChild(instance);
-//         callback(instance, value, index);
-//     });
-// }
-
 export function replicate(table, container, options, mapping, state) {
     if (!state) {
         state = {
             template: container.removeChild(container.firstElementChild),
-            nodes: {}
+            nodes: {},
+            first: true
         };
     }
     
@@ -74,7 +63,7 @@ export function replicate(table, container, options, mapping, state) {
             ? state.nodes[key]
             : state.template.cloneNode(true);
         instance.hidden = !filter(object);
-        map(mapping, object, instance);
+        map(mapping, object, instance, state.first);
         state.nodes[key] = instance;
         return instance;
     });
@@ -85,12 +74,13 @@ export function replicate(table, container, options, mapping, state) {
         }
     });
     
+    state.first = false;
     return (table) => {
         return replicate(table, container, options, mapping, state);
     };
 }
 
-function map(selectors, object, ancestor) {
+function map(selectors, object, ancestor, first) {
     R.mapObjIndexed((values, selector) => {
         if (typeof values !== 'object') {
             values = { text: values };
@@ -122,11 +112,14 @@ function map(selectors, object, ancestor) {
                     }, createValue);
                 }
                 else if (key === 'on') {
-                    R.mapObjIndexed((callback, eventName) => {
-                        if (!node['on' + eventName]) {
-                            node['on' + eventName] = () => callback(object, node);
-                        }
-                    }, createValue);
+                    if (first) {
+                        R.mapObjIndexed((callback, eventName) => {
+                            node.addEventListener(eventName, () => callback(object, node));
+                        }, createValue);
+                    }
+                }
+                else if (key === 'node') {
+                    if (first) createValue(node, object);
                 }
                 else {
                     const value = createValue(object);
