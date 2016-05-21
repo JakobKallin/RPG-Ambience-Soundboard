@@ -1,3 +1,5 @@
+import upgradeAdventure from './upgrade.js';
+
 export default function(backend) {
     function list(signal) {
         signal.adventureListDownloadStarted();
@@ -10,7 +12,9 @@ export default function(backend) {
             const adventures = {};
             return Promise.all(ids.map(function(id) {
                 signal.adventureDownloadStarted(id);
-                return backend.download.contents(id).then(function(adventure) {
+                return backend.download.contents(id).then(function(adventureToUpgrade) {
+                    // const adventure = upgradeAdventure(adventureToUpgrade);
+                    const adventure = adventureToUpgrade;
                     signal.adventureDownloadFinished(id);
                     adventure.id = id;
                     adventures[id] = adventure;

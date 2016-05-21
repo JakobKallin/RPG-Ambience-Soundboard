@@ -1,4 +1,4 @@
-import * as dom from '../dom.js';
+import * as dom from '../document.js';
 import * as R from 'ramda.0.19.1.min';
 
 export default function(page) {

@@ -1,5 +1,5 @@
 import * as R from 'ramda.0.19.1.min';
-import * as dom from './dom.js';
+import * as dom from './document.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     const pages = dom.all('body > .page').sort((a, b) => a.id.localeCompare(b.id));

@@ -23,6 +23,10 @@ html {
 }
 
 .page {
+    position: fixed;
+    left: 0;
+    top: 0;
+    background-color: $background-color;
     @include flex(column, $horizontal: stretch);
 }
 
@@ -439,3 +443,20 @@ html:not(.menu) .menu {
 .zoom-3 { .scene { width: (100% / 14); } }
 .zoom-2 { .scene { width: (100% / 15); } }
 .zoom-1 { .scene { width: (100% / 16); } }
+
+#stage {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    width: 30rem;
+    height: 20rem;
+    background-color: black;
+    
+    .scene, .scene > * {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+    }
+}

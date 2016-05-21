@@ -2,8 +2,10 @@ import Library from './adventure/library.js';
 import GoogleDrive from './storage/google-drive.js';
 import SplashView from './views/splash.js';
 import SoundboardView from './views/soundboard.js';
-import * as dom from './dom.js';
+import * as dom from './document.js';
 import * as R from 'ramda.0.19.1.min';
+import AmbienceStage from 'ambience-stage/stage.js'
+import AmbienceStageDOM from 'ambience-stage/dom.js'
 
 window.addEventListener('DOMContentLoaded', () => {
     showPage('splash');
@@ -45,17 +47,41 @@ window.addEventListener('DOMContentLoaded', () => {
             });
         });
         
+        const stage = AmbienceStage(AmbienceStageDOM(dom.id('stage')));
+        
         const soundboard = SoundboardView({
             adventures: adventures,
             dropdown: document.getElementById('adventure'),
             playScene: function playScene(scene) {
-                if (scene.sound.tracks) {
-                    const id = scene.sound.tracks[0].id;
-                    loadFile(id).then(url => {
-                        audio.src = url;
-                        audio.play();
-                    });
-                }
+                Promise.all([
+                    scene.image.file ? loadFile(scene.image.file.id) : null,
+                    Promise.all(scene.sound.tracks.map(t => loadFile(t.id)))
+                ])
+                .then(files => {
+                    const imageFile = files[0];
+                    const soundFiles = files[1];
+                    const items = [];
+                    if (imageFile) {
+                        items.push({
+                            type: 'image',
+                            url: imageFile,
+                            style: {
+                                backgroundSize: scene.image.size
+                            }
+                        });
+                    }
+                    if (soundFiles.length > 0) {
+                        items.push({
+                            type: 'sound',
+                            tracks: soundFiles,
+                            loop: scene.sound.loop,
+                            overlap: scene.sound.overlap,
+                            shuffle: scene.sound.shuffle,
+                            volume: scene.sound.volume / 100
+                        });
+                    }
+                    stage(items, scene.fade.duration * 1000);
+                });
             },
             adventureSelected: id => {
                 const adventure = adventures[id];
@@ -71,12 +97,34 @@ window.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
-        showPage('soundboard');
+        showPage('soundboard', 0.25);
     });
     
-    function showPage(id) {
+    function showPage(id, fade) {
+        fade = fade || 0;
         dom.all('.page').forEach(p => {
-            p.hidden = p.id !== id;
+            if (p.id === id) {
+                // Make sure the target page is at the bottom, so that pages
+                // fading out will actually be visible.
+                document.body.insertBefore(p, document.body.firstChild);
+                p.hidden = false;
+            }
+            else if (!p.hidden) {
+                fadeOut(p, fade);
+            }
         });
+    }
+    
+    function fadeOut(node, duration) {
+        node.style.transitionProperty = 'opacity';
+        node.style.transitionDuration = duration + 's';
+        node.style.opacity = '0';
+        
+        setTimeout(() => {
+            node.style.transitionProperty = '';
+            node.style.transitionDuration = '';
+            node.style.opacity = '';
+            node.hidden = true;
+        }, duration * 1000);
     }
 });
