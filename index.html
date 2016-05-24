@@ -57,6 +57,8 @@
                             <input type="range" min="1" max="16" step="1" value="6" class="zoom-slider" data-zoom>
                             <button type="button" class="zoom-in"></button>
                         </div>
+                        <button id="stage-button">Use as Display</button>
+                        <button id="remote-button">Use as Remote</button>
                     </div>
                     <div class="error">
                         <p class="message">Some scenes could not be loaded.</p>
@@ -114,9 +116,6 @@
                         </ul>
                     </div>
                 </div>
-                <div>
-                    <button type="button" class="stop-button">Stop All</button>
-                </div>
             </div>
         </div>
         <div class="page page-splash" id="splash">
@@ -151,6 +150,9 @@
                 </form>
             </div>
         </div>
-        <div id="stage"></div>
+        <div id="stage">
+            <div id="background" class="layer"></div>
+            <div id="foreground" class="layer"></div>
+        </div>
     </body>
 </html>

@@ -30,7 +30,19 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     };
     
+    let selectedAdventure = null;
     library.list(signalProgress).then(function(adventures) {
+        const server = 'http://192.168.0.106:12345';
+        const eventSource = new EventSource(server + '/');
+        eventSource.addEventListener('message', event => {
+            console.log('receiving ' + event.data);
+            playSceneWithHotkey(event.data);
+        });
+        eventSource.addEventListener('stop', event => {
+            console.log('receiving stop' + event.data);
+            stopAllScenes();
+        });
+        
         const previews = {};
         const files = {};
         const loadFile = R.memoize(id => {
@@ -47,44 +59,16 @@ window.addEventListener('DOMContentLoaded', () => {
             });
         });
         
-        const stage = AmbienceStage(AmbienceStageDOM(dom.id('stage')));
-        
+        const background = AmbienceStage(AmbienceStageDOM(dom.id('background')));
+        const foreground = AmbienceStage(AmbienceStageDOM(dom.id('foreground')));
         const soundboard = SoundboardView({
             adventures: adventures,
             dropdown: document.getElementById('adventure'),
-            playScene: function playScene(scene) {
-                Promise.all([
-                    scene.image.file ? loadFile(scene.image.file.id) : null,
-                    Promise.all(scene.sound.tracks.map(t => loadFile(t.id)))
-                ])
-                .then(files => {
-                    const imageFile = files[0];
-                    const soundFiles = files[1];
-                    const items = [];
-                    if (imageFile) {
-                        items.push({
-                            type: 'image',
-                            url: imageFile,
-                            style: {
-                                backgroundSize: scene.image.size
-                            }
-                        });
-                    }
-                    if (soundFiles.length > 0) {
-                        items.push({
-                            type: 'sound',
-                            tracks: soundFiles,
-                            loop: scene.sound.loop,
-                            overlap: scene.sound.overlap,
-                            shuffle: scene.sound.shuffle,
-                            volume: scene.sound.volume / 100
-                        });
-                    }
-                    stage(items, scene.fade.duration * 1000);
-                });
-            },
+            playScene: broadcastScene,
+            stopAllScenes: broadcastStop,
             adventureSelected: id => {
                 const adventure = adventures[id];
+                selectedAdventure = adventure;
                 adventure.scenes.forEach(scene => {
                     if (scene.image.file && !(scene.image.file.id in previews)) {
                         previews[scene.image.file.id] = library.preview(scene.image.file.id)
@@ -97,6 +81,73 @@ window.addEventListener('DOMContentLoaded', () => {
                 });
             }
         });
+        
+        dom.on(document, 'keydown', event => {
+            playSceneWithHotkey(dom.key(event.keyCode));
+        });
+        
+        dom.on(document, 'keypress', event => {
+            playSceneWithHotkey(dom.key(event.charCode));
+        });
+        
+        function playSceneWithHotkey(hotkey) {
+            if (!selectedAdventure) return;
+            
+            const scenes = selectedAdventure.scenes.filter(s => s.key === hotkey);
+            scenes.forEach(playScene);
+        }
+        
+        function broadcastScene(scene) {
+            const request = new XMLHttpRequest();
+            request.open('POST', server + '/' + scene.key);
+            request.send();
+        }
+        
+        function broadcastStop() {
+            const request = new XMLHttpRequest();
+            request.open('DELETE', server + '/');
+            request.send();
+        }
+        
+        function stopAllScenes() {
+            background([], 0);
+            foreground([], 0);
+        }
+        
+        function playScene(scene) {
+            Promise.all([
+                scene.image.file ? loadFile(scene.image.file.id) : null,
+                Promise.all(scene.sound.tracks.map(t => loadFile(t.id)))
+            ])
+            .then(files => {
+                const imageFile = files[0];
+                const soundFiles = files[1];
+                const items = [];
+                if (imageFile) {
+                    items.push({
+                        type: 'image',
+                        url: imageFile,
+                        style: {
+                            backgroundSize: scene.image.size
+                        }
+                    });
+                }
+                if (soundFiles.length > 0) {
+                    items.push({
+                        type: 'sound',
+                        tracks: soundFiles,
+                        loop: scene.sound.loop,
+                        overlap: scene.sound.overlap * 1000,
+                        shuffle: scene.sound.shuffle,
+                        volume: scene.sound.volume / 100
+                    });
+                }
+                
+                const layer = scene.layer === 'foreground' ? foreground : background;
+                layer(items, scene.fade.duration * 1000);
+            });
+        }
+        
         showPage('soundboard', 0.25);
     });
     

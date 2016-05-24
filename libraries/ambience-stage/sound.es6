@@ -1,8 +1,8 @@
-export default function startSound(sound, outside, abortSceneIfSoundOnly) {
+export default function startSound(sound, outside, updateScene, abortSceneIfSoundOnly) {
     var loop = 'loop' in sound ? sound.loop : true;
     var shuffle = 'shuffle' in sound ? sound.shuffle : true;
     var overlap = sound.overlap || 0;
-    var shuffleArray = outside.shuffle || function(x) { return x; };
+    var shuffleArray = outside.shuffle || shuffleArrayRandomly;
     
     var tracks = sound.tracks.slice();
     if ( sound.tracks.length === 0 ) {
@@ -34,7 +34,7 @@ export default function startSound(sound, outside, abortSceneIfSoundOnly) {
     
     function startTrack(index) {
         var startTime = outside.time();
-        const outsideTrack = outside.start.track(tracks[index]);
+        const outsideTrack = outside.start.track(tracks[index], updateScene);
         outsideTrack.stop = once(outsideTrack.stop);
         outsideTracks.push(outsideTrack);
         var updateNext = nothing;
@@ -89,3 +89,18 @@ export default function startSound(sound, outside, abortSceneIfSoundOnly) {
         };
     }
 };
+
+function shuffleArrayRandomly(array) {
+    const source = array.slice();
+    const result = [];
+    while ( source.length > 0 ) {
+        const index = randomInteger(source.length - 1);
+        result.push(source[index]);
+        source.splice(index, 1);
+    }
+    return result;
+}
+
+function randomInteger(max) {
+    return Math.floor(Math.random() * (max + 1));
+}

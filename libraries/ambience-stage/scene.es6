@@ -33,7 +33,7 @@ export default function startScene(items, fadeInDuration, outside) {
         
         handles = items.map(function(item) {
             if ( item.type === 'sound' ) {
-                return startSound(item, outside, () => {
+                return startSound(item, outside, update, () => {
                     if (onlySound(items)) end();
                 });
             }

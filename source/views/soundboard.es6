@@ -22,7 +22,6 @@ export default function(options) {
         scenes,
         dom.first('.scene-list'),
         {
-            sort: scene => scene.name,
             filter: scene => selectedAdventure().scenes.includes(scene)
         },
         {
@@ -91,6 +90,14 @@ export default function(options) {
         render(scenes);
         options.adventureSelected(adventure.id);
     }
+    
+    dom.on(dom.id('stage-button'), 'click', () => {
+        dom.enterFullscreen(dom.id('stage'));
+    });
+    
+    dom.on(dom.id('remote-button'), 'click', () => {
+        dom.enterFullscreen(document.documentElement);
+    });
     
     return {
         previewLoaded: (id, url) => {

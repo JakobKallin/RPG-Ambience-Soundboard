@@ -12,16 +12,13 @@ export default function dom(container) {
                 return {
                     fade: {
                         start: () => {
-                            console.log('starting fade of scene ' + sceneNumber);
                             fading = true;
                             requestAnimationFrame(updateIfFading);
                         },
                         step: opacity => {
                             scene.style.opacity = Math.min(opacity, 0.999);
-                            console.log('fading opacity ' + opacity);
                         },
                         stop: () => {
-                            console.log('stopping fade of scene ' + sceneNumber);
                             fading = false;
                         }
                     },
@@ -59,16 +56,21 @@ export default function dom(container) {
             track: function(url, update) {
                 var element = document.createElement('audio');
                 element.src = url;
+                if (container.querySelectorAll('audio').length === 0) {
+                    element.volume = 0;
+                }
                 element.play();
                 element.className = 'track';
                 const scene = container.lastElementChild;
                 scene.appendChild(element);
                 
                 element.addEventListener('timeupdate', update);
+                element.addEventListener('ended', update);
                 
                 return {
                     stop: function() {
                         element.pause();
+                        scene.removeChild(element);
                     },
                     fade: function(volume) {
                         element.volume = volume;
