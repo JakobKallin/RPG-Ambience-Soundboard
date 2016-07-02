@@ -1,4 +1,4 @@
-import * as R from 'ramda.0.19.1.min';
+declare var R:any;
 
 export function clear(node) {
     while ( node.firstChild ) {
@@ -10,12 +10,12 @@ export function remove(node) {
     return node.parentNode.removeChild(node);
 }
 
-export function all(selector, node) {
+export function all(selector, node?) {
     node = node || document;
     return [].slice.call(node.querySelectorAll(selector));
 }
 
-export function first(selector, node) {
+export function first(selector, node?) {
     node = node || document;
     return node.querySelector(selector)
 }
@@ -24,7 +24,7 @@ export function id(id) {
     return document.getElementById(id);
 }
 
-export function on(node, event, listener) {
+export function on(node:any, event:string, listener:(e:Event) => void) {
     node.addEventListener(event, listener);
 }
 
@@ -39,7 +39,7 @@ export function toggleClass(node, table) {
     });
 }
 
-export function replicate(table, container, options, mapping, state) {
+export function replicate(table, container, options, mapping?, state?) {
     if (!state) {
         state = {
             template: container.removeChild(container.firstElementChild),

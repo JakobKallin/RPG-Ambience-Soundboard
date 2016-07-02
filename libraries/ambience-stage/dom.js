@@ -1,8 +1,9 @@
-export default function dom(container) {
+"use strict";
+function dom(container) {
     let number = 0;
     return {
         start: {
-            scene: function(update) {
+            scene: function (update) {
                 const scene = document.createElement('div');
                 scene.className = 'scene';
                 container.appendChild(scene);
@@ -16,7 +17,7 @@ export default function dom(container) {
                             requestAnimationFrame(updateIfFading);
                         },
                         step: opacity => {
-                            scene.style.opacity = Math.min(opacity, 0.999);
+                            scene.style.opacity = String(Math.min(opacity, 0.999));
                         },
                         stop: () => {
                             fading = false;
@@ -26,7 +27,6 @@ export default function dom(container) {
                         container.removeChild(scene);
                     }
                 };
-                
                 function updateIfFading() {
                     if (fading) {
                         update();
@@ -34,26 +34,24 @@ export default function dom(container) {
                     }
                 }
             },
-            image: function(image) {
+            image: function (image) {
                 var element = document.createElement('div');
                 element.style.backgroundImage = 'url(' + image.url + ')';
                 element.className = 'image';
                 const scene = container.lastElementChild;
                 scene.appendChild(element);
-                
-                if ( image.style ) {
-                    Object.keys(image.style).forEach(function(cssKey) {
+                if (image.style) {
+                    Object.keys(image.style).forEach(function (cssKey) {
                         var cssValue = image.style[cssKey];
                         element.style[cssKey] = cssValue;
                     });
                 }
-                
                 return {
-                    stop: function() {}
+                    stop: function () { }
                 };
             },
-            sound: () => function() {},
-            track: function(url, update) {
+            sound: () => function () { },
+            track: function (url, update) {
                 var element = document.createElement('audio');
                 element.src = url;
                 if (container.querySelectorAll('audio').length === 0) {
@@ -63,16 +61,14 @@ export default function dom(container) {
                 element.className = 'track';
                 const scene = container.lastElementChild;
                 scene.appendChild(element);
-                
                 element.addEventListener('timeupdate', update);
                 element.addEventListener('ended', update);
-                
                 return {
-                    stop: function() {
+                    stop: function () {
                         element.pause();
                         scene.removeChild(element);
                     },
-                    fade: function(volume) {
+                    fade: function (volume) {
                         element.volume = volume;
                     },
                     duration: () => element.duration * 1000
@@ -81,4 +77,7 @@ export default function dom(container) {
         },
         time: () => new Date()
     };
-};
+}
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = dom;
+;

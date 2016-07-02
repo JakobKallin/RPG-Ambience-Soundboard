@@ -1,4 +1,4 @@
-import startSound from './sound.js';
+import startSound from './sound';
 
 export default function startScene(items, fadeInDuration, outside) {
     fadeInDuration = fadeInDuration || 0;

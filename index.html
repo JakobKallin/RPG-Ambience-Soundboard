@@ -6,6 +6,7 @@
         <title>RPG Ambience Soundboard</title>
         <link rel="stylesheet" href="css/soundboard.css">
         <!-- <script src="/bundle.prototype.js"></script> -->
+        <script src="/libraries/ramda.0.19.1.min.js"></script>
         <script src="/bundle.js"></script>
     </head>
     <body>
@@ -118,22 +119,15 @@
                 </div>
             </div>
         </div>
-        <div class="page page-splash" id="splash">
-            <div class="center">
-                <p>Loading RPG Ambience Soundboard…</p>
-                <progress value="0.5"></progress>
-                <ul class="events" data-gradual>
-                    <li></li>
-                </ul>
-            </div>
-        </div>
         <div class="page page-google-drive" id="google-drive">
             <div class="center">
                 <p>To get started, please sign in to Google Drive</p>
-                <button type="button">
-                    <img src="/images/google-drive.png" alt="">
-                    <span>Sign in to Google Drive</span>
-                </button>
+                <form>
+                    <button type="submit">
+                        <img src="/images/google-drive.png" alt="">
+                        <span>Sign in to Google Drive</span>
+                    </button>
+                </form>
             </div>
         </div>
         <div class="page page-welcome" id="welcome">
@@ -148,6 +142,20 @@
                 <form method="get" action="/" class="start">
                     <button type="submit" class="start">Start!</a>
                 </form>
+            </div>
+        </div>
+        <div class="page page-loading-library" id="loading-library">
+            <div class="center">
+                <p>Loading adventure library…</p>
+                <progress value="0"></progress>
+                <ul class="events" data-gradual>
+                    <li></li>
+                </ul>
+            </div>
+        </div>
+        <div class="page page-loading-app" id="loading-app">
+            <div class="center">
+                <p>Loading RPG Ambience Soundboard…</p>
             </div>
         </div>
         <div id="stage">

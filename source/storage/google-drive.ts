@@ -1,5 +1,7 @@
+declare var gapi:any;
+
 export default function(appId) {
-    const ids = {
+    const ids:any = {
         app: appId
     };
     ids.client = ids.app + '.apps.googleusercontent.com';
@@ -26,7 +28,7 @@ export default function(appId) {
     }
     
     function downloadPreview(id) {
-        return downloadMetadata(id).then(metadata => metadata.thumbnailLink);
+        return downloadMetadata(id).then((metadata:any) => metadata.thumbnailLink);
     }
     
     function search(options) {
@@ -40,7 +42,7 @@ export default function(appId) {
     
     function searchPage(url, extension) {
         return request('GET', url)
-        .then(function(listing) {
+        .then(function(listing:any) {
             const items = listing.items.filter(function(item) {
                 return item.fileExtension === extension;
             })
@@ -57,9 +59,9 @@ export default function(appId) {
         });
     }
     
-    function request(method, url, options) {
+    function request(method, url, options?) {
         options = options || {};
-        return authenticate()
+        return loadAccessToken(true)
         .then(function(token) {
             return http(method, url, {
                 headers: {
@@ -93,42 +95,31 @@ export default function(appId) {
         });
     }
     
-    var accessToken = null;
-    function authenticate() {
-        return new Promise(function(resolve, reject) {
-            if ( accessToken === null ) {
-                loadAccessToken(true)
-                .catch(function() {
-                    return loadAccessToken(false);
-                })
-                .then(function(token) {
-                    accessToken = token;
-                    resolve(accessToken);
-                });
-            }
-            else {
-                resolve(accessToken);
-            }
-        });
-    }
-    
+    let accessToken = null;
     function loadAccessToken(immediate) {
         return new Promise(function(resolve, reject) {
-            loadGoogleApi()
-            .then(function() {
-                gapi.auth.authorize({
-                    client_id: ids.client,
-                    scope: urls.scope,
-                    immediate: immediate
-                }, function(result) {
-                    if ( result && !result.error ) {
-                        resolve(result.access_token);
-                    }
-                    else {
-                        reject();
-                    }
+            if (accessToken) {
+                resolve(accessToken);
+            }
+            else {
+                loadGoogleApi()
+                .then(() => {
+                    gapi.auth.authorize({
+                        client_id: ids.client,
+                        scope: urls.scope,
+                        immediate: immediate
+                    },
+                    (result) => {
+                        if ( result && !result.error ) {
+                            accessToken = result.access_token;
+                            resolve(accessToken);
+                        }
+                        else {
+                            reject();
+                        }
+                    });
                 });
-            });
+            }
         });
     }
     
@@ -148,7 +139,7 @@ export default function(appId) {
             });
             
             xhr.addEventListener('load', function() {
-                var response = options.responseType
+                let response = options.responseType
                     ? xhr.response
                     : responseFromRequest(xhr);
                 resolve(response);
@@ -169,8 +160,8 @@ export default function(appId) {
     }
     
     function responseFromRequest(xhr) {
-        var mimeTypeString = xhr.getResponseHeader('Content-Type');
-        var mimeType = mimeTypeString.split(';')[0];
+        let mimeTypeString = xhr.getResponseHeader('Content-Type');
+        let mimeType = mimeTypeString.split(';')[0];
         if ( mimeType === 'application/json' ) {
             return JSON.parse(xhr.responseText);
         }
@@ -180,6 +171,7 @@ export default function(appId) {
     }
         
     return {
+        authenticate: (immediate:boolean) => loadAccessToken(immediate),
         download: {
             metadata: downloadMetadata,
             contents: downloadContents,

@@ -1,5 +1,4 @@
-import * as dom from '../document.js';
-import * as R from 'ramda.0.19.1.min';
+import * as dom from '../document';
 
 export default function(page) {
     dom.first('progress', page).value = 0;

@@ -1,1 +1,4 @@
 .sass-cache
+css/**/*.css
+css/**/*.css.map
+source/**/*.js

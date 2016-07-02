@@ -1,5 +1,5 @@
-import * as dom from '../document.js';
-import * as R from 'ramda.0.19.1.min';
+import * as dom from '../document';
+declare var R:any;
 
 export default function(options) {
     const dropdown = options.dropdown;

@@ -1,4 +1,4 @@
-import upgradeAdventure from './upgrade.js';
+import upgradeAdventure from './upgrade';
 
 export default function(backend) {
     function list(signal) {
@@ -35,9 +35,14 @@ export default function(backend) {
         return backend.download.preview(id);
     }
     
+    function authenticate(immediate:boolean) {
+        return backend.authenticate(immediate);
+    }
+    
     return {
         list: list,
         download: download,
-        preview: preview
+        preview: preview,
+        authenticate: authenticate
     };
 };
