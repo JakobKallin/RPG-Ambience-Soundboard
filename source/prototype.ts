@@ -1,5 +1,5 @@
-import * as R from 'ramda.0.19.1.min';
-import * as dom from './document.js';
+import * as dom from './document';
+declare var R:any;
 
 document.addEventListener('DOMContentLoaded', () => {
     const pages = dom.all('body > .page').sort((a, b) => a.id.localeCompare(b.id));
@@ -12,11 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentName = location.hash.substring(1);
         const currentIndex = pageNames.indexOf(currentName);
         
-        if (event.keyCode === 37) {
+        if ((<KeyboardEvent>event).keyCode === 37) {
             const nextIndex = currentIndex === 0 ? pageNames.length - 1 : currentIndex - 1;
             showPage(nextIndex);
         }
-        else if (event.keyCode === 39) {
+        else if ((<KeyboardEvent>event).keyCode === 39) {
             const nextIndex = (currentIndex + 1) % pageNames.length;
             showPage(nextIndex);
         }

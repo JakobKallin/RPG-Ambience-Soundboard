@@ -1,7 +1,15 @@
 import * as dom from '../document';
 declare var R:any;
 
-export default function(options) {
+interface SoundboardViewCallbacks {
+    dropdown: HTMLSelectElement,
+    adventures: any,
+    playScene: (scene:any) => void,
+    stopAllScenes: () => void,
+    adventureSelected: (s:string) => void
+}
+
+export default function(options:SoundboardViewCallbacks) {
     const dropdown = options.dropdown;
     const adventures = options.adventures;
     const scenes = R.fromPairs(R.unnest(R.values(adventures).map(adventure => {
@@ -26,8 +34,9 @@ export default function(options) {
         },
         {
             '.scene': { node: (node, scene) => {
+                node.classList.add('loading');
                 progressCallbacks.push(files => {
-                    const loading = scene.sound.tracks.some(t => typeof files[t.id] === 'number');
+                    const loading = firstSound(scene).tracks.some(t => !(t in files) || typeof files[t] === 'number');
                     node.classList.toggle('loading', loading);
                 });
             } },
@@ -35,22 +44,30 @@ export default function(options) {
             '.scene-hotkey': scene => scene.key || '',
             '.scene-button': { on: { click: options.playScene } },
             '.scene-preview-image': {
-                hidden: scene => !scene.image.file,
+                hidden: scene => !firstImage(scene),
                 on: { load: (scene, image) => image.classList.add('loaded') },
                 src: scene => hasImagePreview(scene)
-                    ? previews[scene.image.file.id]
+                    ? previews[firstImage(scene).file]
                     : ''
             },
             'progress': { node: (node, scene) => {
                 progressCallbacks.push(files => {
-                    node.value = combinedProgress(scene.sound.tracks, files);
+                    node.value = combinedProgress(firstSound(scene).tracks, files);
                 });
             } }
         }
     );
     
+    function firstImage(scene) {
+        return scene.media.filter(m => m.type === 'image')[0];
+    }
+    
+    function firstSound(scene) {
+        return scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
+    }
+    
     function hasImagePreview(scene) {
-        return scene.image.file && typeof previews[scene.image.file.id] === 'string';
+        return firstImage(scene) && typeof previews[firstImage(scene).file] === 'string';
     }
     
     function renderProgress() {
@@ -60,7 +77,7 @@ export default function(options) {
     function combinedProgress(tracks, files) {
         return tracks.length === 0
             ? 1
-            : R.sum(tracks.map(t => singleProgress(files[t.id]))) / tracks.length;
+            : R.sum(tracks.map(t => singleProgress(files[t]))) / tracks.length;
     }
     
     function singleProgress(progress) {
@@ -74,6 +91,10 @@ export default function(options) {
             return 0;
         }
     }
+    
+    dom.on(dom.id('stop-button'), 'click', () => {
+        options.stopAllScenes();
+    });
     
     dropdown.addEventListener('change', showCurrentAdventure);
     showCurrentAdventure();
@@ -90,14 +111,6 @@ export default function(options) {
         render(scenes);
         options.adventureSelected(adventure.id);
     }
-    
-    dom.on(dom.id('stage-button'), 'click', () => {
-        dom.enterFullscreen(dom.id('stage'));
-    });
-    
-    dom.on(dom.id('remote-button'), 'click', () => {
-        dom.enterFullscreen(document.documentElement);
-    });
     
     return {
         previewLoaded: (id, url) => {

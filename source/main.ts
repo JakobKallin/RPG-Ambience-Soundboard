@@ -7,11 +7,19 @@ import * as dom from './document';
 import AmbienceStage from '../libraries/ambience-stage/stage';
 import AmbienceStageDOM from '../libraries/ambience-stage/dom';
 import { State, transitions } from './state-machine';
+import createQueue from './queue';
 declare var R:any;
 
 dom.on(window, 'DOMContentLoaded', () => {
     let state:State = State.Loading;
     stateEntered(state);
+    
+    const latest = {
+        fade: {
+            background: 0,
+            foreground: 0
+        }
+    };
     
     const appId = '907013371139';
     const library = Library(GoogleDrive(appId));
@@ -84,11 +92,16 @@ dom.on(window, 'DOMContentLoaded', () => {
             enterState(State.LibraryLoaded);
             startSoundboard(adventures);
         })
-        .catch(e => enterState(State.SessionError));
+        .catch(e => {
+            console.error(e);
+            enterState(State.SessionError)
+        });
     }
     
     let selectedAdventure:any = null;
-    function startSoundboard(adventures:any[]):void {
+    const queueFileDownload = createQueue(3);
+    const queuePreviewDownload = createQueue(50);
+    function startSoundboard(adventures:any):void {
         const previews = {};
         const files = {};
         const loadFile = R.memoize((id:string) => {
@@ -98,7 +111,11 @@ dom.on(window, 'DOMContentLoaded', () => {
                 // callbacks available to us.
                 setTimeout(() => {
                     soundboard.fileProgress(id, 0);
-                    return library.download(id, (ratio:number) => soundboard.fileProgress(id, ratio))
+                    return queueFileDownload(() => {
+                        return library.download(id, (ratio:number) => {
+                            soundboard.fileProgress(id, ratio);
+                        });
+                    })
                     .then(resolve)
                     .catch(reject);
                 }, 0);
@@ -109,20 +126,24 @@ dom.on(window, 'DOMContentLoaded', () => {
         const foreground = AmbienceStage(AmbienceStageDOM(dom.id('foreground')));
         const soundboard = SoundboardView({
             adventures: adventures,
-            dropdown: document.getElementById('adventure'),
+            dropdown: <HTMLSelectElement> document.getElementById('adventure'),
             playScene: playScene,
             stopAllScenes: stopAllScenes,
             adventureSelected: (id:string) => {
                 const adventure = adventures[id];
                 selectedAdventure = adventure;
                 adventure.scenes.forEach((scene:any) => {
-                    if (scene.image.file && !(scene.image.file.id in previews)) {
-                        previews[scene.image.file.id] = library.preview(scene.image.file.id)
-                        .then((url:string) => soundboard.previewLoaded(scene.image.file.id, url));
+                    const firstImage = scene.media.filter(m => m.type === 'image')[0];
+                    if (firstImage && !(firstImage.file in previews)) {
+                        previews[firstImage.file] = queuePreviewDownload(() => {
+                            return library.preview(firstImage.file);
+                        })
+                        .then((url:string) => soundboard.previewLoaded(firstImage.file, url));
                     }
                     
-                    scene.sound.tracks.forEach((t:any) => loadFile(t.id).then((url:string) => {
-                        soundboard.fileLoaded(t.id, url);
+                    const firstSound = scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
+                    firstSound.tracks.forEach((t:any) => loadFile(t).then((url:string) => {
+                        soundboard.fileLoaded(t, url);
                     }));
                 });
             }
@@ -144,14 +165,16 @@ dom.on(window, 'DOMContentLoaded', () => {
         }
         
         function stopAllScenes():void {
-            background([], 0);
-            foreground([], 0);
+            background([], latest.fade.background * 1000);
+            foreground([], latest.fade.foreground * 1000);
         }
         
         function playScene(scene:any):void {
+            const firstImage = scene.media.filter(m => m.type === 'image')[0];
+            const firstSound = scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
             Promise.all([
-                scene.image.file ? loadFile(scene.image.file.id) : null,
-                Promise.all(scene.sound.tracks.map((t:any) => loadFile(t.id)))
+                firstImage ? loadFile(firstImage.file) : null,
+                Promise.all(firstSound.tracks.map((t:any) => loadFile(t)))
             ])
             .then(files => {
                 const imageFile = files[0];
@@ -162,7 +185,7 @@ dom.on(window, 'DOMContentLoaded', () => {
                         type: 'image',
                         url: imageFile,
                         style: {
-                            backgroundSize: scene.image.size
+                            backgroundSize: firstImage.size
                         }
                     });
                 }
@@ -170,15 +193,16 @@ dom.on(window, 'DOMContentLoaded', () => {
                     items.push({
                         type: 'sound',
                         tracks: soundFiles,
-                        loop: scene.sound.loop,
-                        overlap: scene.sound.overlap * 1000,
-                        shuffle: scene.sound.shuffle,
-                        volume: scene.sound.volume / 100
+                        loop: firstSound.loop,
+                        overlap: firstSound.overlap * 1000,
+                        shuffle: firstSound.shuffle,
+                        volume: firstSound.volume / 100
                     });
                 }
                 
                 const layer = scene.layer === 'foreground' ? foreground : background;
-                layer(items, scene.fade.duration * 1000);
+                latest.fade[scene.layer] = scene.fade.out;
+                layer(items, scene.fade.in * 1000);
             });
         }
     }

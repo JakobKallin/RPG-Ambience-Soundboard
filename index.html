@@ -5,13 +5,71 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>RPG Ambience Soundboard</title>
         <link rel="stylesheet" href="css/soundboard.css">
-        <!-- <script src="/bundle.prototype.js"></script> -->
         <script src="/libraries/ramda.0.19.1.min.js"></script>
+        <!-- <script src="/bundle.prototype.js"></script> -->
         <script src="/bundle.js"></script>
     </head>
     <body>
-        <div class="page page-soundboard scene-view-ungrouped" id="soundboard">
-            <div class="content">
+        <div class="page page-soundboard vertical padding spacing" id="soundboard">
+            <div id="top-menu">
+                <select class="adventure" id="adventure">
+                    <option data-repeat="10">Some Adventure</option>
+                </select>
+            </div>
+            <div class="scene-view flex">
+                <div class="ungrouped">
+                    <ul class="scene-list">
+                        <li class="scene" data-repeat="10">
+                            <button type="button" class="scene-button" data-sound>
+                                <div class="scene-preview">
+                                    <img src="" alt="" class="scene-preview-image">
+                                </div>
+                                <div class="scene-label">
+                                    <span class="scene-title">Wizard's Library in the Evil Forest</span>
+                                    <span class="scene-hotkey"></span>
+                                </div>
+                                <progress value="0">0%</progress>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="grouped" hidden>
+                    <h2 class="group-title">Background</h2>
+                    <ul class="scene-list">
+                        <li class="scene error" data-repeat="10">
+                            <button type="button" class="scene-button" data-sound>
+                                <progress value="0">0%</progress>
+                                <div class="scene-preview">
+                                    <img src="" alt="" class="scene-preview-image">
+                                </div>
+                                <div class="scene-label">
+                                    <span class="scene-title">Wizard's Library in the Evil Forest</span>
+                                    <span class="scene-hotkey"></span>
+                                </div>
+                            </button>
+                        </li>
+                    </ul>
+                    <h2 class="group-title">Foreground</h2>
+                    <ul class="scene-list">
+                        <li class="scene" data-repeat="15">
+                            <button type="button" class="scene-button" data-sound>
+                                <progress value="0">0%</progress>
+                                <div class="scene-preview">
+                                    <img src="" alt="" class="scene-preview-image">
+                                </div>
+                                <div class="scene-label">
+                                    <span class="scene-title">Wizard's Library in the Evil Forest</span>
+                                    <span class="scene-hotkey"></span>
+                                </div>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div>
+                <button type="button" id="stop-button">Stop All</button>
+            </div>
+            <!-- <div class="content">
                 <div id="options">
                     <button type="button" class="menu-button" data-menu>Menu</button>
                     <div class="menu">
@@ -58,8 +116,6 @@
                             <input type="range" min="1" max="16" step="1" value="6" class="zoom-slider" data-zoom>
                             <button type="button" class="zoom-in"></button>
                         </div>
-                        <button id="stage-button">Use as Display</button>
-                        <button id="remote-button">Use as Remote</button>
                     </div>
                     <div class="error">
                         <p class="message">Some scenes could not be loaded.</p>
@@ -79,7 +135,7 @@
                                         <span class="scene-title">Wizard's Library in the Evil Forest</span>
                                         <span class="scene-hotkey"></span>
                                     </div>
-                                    <progress></progress>
+                                    <progress value="0">0%</progress>
                                 </button>
                             </li>
                         </ul>
@@ -89,7 +145,7 @@
                         <ul class="scene-list">
                             <li class="scene error" data-repeat="10">
                                 <button type="button" class="scene-button" data-sound>
-                                    <progress value="0.25">25%</progress>
+                                    <progress value="0">0%</progress>
                                     <div class="scene-preview">
                                         <img src="" alt="" class="scene-preview-image">
                                     </div>
@@ -104,7 +160,7 @@
                         <ul class="scene-list">
                             <li class="scene" data-repeat="15">
                                 <button type="button" class="scene-button" data-sound>
-                                    <progress value="0.25">25%</progress>
+                                    <progress value="0">0%</progress>
                                     <div class="scene-preview">
                                         <img src="" alt="" class="scene-preview-image">
                                     </div>
@@ -117,7 +173,7 @@
                         </ul>
                     </div>
                 </div>
-            </div>
+            </div> -->
         </div>
         <div class="page page-google-drive" id="google-drive">
             <div class="center">
@@ -149,7 +205,7 @@
                 <p>Loading adventure library…</p>
                 <progress value="0"></progress>
                 <ul class="events" data-gradual>
-                    <li></li>
+                    <li data-repeat="10">Some very long message with some random string like 24ut6uy38ygirnm380942t6ju293jtf</li>
                 </ul>
             </div>
         </div>

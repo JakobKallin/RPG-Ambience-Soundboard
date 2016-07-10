@@ -22,12 +22,32 @@ html {
     background-color: $background-color;
 }
 
+.vertical {
+    @include flex(column, $horizontal: stretch, $vertical: center);
+}
+
+.vertical.spacing > * + * {
+    margin-top: 1rem;
+}
+
+.padding {
+    padding: 1rem;
+}
+
+.horizontal {
+    @include flex(row, $horizontal: center, $vertical: stretch);
+}
+
+.flex {
+    flex: 1;
+}
+
 .page {
     position: fixed;
     left: 0;
     top: 0;
     background-color: $background-color;
-    @include flex(column, $horizontal: stretch);
+    @include flex(column, $horizontal: stretch, $vertical: center);
 }
 
 .center:not(.vertical):not(.horizontal) {
@@ -50,6 +70,8 @@ html {
     
     .center {
         position: relative;
+        width: 100%;
+        max-width: 50rem;
     }
     
     p {
@@ -145,14 +167,19 @@ html {
 }
 
 .page-soundboard {
-    .content {
-        flex: 1;
-        @include flex(column,
-            $horizontal: stretch,
-            $vertical-spacing: 1rem
-        );
-        overflow: auto;
-        padding: 1rem;
+    select, button {
+        padding: 0.25em 0.5em;
+    }
+    
+    #top-menu {
+        select, button {
+            height: 2.5rem;
+        }
+    }
+    
+    #stop-button {
+        font-size: 2em;
+        width: 100%;
     }
     
     #options {
@@ -165,11 +192,6 @@ html {
         
         & > * {
             vertical-align: middle;
-        }
-        
-        select, button {
-            padding: 0.25rem 0.5rem;
-            height: 2.5rem;
         }
         
         label > * {
@@ -306,6 +328,12 @@ html {
     .scene {
         min-width: (100% / 3);
         padding: 0.5rem;
+        transition-property: opacity;
+        transition-duration: 0.5s;
+    }
+    
+    .scene.loading {
+        opacity: 0.5;
     }
     
     @media (min-width: 20em) {
@@ -487,15 +515,6 @@ html:not(.menu) .menu {
 .other-menu {
     margin-left: 0 !important;
     flex: 1;
-}
-
-#stage-button,
-#remote-button {
-    float: right;
-}
-
-#remote-button {
-    margin-right: 0.5rem;
 }
 
 html:-webkit-full-screen {

@@ -16,8 +16,11 @@ export default function(adventure) {
         }
         
         delete scene.mixin;
-        scene.fade.in = scene.fade.direction.indexOf('in') !== -1;
-        scene.fade.out = scene.fade.direction.indexOf('out') !== -1;
+        const fadesIn = scene.fade.direction.indexOf('in') !== -1;
+        scene.fade.in = fadesIn ? scene.fade.duration : 0;
+        const fadesOut = scene.fade.direction.indexOf('out') !== -1;
+        scene.fade.out = fadesOut ? scene.fade.duration : 0;
+        delete scene.fade.duration;
         delete scene.fade.direction;
         
         scene.background = scene.background.color;
@@ -51,7 +54,7 @@ export default function(adventure) {
         if ( scene.sound.tracks.length > 0 ) {
             scene.media.push({
                 type: 'sound',
-                tracks: scene.sound.tracks.map((t) => t.id),
+                tracks: scene.sound.tracks.map(t => t.id),
                 loop: scene.sound.loop,
                 shuffle: scene.sound.shuffle,
                 volume: scene.sound.volume / 100,
