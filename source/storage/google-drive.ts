@@ -76,8 +76,8 @@ export default function(appId) {
     function loadScript(url) {
         return new Promise(function(resolve, reject) {
             const element = document.createElement('script');
-            element.addEventListener('load', function() { resolve(); });
-            element.addEventListener('error', function() { reject(); });
+            element.addEventListener('load', () => resolve());
+            element.addEventListener('error', () => reject(new Error('Could not load script: ' + url)));
             element.async = true;
             element.src = url;
             document.head.appendChild(element);
@@ -92,6 +92,7 @@ export default function(appId) {
                     resolve();
                 }});
             })
+            .catch(reject);
         });
     }
     
@@ -109,7 +110,7 @@ export default function(appId) {
                         scope: urls.scope,
                         immediate: immediate
                     },
-                    (result) => {
+                    result => {
                         if ( result && !result.error ) {
                             accessToken = result.access_token;
                             resolve(accessToken);
@@ -118,7 +119,8 @@ export default function(appId) {
                             reject();
                         }
                     });
-                });
+                })
+                .catch(reject);
             }
         });
     }
@@ -144,8 +146,8 @@ export default function(appId) {
                     : responseFromRequest(xhr);
                 resolve(response);
             });
-            xhr.addEventListener('error', function(e) { reject(e); });
-            xhr.addEventListener('abort', function(e) { reject(e); });
+            xhr.addEventListener('error', e => reject(new Error('Could not load URL: ' + url)));
+            xhr.addEventListener('abort', e => reject(new Error('Loading of URL aborted: ' + url)));
             
             if (options.progress) {
                 xhr.addEventListener('progress', e => {

@@ -3,3 +3,4 @@ css/**/*.css
 css/**/*.css.map
 source/**/*.js
 bundle.js
+bundle.prototype.js

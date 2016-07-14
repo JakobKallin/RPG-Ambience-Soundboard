@@ -35,10 +35,11 @@ export default function(options:SoundboardViewCallbacks) {
         {
             '.scene': { node: (node, scene) => {
                 node.classList.add('loading');
-                progressCallbacks.push(files => {
-                    const loading = firstSound(scene).tracks.some(t => !(t in files) || typeof files[t] === 'number');
+                progressCallbacks.push(allFiles => {
+                    const loading = sceneFiles(scene).some(f => !(f in allFiles) || typeof allFiles[f] === 'number');
                     node.classList.toggle('loading', loading);
                 });
+                node.classList.toggle('with-image', Boolean(firstImage(scene)));
             } },
             '.scene-title': scene => scene.name || String.fromCharCode(160),
             '.scene-hotkey': scene => scene.key || '',
@@ -51,12 +52,17 @@ export default function(options:SoundboardViewCallbacks) {
                     : ''
             },
             'progress': { node: (node, scene) => {
-                progressCallbacks.push(files => {
-                    node.value = combinedProgress(firstSound(scene).tracks, files);
+                progressCallbacks.push(allFiles => {
+                    node.value = combinedProgress(sceneFiles(scene), allFiles);
                 });
             } }
         }
     );
+    
+    function sceneFiles(scene) {
+        return firstSound(scene).tracks
+        .concat(firstImage(scene) ? firstImage(scene).file : []);
+    }
     
     function firstImage(scene) {
         return scene.media.filter(m => m.type === 'image')[0];
@@ -74,10 +80,10 @@ export default function(options:SoundboardViewCallbacks) {
         progressCallbacks.forEach(callback => callback(files));
     }
     
-    function combinedProgress(tracks, files) {
-        return tracks.length === 0
+    function combinedProgress(sceneFiles, allFiles) {
+        return sceneFiles.length === 0
             ? 1
-            : R.sum(tracks.map(t => singleProgress(files[t]))) / tracks.length;
+            : R.sum(sceneFiles.map(t => singleProgress(allFiles[t]))) / sceneFiles.length;
     }
     
     function singleProgress(progress) {
@@ -96,20 +102,10 @@ export default function(options:SoundboardViewCallbacks) {
         options.stopAllScenes();
     });
     
-    dropdown.addEventListener('change', showCurrentAdventure);
-    showCurrentAdventure();
-    function showCurrentAdventure() {
-        showAdventure(selectedAdventure());
-    }
+    dropdown.addEventListener('change', () => options.adventureSelected(dropdown.value));
     
     function selectedAdventure() {
-        const id = dropdown.value;
-        return adventures[id];
-    }
-    
-    function showAdventure(adventure) {
-        render(scenes);
-        options.adventureSelected(adventure.id);
+        return adventures[dropdown.value];
     }
     
     return {
@@ -124,6 +120,10 @@ export default function(options:SoundboardViewCallbacks) {
         fileLoaded: (id, url) => {
             files[id] = url;
             renderProgress();
+        },
+        adventureSelected: id => {
+            dropdown.value = id;
+            render(scenes);
         }
     };
 };

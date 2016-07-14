@@ -10,7 +10,7 @@ export function remove(node) {
     return node.parentNode.removeChild(node);
 }
 
-export function all(selector, node?) {
+export function all(selector, node?):HTMLElement[] {
     node = node || document;
     return [].slice.call(node.querySelectorAll(selector));
 }

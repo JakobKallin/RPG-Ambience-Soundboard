@@ -141,13 +141,10 @@ html {
     }
 }
 
-.page-google-drive {
+.page-google-drive,
+.page-session-error {
     padding: 1rem;
     text-align: center;
-    
-    p {
-        @include heading;
-    }
     
     button {
         @include box-button;
@@ -163,6 +160,17 @@ html {
             margin-right: auto;
             margin-bottom: 1rem;
         }
+    }
+}
+
+.page-google-drive {
+    p { @include heading; }
+}
+
+.page-session-error {
+    h2 { @include heading; }
+    p {
+        margin-top: 1rem;
     }
 }
 
@@ -334,6 +342,9 @@ html {
     
     .scene.loading {
         opacity: 0.5;
+        .scene-button {
+            cursor: progress;
+        }
     }
     
     @media (min-width: 20em) {
