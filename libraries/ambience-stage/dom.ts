@@ -1,13 +1,10 @@
 export default function dom(container) {
-    let number = 0;
     return {
         start: {
             scene: function(update) {
                 const scene = document.createElement('div');
                 scene.className = 'scene';
                 container.appendChild(scene);
-                number += 1;
-                const sceneNumber = number;
                 let fading = false;
                 return {
                     fade: {
