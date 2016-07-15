@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     dom.all('[data-repeat]').forEach(node => {
-        const count = Number(node.dataset.repeat);
+        const count = Number(node.dataset['repeat']);
         R.range(0, count).reverse().forEach((i) => {
             const clone = node.cloneNode(true);
             insertNumber(clone, i + 1);
@@ -33,11 +33,12 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     dom.all('[data-zoom]').forEach(node => {
-        dom.on(node, 'input', update);
+        const input = <HTMLInputElement> node;
+        dom.on(input, 'input', update);
         function update() {
-            const min = Number(node.min);
-            const max = Number(node.max);
-            const value = Number(node.value);
+            const min = Number(input.min);
+            const max = Number(input.max);
+            const value = Number(input.value);
             R.range(min, max + 1).forEach(level => {
                 const className = 'zoom-' + level;
                 document.documentElement.classList.toggle(className, level === value);
