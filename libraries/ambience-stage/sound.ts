@@ -80,11 +80,12 @@ export default function startSound(sound, outside, updateScene, abortSceneIfSoun
     function nothing() {}
     
     function once(callback) {
+        const args = arguments;
         let called = false;
         return () => {
             if (!called) {
                 called = true;
-                callback.apply(undefined, arguments);
+                callback.apply(undefined, args);
             }
         };
     }

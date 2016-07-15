@@ -2,5 +2,6 @@
 css/**/*.css
 css/**/*.css.map
 source/**/*.js
+libraries/ambience-stage/*.js
 bundle.js
 bundle.prototype.js
