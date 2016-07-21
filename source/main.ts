@@ -46,9 +46,11 @@ dom.on(window, 'DOMContentLoaded', () => {
     const views = {
         googleDrive: GoogleDriveView(dom.id('google-drive'), {
             login: () => {
-                enterState(State.StartingSession);
                 library.authenticate(false)
-                .then(loadLibrary)
+                .then(() => {
+                    enterState(State.StartingSession);
+                    return loadLibrary();
+                })
                 .catch(error => {
                     enterState(State.SessionError, error)
                 })

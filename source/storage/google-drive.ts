@@ -98,29 +98,39 @@ export default function(appId) {
     
     let accessToken = null;
     function loadAccessToken(immediate) {
-        return new Promise(function(resolve, reject) {
+        return new Promise((resolve, reject) => {
             if (accessToken) {
                 resolve(accessToken);
             }
-            else {
+            else if (immediate) {
                 loadGoogleApi()
-                .then(() => {
-                    gapi.auth.authorize({
-                        client_id: ids.client,
-                        scope: urls.scope,
-                        immediate: immediate
-                    },
-                    result => {
-                        if ( result && !result.error ) {
-                            accessToken = result.access_token;
-                            resolve(accessToken);
-                        }
-                        else {
-                            reject();
-                        }
-                    });
-                })
+                .then(googleAuth)
                 .catch(reject);
+            }
+            // If it's not immediate, i.e. we require user interaction, we
+            // cannot use promises because everything needs to be in the same
+            // synchronous function call as the click event. We thus do not load
+            // the Google API first in this situation, instead assuming that it
+            // has already been loaded with an earlier immediate call.
+            else {
+                googleAuth();
+            }
+            
+            function googleAuth() {
+                gapi.auth.authorize({
+                    client_id: ids.client,
+                    scope: urls.scope,
+                    immediate: immediate
+                },
+                result => {
+                    if ( result && !result.error ) {
+                        accessToken = result.access_token;
+                        resolve(accessToken);
+                    }
+                    else {
+                        reject();
+                    }
+                });
             }
         });
     }
