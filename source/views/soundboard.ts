@@ -6,7 +6,8 @@ interface SoundboardViewCallbacks {
     adventures: any,
     playScene: (scene:any) => void,
     stopAllScenes: () => void,
-    adventureSelected: (s:string) => void
+    adventureSelected: (s:string) => void,
+    changeVolume: (volume:number) => void
 }
 
 export default function(options:SoundboardViewCallbacks) {
@@ -100,6 +101,26 @@ export default function(options:SoundboardViewCallbacks) {
     
     dom.on(dom.id('stop-button'), 'click', () => {
         options.stopAllScenes();
+    });
+    
+    const volumeSlider = <HTMLInputElement> dom.id('volume-slider');
+    dom.on(dom.id('volume-down'), 'click', () => {
+        const volume = 0;
+        volumeSlider.value = String(volume);
+        options.changeVolume(volume);
+    });
+    
+    dom.on(dom.id('volume-up'), 'click', () => {
+        const volume = 1;
+        volumeSlider.value = String(volume);
+        options.changeVolume(volume);
+    });
+    
+    dom.on(dom.id('volume-slider'), 'input', () => {
+        const volume = parseFloat(volumeSlider.value);
+        if (!isNaN(volume)) {
+            options.changeVolume(volume);
+        }
     });
     
     dropdown.addEventListener('change', () => options.adventureSelected(dropdown.value));

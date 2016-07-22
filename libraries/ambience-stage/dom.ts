@@ -1,81 +1,89 @@
 export default function dom(container) {
     return {
-        start: {
-            scene: function(update) {
-                const scene = document.createElement('div');
-                scene.className = 'scene';
-                container.appendChild(scene);
-                let fading = false;
-                return {
-                    fade: {
-                        start: () => {
-                            fading = true;
-                            requestAnimationFrame(updateIfFading);
-                        },
-                        step: opacity => {
-                            scene.style.opacity = String(Math.min(opacity, 0.999));
-                        },
-                        stop: () => {
-                            fading = false;
-                        }
-                    },
-                    stop: () => {
-                        container.removeChild(scene);
-                    }
-                };
-                
-                function updateIfFading() {
-                    if (fading) {
-                        update();
-                        requestAnimationFrame(updateIfFading);
-                    }
+        time: () => new Date().getTime(),
+        scene: update => {
+            const scene = document.createElement('div');
+            scene.className = 'scene';
+            container.appendChild(scene);
+            const fading = {
+                in: true,
+                out: false
+            };
+            requestAnimationFrame(function frame() {
+                if (fading.in) {
+                    update();
+                    requestAnimationFrame(frame);
                 }
-            },
-            image: function(image) {
-                var element = document.createElement('div');
-                element.style.backgroundImage = 'url(' + image.url + ')';
-                element.className = 'image';
-                const scene = container.lastElementChild;
-                scene.appendChild(element);
-                
-                if ( image.style ) {
-                    Object.keys(image.style).forEach(function(cssKey) {
-                        var cssValue = image.style[cssKey];
-                        element.style[cssKey] = cssValue;
-                    });
-                }
-                
-                return {
-                    stop: function() {}
-                };
-            },
-            sound: () => function() {},
-            track: function(url, update) {
-                var element = document.createElement('audio');
-                element.src = url;
-                if (container.querySelectorAll('audio').length === 0) {
-                    element.volume = 0;
-                }
-                element.play();
-                element.className = 'track';
-                const scene = container.lastElementChild;
-                scene.appendChild(element);
-                
-                element.addEventListener('timeupdate', update);
-                element.addEventListener('ended', update);
-                
-                return {
-                    stop: function() {
-                        element.pause();
-                        scene.removeChild(element);
-                    },
-                    fade: function(volume) {
-                        element.volume = volume;
-                    },
-                    duration: () => element.duration * 1000
-                };
+            });
+            
+            function step(opacity) {
+                scene.style.opacity = String(Math.min(opacity, 0.999));
             }
-        },
-        time: () => new Date()
+            
+            return {
+                fade: {
+                    in: {
+                        step: step,
+                        stop: () => fading.in = false
+                    },
+                    out: {
+                        start: () => {
+                            fading.out = true;
+                            requestAnimationFrame(function frame() {
+                                if (fading.out) {
+                                    update();
+                                    requestAnimationFrame(frame);
+                                }
+                            });
+                        },
+                        step: step
+                    }
+                },
+                stop: () => {
+                    container.removeChild(scene);
+                    fading.out = false;
+                },
+                image: function(image) {
+                    const element = document.createElement('img');
+                    element.src = image.url;
+                    element.className = 'image';
+                    scene.appendChild(element);
+                    
+                    if (image.style) {
+                        Object.keys(image.style).forEach(function(cssKey) {
+                            const cssValue = image.style[cssKey];
+                            element.style[cssKey] = cssValue;
+                        });
+                    }
+                    
+                    return {
+                        stop: () => scene.removeChild(element)
+                    };
+                },
+                sound: () => ({
+                    stop: () => {},
+                    track: url => {
+                        const element = document.createElement('audio');
+                        element.src = url;
+                        element.play();
+                        element.className = 'track';
+                        scene.appendChild(element);
+                        
+                        element.addEventListener('timeupdate', update);
+                        
+                        return {
+                            stop: () => {
+                                element.pause();
+                                scene.removeChild(element);
+                            },
+                            fade: volume => {
+                                element.volume = volume;
+                            },
+                            duration: () => element.duration * 1000
+                        };
+                    }
+                })
+            };
+        }
     };
 };

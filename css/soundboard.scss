@@ -22,6 +22,10 @@ html {
     background-color: $background-color;
 }
 
+.horizontal {
+    @include flex(row, $horizontal: center, $vertical: stretch);
+}
+
 .vertical {
     @include flex(column, $horizontal: stretch, $vertical: center);
 }
@@ -182,6 +186,12 @@ html {
     #top-menu {
         select, button {
             height: 2.5rem;
+        }
+        
+        #volume-down,
+        #volume-up,
+        #volume-slider {
+            vertical-align: middle;
         }
     }
     

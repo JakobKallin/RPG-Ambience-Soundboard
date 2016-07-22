@@ -1,15 +1,22 @@
 import start from './scene';
 
 export default function stage(outside) {
-    var abort = nothing;
-    var stop = function(fade) {
-        return nothing;
-    };
+    let fadingOut = null;
+    let fadingIn = null;
+    let volume = 1;
     
-    return function(items, fadeInDuration) {
-        abort();
-        abort = stop(fadeInDuration);
-        stop = start(items, fadeInDuration, outside);
+    return {
+        start: (items:any[], fadeInDuration=0) => {
+            if (fadingOut) fadingOut.stop();
+            fadingOut = fadingIn;
+            if (fadingOut) fadingOut.stop(fadeInDuration);
+            fadingIn = start(items, fadeInDuration, volume, outside);
+        },
+        volume: (newVolume:number) => {
+            volume = newVolume;
+            if (fadingOut) fadingOut.volume(newVolume);
+            if (fadingIn) fadingIn.volume(newVolume);
+        }
     }
     
     function nothing() {}

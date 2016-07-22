@@ -11,10 +11,17 @@
     </head>
     <body>
         <div class="page page-soundboard vertical padding spacing" id="soundboard">
-            <div id="top-menu">
-                <select class="adventure" id="adventure">
-                    <option data-repeat="10">Some Adventure</option>
-                </select>
+            <div id="top-menu" class="horizontal">
+                <div class="flex">
+                    <select class="adventure" id="adventure">
+                        <option data-repeat="10">Some Adventure</option>
+                    </select>
+                </div>
+                <div>
+                    <button type="button" id="volume-down">🔇</button>
+                    <input type="range" min="0" step="0.01" max="1" value="1" id="volume-slider">
+                    <button type="button" id="volume-up">🔊</button>
+                </div>
             </div>
             <div class="scene-view flex">
                 <div class="ungrouped">

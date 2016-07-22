@@ -1,146 +1,240 @@
 import startSound from './sound';
 
-export default function startScene(items, fadeInDuration, outside) {
-    fadeInDuration = fadeInDuration || 0;
-    var startTime = outside.time();
-    var hasEnded = false;
-    var handles = [];
-    var sceneHandle;
-    
-    var updateFade = function updateFadeIn() {
-        var ratio = fadeRatio(startTime, outside.time(), fadeInDuration);
-        sceneHandle.fade.step(ratio);
-        handles.forEach(function(handle) {
-            if (handle.fade) handle.fade(ratio);
-        });
-        
-        if ( ratio === 1 ) {
-            sceneHandle.fade.stop();
-            updateFade = nothing;
-        }
+enum SceneState {
+    Starting,
+    FadingIn,
+    Playing,
+    FadingOut,
+    Ended
+}
+
+export default function startScene(items, fadeInDuration=0, volume=1, outside) {
+    let fadeOutDuration:number = null;
+    let started:number = null;
+    let stopped:number = null;
+    const handles = {
+        scene: null,
+        items: null
     };
+    
+    let state:SceneState = SceneState.Starting;
+    enterState(SceneState.FadingIn);
+    
+    function validTransition(before:SceneState, after:SceneState) {
+        switch(after) {
+            case SceneState.FadingIn:
+                return before === SceneState.Starting;
+            case SceneState.Playing:
+                return before === SceneState.FadingIn;
+            case SceneState.FadingOut:
+                return before === SceneState.FadingIn || before === SceneState.Playing;
+            case SceneState.Ended:
+                return before === SceneState.FadingOut;
+            default:
+                throw new Error('Invalid state: ' + after);
+        }
+    }
+    
+    function enterState(newState:SceneState) {
+        if (!validTransition(state, newState)) {
+            throw new Error('Invalid transition: ' + state + ' to ' + newState);
+        }
         
-    function start(items, fadeInDuration, outside) {
-        sceneHandle = outside.start.scene ? outside.start.scene(update) : {};
-        sceneHandle = sceneHandle || {};
-        sceneHandle.stop = sceneHandle.stop || nothing;
-        sceneHandle.fade = sceneHandle.fade || {};
-        sceneHandle.fade.start = sceneHandle.fade.start || nothing;
-        sceneHandle.fade.step = sceneHandle.fade.step || nothing;
-        sceneHandle.fade.stop = sceneHandle.fade.stop || nothing;
+        const time = outside.time();
+        if (newState === SceneState.FadingIn) {
+            started = time;
+            handles.scene = outside.scene(update);
+            handles.items = items.map(function(item) {
+                if (item.type === 'sound') {
+                    const callbacks = {
+                        time: outside.time,
+                        shuffle: outside.shuffle,
+                        sound: handles.scene.sound,
+                        track: handles.scene.track
+                    };
+                    return {
+                        type: 'sound',
+                        callback: startSound(item, callbacks)
+                    };
+                }
+                else {
+                    return {
+                        type: item.type,
+                        callback: handles.scene[item.type](item, update)
+                    };
+                }
+            });
+            handles.scene.stop = once(handles.scene.stop);
+            handles.scene.fade.in.stop = once(handles.scene.fade.in.stop);
+            handles.scene.fade.out.start = once(handles.scene.fade.out.start);
+        }
+        else if (newState === SceneState.Playing) {
+            handles.scene.fade.in.step(1);
+            handles.scene.fade.in.stop();
+        }
+        else if (newState === SceneState.FadingOut) {
+            stopped = time;
+            // If we're jumping straight to fade-out from fade-in, make sure
+            // that the fade-in is completed, because that is otherwise done
+            // when the transition completes normally.
+            if (state === SceneState.FadingIn) {
+                handles.scene.fade.in.step(1);
+                handles.scene.fade.in.stop();
+            }
+            handles.scene.fade.out.start();
+        }
+        else if (newState === SceneState.Ended) {
+            handles.scene.fade.out.step(0);
+            handles.items.forEach(function(handle) {
+                handle.callback.stop();
+            });
+            handles.scene.stop();
+        }
+        else {
+            throw new Error('Invalid transition: ' + newState);
+        }
         
-        sceneHandle.fade.start();
-        
-        handles = items.map(function(item) {
-            if ( item.type === 'sound' ) {
-                return startSound(item, outside, update, () => {
-                    if (onlySound(items)) end();
-                });
+        state = newState;
+    }
+    
+    function update() {
+        const time = outside.time();
+        let scenesPlaying:boolean[] = [];
+        if (state === SceneState.FadingIn) {
+            const progress = fadeInDuration === 0 ? 1 : bound(0, 1, (time - started) / fadeInDuration);
+            invariant(0 <= progress && progress <= 1, 'Fade-in progress between 0 and 1', progress);
+            const fadeInEnding = progress === 1;
+            const opacity = progress;
+            scenesPlaying = updateHandles(time, opacity);
+            
+            if (fadeInEnding) {
+                enterState(SceneState.Playing);
             }
             else {
-                return outside.start[item.type](item, update);
+                handles.scene.fade.in.step(progress);
+            }
+        }
+        else if (state === SceneState.Playing) {
+            const opacity = 1;
+            scenesPlaying = updateHandles(time, opacity);
+        }
+        else if (state === SceneState.FadingOut) {
+            const progress = fadeOutDuration === 0 ? 1 : bound(0, 1, (time - stopped) / fadeOutDuration);
+            invariant(0 <= progress && progress <= 1, 'Fade-out progress between 0 and 1', progress);
+            const opacity = 1 - progress;
+            scenesPlaying = updateHandles(time, opacity);
+            
+            const isEnding = time >= stopped + fadeOutDuration;
+            if (isEnding) {
+                enterState(SceneState.Ended);
+            }
+            else {
+                handles.scene.fade.out.step(opacity);
+            }
+        }
+        
+        if (scenesPlaying.some(p => p === false) && onlySound(items)) {
+            end();
+        }
+    }
+    
+    function checkForEnd(time:number) {
+        if (time >= stopped + fadeOutDuration) {
+            enterState(SceneState.Ended);
+        }
+    }
+    
+    function updateHandles(time:number, opacity:number) {
+        const scenesPlaying:boolean[] = handles.items.map(handle => {
+            if (handle.callback.update) {
+                if (handle.type === 'sound') {
+                    return handle.callback.update();
+                }
+                else {
+                    return handle.callback.update();
+                }
+            }
+            else {
+                return true;
             }
         });
         
-        return stop;
+        handles.items.forEach(handle => {
+            if (handle.callback.fade) {
+                if (handle.type === 'sound') {
+                    handle.callback.fade(opacity * volume);
+                }
+                else {
+                    handle.callback.fade(opacity);
+                }
+            }
+        });
+        
+        return scenesPlaying;
     }
+        
+    const stop = (fadeDuration=0) => {
+        if (state === SceneState.FadingIn || state === SceneState.Playing) {
+            stopped = outside.time();
+            fadeOutDuration = fadeDuration;
+            enterState(SceneState.FadingOut);
+            update();
+        }
+        else {
+            end();
+        }
+    };
+    
+    const end = () => {
+        if (state !== SceneState.Ended) {
+            fadeOutDuration = 0;
+            if (state === SceneState.FadingIn || state === SceneState.Playing) {
+                enterState(SceneState.FadingOut);
+            }
+            enterState(SceneState.Ended);
+        }
+    };
+    
+    return {
+        stop: stop,
+        volume: (newVolume:number) => {
+            volume = newVolume;
+            update();
+        }
+    };
     
     function onlySound(items) {
         return items.every(i => i.type === 'sound');
     }
     
-    // function stopSceneAfterwards(startSound) {
-    //     var startSound = startSound || constant(nothing);
-    //     return function() {
-    //         var stopSound = startSound();
-    //         let soundStopped = false;
-    //         return function() {
-    //             // Once `stop` is called below, all of the stop handles will be
-    //             // called in turn, which includes this very function. We thus
-    //             // prevent it from being called twice.
-    //             if (!soundStopped) {
-    //                 soundStopped = true;
-    //                 stopSound();
-    //                 stop(0);
-    //             }
-    //         };
-    //     };
-    // }
-    
-    function update() {
-        handles.forEach(function(handle) {
-            if ( handle.update ) {
-                handle.update();
-            }
-        });
-        updateFade();
-    }
-    
-    const stop = once(fadeOutDuration => {
-        const stopTime = outside.time();
-        updateFade = function updateFadeOut() {
-            var ratio = 1 - fadeRatio(stopTime, outside.time(), fadeOutDuration);
-            sceneHandle.fade.step(ratio);
-            handles.forEach(function(handle) {
-                if (handle.fade) handle.fade(ratio);
-            });
-            
-            if ( ratio === 0 ) {
-                end();
-            }
-        };
-        sceneHandle.fade.start();
-        
-        if ( fadeOutDuration === 0 ) {
-            end();
-        }
-        
-        return end;
-    });
-    
-    function end() {
-        if ( !hasEnded ) {
-            hasEnded = true;
-            updateFade = nothing;
-            handles.forEach(function(handle) {
-                handle.stop();
-            });
-            sceneHandle.fade.stop();
-            sceneHandle.stop();
-        }
-    }
-    
-    function fadeRatio(startTime, currentTime, duration) {
-        var elapsed = currentTime - startTime;
-        if ( duration === 0 ) {
-            return 1;
-        }
-        else {
-            var ratio = elapsed / duration;
-            var boundedRatio = Math.min(Math.max(ratio, 0), 1);
-            return boundedRatio;
-        }
-    }
-    
     function nothing() {}
-    
-    function constant(value) {
-        return function() {
-            return value;
-        };
-    }
     
     function once(callback) {
         let called = false;
-        let result = null;
+        // Function keyword in order to capture arguments.
         return function() {
-            if (!called) {
-                called = true;
-                result = callback.apply(undefined, arguments);
+            if (called) {
+                throw new Error('Function called more than once')
             }
-            return result;
+            else {
+                called = true;
+                return callback.apply(undefined, arguments);
+            }
         };
     }
     
-    return start(items, fadeInDuration, outside);
+    function bound(min, max, value) {
+        invariant(min <= max, 'Lower bound lower than upper bound', min, max);
+        const boundedAbove = Math.min(value, max);
+        return Math.max(min, boundedAbove);
+    }
+    
+    function invariant(expression, description, ...values) {
+        if (expression !== true) {
+            throw new Error(
+                'Invariant broken: ' + description + '\n' +
+                'Values: ' + values.join(', ')
+            );
+        }
+    }
 };

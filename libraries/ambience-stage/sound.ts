@@ -1,29 +1,30 @@
-export default function startSound(sound, outside, updateScene, abortSceneIfSoundOnly) {
-    var loop = 'loop' in sound ? sound.loop : true;
-    var shuffle = 'shuffle' in sound ? sound.shuffle : true;
-    var overlap = sound.overlap || 0;
-    var shuffleArray = outside.shuffle || shuffleArrayRandomly;
+export default function startSound(sound, outside) {
+    const loop = 'loop' in sound ? sound.loop : true;
+    const shuffle = 'shuffle' in sound ? sound.shuffle : true;
+    const overlap = sound.overlap || 0;
+    const shuffleArray = outside.shuffle || shuffleArrayRandomly;
+    let volume = 0;
     
-    var tracks = sound.tracks.slice();
-    if ( sound.tracks.length === 0 ) {
+    let tracks = sound.tracks.slice();
+    if (sound.tracks.length === 0) {
         throw new Error('Cannot start sound without tracks.');
     } 
-    if ( shuffle ) {
+    if (shuffle) {
         tracks = shuffleArray(tracks);
     }
     
-    const stopOutsideSound = outside.start.sound ? outside.start.sound() : nothing;
+    const soundHandle = outside.sound();
     const outsideTracks = [];
-    var updateLatest = startTrack(0);
+    let updateLatest = startTrack(0);
     
-    const fadeSound = ratio => {
-        outsideTracks.forEach(t => t.fade(ratio));
+    const fadeSound = newVolume => {
+        volume = newVolume;
+        outsideTracks.forEach(t => t.fade(volume));
     };
     
     const stopSound = once(() => {
         outsideTracks.forEach(t => t.stop());
-        stopOutsideSound();
-        abortSceneIfSoundOnly();
+        soundHandle.stop();
     });
     
     return {
@@ -33,33 +34,34 @@ export default function startSound(sound, outside, updateScene, abortSceneIfSoun
     };
     
     function startTrack(index) {
-        var startTime = outside.time();
-        const outsideTrack = outside.start.track(tracks[index], updateScene);
+        const startTime = outside.time();
+        const outsideTrack = soundHandle.track(tracks[index]);
         outsideTrack.stop = once(outsideTrack.stop);
         outsideTracks.push(outsideTrack);
-        var updateNext = nothing;
+        outsideTrack.fade(volume);
+        let updateNext = nothing;
         
-        return function update() {
-            var currentTime = outside.time();
-            var elapsed = currentTime - startTime;
+        return function update():boolean {
+            const currentTime = outside.time();
+            const elapsed = currentTime - startTime;
             
             const duration = outsideTrack.duration();
             // Duration not known yet, so don't attempt any overlap until it is.
             if (isNaN(duration)) {
-                return;
+                return true;
             }
             
-            if ( elapsed >= duration ) {
+            if (elapsed >= duration) {
                 outsideTrack.stop();
                 outsideTracks.splice(outsideTracks.indexOf(outsideTrack, 1));
             }
             
-            if ( elapsed >= duration - overlap && updateNext === nothing ) {
-                if ( (index + 1) in tracks ) {
+            if (elapsed >= duration - overlap && updateNext === nothing) {
+                if ((index + 1) in tracks) {
                     updateNext = startTrack(index + 1);
                 }
-                else if ( loop ) {
-                    if ( shuffle ) {
+                else if (loop) {
+                    if (shuffle) {
                         tracks = shuffleArray(tracks);
                     }
                     updateNext = startTrack(0);
@@ -69,15 +71,20 @@ export default function startSound(sound, outside, updateScene, abortSceneIfSoun
             if (elapsed >= duration) {
                 if (updateNext === nothing) {
                     stopSound();
+                    return false;
                 }
                 else {
                     updateLatest = updateNext;
                 }
             }
+            
+            return true;
         };
     }
     
-    function nothing() {}
+    function nothing() {
+        return true;
+    }
     
     function once(callback) {
         const args = arguments;
@@ -94,7 +101,7 @@ export default function startSound(sound, outside, updateScene, abortSceneIfSoun
 function shuffleArrayRandomly(array) {
     const source = array.slice();
     const result = [];
-    while ( source.length > 0 ) {
+    while (source.length > 0) {
         const index = randomInteger(source.length - 1);
         result.push(source[index]);
         source.splice(index, 1);

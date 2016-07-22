@@ -157,7 +157,11 @@ dom.on(window, 'DOMContentLoaded', () => {
             dropdown: <HTMLSelectElement> document.getElementById('adventure'),
             playScene: playScene,
             stopAllScenes: stopAllScenes,
-            adventureSelected: (id:string) => selectAdventure(id)
+            adventureSelected: (id:string) => selectAdventure(id),
+            changeVolume: volume => {
+                background.volume(volume);
+                foreground.volume(volume);
+            }
         });
         selectAdventure(
             Storage.read().adventure ||
@@ -209,8 +213,8 @@ dom.on(window, 'DOMContentLoaded', () => {
         }
         
         function stopAllScenes():void {
-            background([], latest.fade.background * 1000);
-            foreground([], latest.fade.foreground * 1000);
+            background.start([], latest.fade.background * 1000);
+            foreground.start([], latest.fade.foreground * 1000);
         }
         
         function playScene(scene:any):void {
@@ -246,7 +250,7 @@ dom.on(window, 'DOMContentLoaded', () => {
                 
                 const layer = scene.layer === 'foreground' ? foreground : background;
                 latest.fade[scene.layer] = scene.fade.out;
-                layer(items, scene.fade.in * 1000);
+                layer.start(items, scene.fade.in * 1000);
             });
         }
     }
