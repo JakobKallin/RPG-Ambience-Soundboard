@@ -31,6 +31,7 @@ export default function(options:SoundboardViewCallbacks) {
         scenes,
         dom.first('.scene-list'),
         {
+            sort: scene => selectedAdventure().scenes.indexOf(scene),
             filter: scene => selectedAdventure().scenes.includes(scene)
         },
         {
