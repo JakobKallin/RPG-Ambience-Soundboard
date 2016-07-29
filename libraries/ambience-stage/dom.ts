@@ -60,29 +60,58 @@ export default function dom(container) {
                         stop: () => scene.removeChild(element)
                     };
                 },
-                sound: () => ({
-                    stop: () => {},
-                    track: url => {
+                sound: () => {
+                    // Mobile Chrome (at least) only allows audio to be played
+                    // as a direct result of user interaction, which means that
+                    // overlap cannot trigger audio playback directly as it
+                    // relies on non-interaction events. However, as soon as we
+                    // call `play` on an audio element, we can trigger playback
+                    // on that element later in any context. We thus create a
+                    // pool of two audio elements that we then alternate between
+                    // in order to support overlap.
+                    const elements = {
+                        busy: [],
+                        idle: []
+                    };
+                    [0, 1].forEach(i => {
                         const element = document.createElement('audio');
-                        element.src = url;
                         element.play();
+                        element.pause();
                         element.className = 'track';
-                        scene.appendChild(element);
-                        
-                        element.addEventListener('timeupdate', update);
-                        
-                        return {
-                            stop: () => {
-                                element.pause();
-                                scene.removeChild(element);
-                            },
-                            fade: volume => {
-                                element.volume = volume;
-                            },
-                            duration: () => element.duration * 1000
-                        };
-                    }
-                })
+                        elements.idle.push(element);
+                    });
+
+                    return {
+                        stop: () => {},
+                        track: url => {
+                            const element = elements.idle.pop();
+                            element.src = url;
+                            element.className = 'track';
+                            element.addEventListener('timeupdate', update);
+                            scene.appendChild(element);
+                            
+                            element.play();
+                            elements.busy.push(element);
+                            
+                            return {
+                                stop: () => {
+                                    element.pause();
+                                    scene.removeChild(element);
+                                    element.currentTime = 0;
+                                    element.src = '';
+                                    element.removeEventListener('timeupdate', update);
+                                    
+                                    elements.busy.splice(elements.busy.indexOf(element), 1);
+                                    elements.idle.push(element);
+                                },
+                                fade: volume => {
+                                    element.volume = volume;
+                                },
+                                duration: () => element.duration * 1000
+                            };
+                        }
+                    };
+                }
             };
         }
     };

@@ -53,7 +53,7 @@ export default function startSound(sound, outside) {
             
             if (elapsed >= duration) {
                 outsideTrack.stop();
-                outsideTracks.splice(outsideTracks.indexOf(outsideTrack, 1));
+                remove(outsideTrack, outsideTracks);
             }
             
             if (elapsed >= duration - overlap && updateNext === nothing) {
@@ -111,4 +111,8 @@ function shuffleArrayRandomly(array) {
 
 function randomInteger(max) {
     return Math.floor(Math.random() * (max + 1));
+}
+
+function remove(value, array) {
+    array.splice(array.indexOf(value), 1);
 }
