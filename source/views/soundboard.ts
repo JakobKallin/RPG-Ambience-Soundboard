@@ -123,6 +123,10 @@ export default function(options:SoundboardViewCallbacks) {
         }
     });
 
+    dom.on(dom.id('fullscreen'), 'click', () => {
+        dom.toggleFullscreen();
+    });
+
     dropdown.addEventListener('change', () => options.adventureSelected(dropdown.value));
 
     function selectedAdventure() {

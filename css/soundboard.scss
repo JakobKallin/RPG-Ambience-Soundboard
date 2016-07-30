@@ -497,42 +497,6 @@ html:not(.menu) .menu {
 .zoom-2 { .scene { width: (100% / 15); } }
 .zoom-1 { .scene { width: (100% / 16); } }
 
-#stage {
-    display: none;
-    position: fixed;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: black;
-    cursor: none;
-
-    .layer {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-    }
-
-    .scene, .scene > * {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        height: 100%;
-    }
-
-    .image {
-        background-position: center center;
-        background-repeat: no-repeat;
-    }
-}
-
-#stage:fullscreen { display: block; }
-#stage:-webkit-full-screen { display: block; }
-#stage:-moz-full-screen { display: block; }
-
 .menu-button, .zoom, .scene.error {
     display: none !important;
 }
@@ -540,14 +504,4 @@ html:not(.menu) .menu {
 .other-menu {
     margin-left: 0 !important;
     flex: 1;
-}
-
-html:-webkit-full-screen {
-    .other-menu {
-        display: none;
-    }
-
-    .scene-view {
-        margin-top: 0 !important;
-    }
 }

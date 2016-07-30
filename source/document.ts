@@ -47,13 +47,13 @@ export function replicate(table, container, options, mapping?, state?) {
             first: true
         };
     }
-    
+
     R.mapObjIndexed((node, key) => {
         if (!(key in table)) {
             node.remove();
         }
     }, state.nodes);
-    
+
     const keys = Object.keys(table);
     const order = options.sort || R.identity;
     const filter = options.filter || (() => true);
@@ -67,13 +67,13 @@ export function replicate(table, container, options, mapping?, state?) {
         state.nodes[key] = instance;
         return instance;
     });
-    
+
     nodes.forEach((node, index) => {
         if (node.parent !== container) {
             container.insertBefore(node, container.children[index]);
         }
     });
-    
+
     state.first = false;
     return (table) => {
         return replicate(table, container, options, mapping, state);
@@ -85,11 +85,11 @@ function map(selectors, object, ancestor, first) {
         if (typeof values !== 'object') {
             values = { text: values };
         }
-        
+
         const matching = all(selector, ancestor).concat(
             ancestor.matches(selector) ? [ancestor] : []
         );
-        
+
         matching.forEach(node => {
             R.mapObjIndexed((createValue, key) => {
                 if (key === 'text') {
@@ -190,8 +190,8 @@ export function loadScript(url) {
     });
 }
 
-export function enterFullscreen(element) {
-    element = element || document;
+export function enterFullscreen(element?:Element) {
+    element = element || document.documentElement;
     [
         'webkitRequestFullscreen',
         'webkitRequestFullScreen',
@@ -200,6 +200,33 @@ export function enterFullscreen(element) {
         'requestFullscreen'
     ].forEach(f => {
         if (f in element) element[f]();
+    });
+}
+
+export function toggleFullscreen(element?:Element) {
+    [
+        'webkitFullscreenElement',
+        'webkitFullScreenElement',
+        'mozFullscreenElement',
+        'mozFullScreenElement',
+        'fullscreenElement'
+    ].forEach(p => {
+        if (p in document) {
+            if (document[p]) {
+                [
+                    'webkitExitFullscreen',
+                    'webkitExitFullScreen',
+                    'mozExitFullScreen',
+                    'mozExitFullScreen',
+                    'exitFullscreen'
+                ].forEach(f => {
+                    if (f in document) document[f]();
+                });
+            }
+            else {
+                enterFullscreen(element);
+            }
+        }
     });
 }
 
