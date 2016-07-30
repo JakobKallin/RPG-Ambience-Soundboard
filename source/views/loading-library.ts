@@ -13,6 +13,12 @@ export default function(page) {
             const instance = template.cloneNode(true);
             instance.textContent = text;
             events.insertBefore(instance, events.firstElementChild);
+        },
+        error: text => {
+            const instance = template.cloneNode(true);
+            instance.textContent = text;
+            instance.classList.add('error');
+            events.insertBefore(instance, events.firstElementChild);
         }
     };
 }

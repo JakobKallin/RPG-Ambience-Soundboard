@@ -4,35 +4,35 @@ export default function startSound(sound, outside) {
     const overlap = sound.overlap || 0;
     const shuffleArray = outside.shuffle || shuffleArrayRandomly;
     let volume = 0;
-    
+
     let tracks = sound.tracks.slice();
     if (sound.tracks.length === 0) {
         throw new Error('Cannot start sound without tracks.');
-    } 
+    }
     if (shuffle) {
         tracks = shuffleArray(tracks);
     }
-    
+
     const soundHandle = outside.sound();
     const outsideTracks = [];
     let updateLatest = startTrack(0);
-    
+
     const fadeSound = newVolume => {
         volume = newVolume;
         outsideTracks.forEach(t => t.fade(volume));
     };
-    
+
     const stopSound = once(() => {
         outsideTracks.forEach(t => t.stop());
         soundHandle.stop();
     });
-    
+
     return {
         fade: fadeSound,
         stop: stopSound,
         update: () => updateLatest()
     };
-    
+
     function startTrack(index) {
         const startTime = outside.time();
         const outsideTrack = soundHandle.track(tracks[index]);
@@ -40,22 +40,22 @@ export default function startSound(sound, outside) {
         outsideTracks.push(outsideTrack);
         outsideTrack.fade(volume);
         let updateNext = nothing;
-        
+
         return function update():boolean {
             const currentTime = outside.time();
             const elapsed = currentTime - startTime;
-            
+
             const duration = outsideTrack.duration();
             // Duration not known yet, so don't attempt any overlap until it is.
             if (isNaN(duration)) {
                 return true;
             }
-            
+
             if (elapsed >= duration) {
                 outsideTrack.stop();
                 remove(outsideTrack, outsideTracks);
             }
-            
+
             if (elapsed >= duration - overlap && updateNext === nothing) {
                 if ((index + 1) in tracks) {
                     updateNext = startTrack(index + 1);
@@ -67,7 +67,7 @@ export default function startSound(sound, outside) {
                     updateNext = startTrack(0);
                 }
             }
-            
+
             if (elapsed >= duration) {
                 if (updateNext === nothing) {
                     stopSound();
@@ -77,15 +77,15 @@ export default function startSound(sound, outside) {
                     updateLatest = updateNext;
                 }
             }
-            
+
             return true;
         };
     }
-    
+
     function nothing() {
         return true;
     }
-    
+
     function once(callback) {
         const args = arguments;
         let called = false;

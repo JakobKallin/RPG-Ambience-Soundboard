@@ -15,11 +15,11 @@ export default function dom(container) {
                     requestAnimationFrame(frame);
                 }
             });
-            
+
             function step(opacity) {
                 scene.style.opacity = String(Math.min(opacity, 0.999));
             }
-            
+
             return {
                 fade: {
                     in: {
@@ -48,14 +48,14 @@ export default function dom(container) {
                     element.src = image.url;
                     element.className = 'image';
                     scene.appendChild(element);
-                    
+
                     if (image.style) {
                         Object.keys(image.style).forEach(function(cssKey) {
                             const cssValue = image.style[cssKey];
                             element.style[cssKey] = cssValue;
                         });
                     }
-                    
+
                     return {
                         stop: () => scene.removeChild(element)
                     };
@@ -89,10 +89,10 @@ export default function dom(container) {
                             element.className = 'track';
                             element.addEventListener('timeupdate', update);
                             scene.appendChild(element);
-                            
+
                             element.play();
                             elements.busy.push(element);
-                            
+
                             return {
                                 stop: () => {
                                     element.pause();
@@ -100,7 +100,7 @@ export default function dom(container) {
                                     element.currentTime = 0;
                                     element.src = '';
                                     element.removeEventListener('timeupdate', update);
-                                    
+
                                     elements.busy.splice(elements.busy.indexOf(element), 1);
                                     elements.idle.push(element);
                                 },

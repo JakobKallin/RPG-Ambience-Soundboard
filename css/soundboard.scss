@@ -71,25 +71,25 @@ html {
 .page-loading-app, .page-loading-library {
     padding: 1rem;
     text-align: center;
-    
+
     .center {
         position: relative;
         width: 100%;
         max-width: 50rem;
     }
-    
+
     p {
         position: relative;
         @include heading;
     }
-    
+
     progress {
         display: block;
         width: 100%;
         margin-top: 1rem;
         margin-bottom: 1rem;
     }
-    
+
     .events {
         position: absolute;
         left: 0;
@@ -97,11 +97,15 @@ html {
         width: 100%;
         text-align: center;
         color: $subtle-text-color;
-        
+
         > * + * {
             margin-top: 0.25rem;
         }
-        
+
+        > .error {
+            color: hsl(0, 50%, 50%);
+        }
+
         :nth-child(1) { opacity: 1; }
         :nth-child(2) { opacity: 0.9; }
         :nth-child(3) { opacity: 0.8; }
@@ -118,27 +122,27 @@ html {
 
 .page-welcome {
     padding: 1rem;
-    
+
     h2 {
         @include heading;
         text-align: center;
     }
-    
+
     li {
         display: list-item;
         margin-left: 2rem;
         margin-right: 2rem;
     }
-    
+
     ul, p {
         margin-top: 1rem;
         margin-bottom: 1rem;
     }
-    
+
     .start {
         text-align: center;
     }
-    
+
     .start button {
         font-size: 1.5rem;
         padding: 0.5rem;
@@ -149,14 +153,14 @@ html {
 .page-session-error {
     padding: 1rem;
     text-align: center;
-    
+
     button {
         @include box-button;
         margin-top: 1.5rem;
         padding: 1.5rem;
         font-size: 1.5rem;
         color: $white;
-        
+
         img {
             display: block;
             width: 7rem;
@@ -182,24 +186,24 @@ html {
     select, button {
         padding: 0.25em 0.5em;
     }
-    
+
     #top-menu {
         select, button {
             height: 2.5rem;
         }
-        
+
         #volume-down,
         #volume-up,
         #volume-slider {
             vertical-align: middle;
         }
     }
-    
+
     #stop-button {
         font-size: 2em;
         width: 100%;
     }
-    
+
     #options {
         flex-shrink: 0;
         @include flex(row,
@@ -207,15 +211,15 @@ html {
             $horizontal-spacing: 1rem
         );
         position: relative;
-        
+
         & > * {
             vertical-align: middle;
         }
-        
+
         label > * {
             vertical-align: middle;
         }
-        
+
         .menu-button {
             &:before {
                 font-family: Fontawesome;
@@ -223,7 +227,7 @@ html {
                 vertical-align: middle;
             }
         }
-        
+
         .menu {
             position: absolute;
             left: 0;
@@ -234,16 +238,16 @@ html {
             padding: 1rem;
             color: $white;
             box-shadow: 0.5rem 0.5rem hsla(0, 0%, 0%, 0.5);
-            
+
             ul {
                 @include flex(column, $vertical-spacing: 1rem);
             }
-            
+
             .zoom {
                 position: static;
             }
         }
-        
+
         .error {
             @include flex(row,
                 $vertical: center,
@@ -252,7 +256,7 @@ html {
             padding: 0 0.5rem;
             color: $white;
             background-color: hsl(0, 65%, 40%);
-            
+
             .retry {
                 height: auto;
                 &:before {
@@ -263,13 +267,13 @@ html {
                     vertical-align: middle;
                 }
             }
-            
+
             .close {
                 height: auto;
                 @include reset-control;
                 font-size: 0;
                 color: hsl(0, 65%, 15%);
-                
+
                 &:before {
                     font-size: 1.5rem;
                     line-height: 1;
@@ -277,47 +281,47 @@ html {
                 }
             }
         }
-        
+
         @media (max-width: 40em) {
             .other-menu {
                 display: none;
             }
         }
-        
+
         .zoom {
             position: absolute;
             right: 0;
             top: 0;
-            
+
             & > * {
                 vertical-align: middle;
             }
         }
-        
+
         .zoom-slider {
             margin-left: 0.5rem;
             margin-right: 0.5rem;
         }
-        
+
         .zoom-in, .zoom-out {
             width: 2rem;
             height: 2rem;
             padding: 0;
         }
-        
+
         .zoom-in:before, .zoom-out:before {
             font-family: FontAwesome;
         }
-        
+
         .zoom-out:before {
             content: $fa-var-search-minus;
         }
-        
+
         .zoom-in:before {
             content: $fa-var-search-plus;
         }
     }
-    
+
     .scene-view {
         position: relative;
         flex: 1;
@@ -326,14 +330,14 @@ html {
         );
         overflow: auto;
     }
-    
+
     .scene-view .grouped,
     .scene-view .ungrouped {
         flex: 1;
         overflow-y: auto;
         overflow-x: hidden;
     }
-    
+
     .scene-list {
         margin: -0.5rem;
         @include flex(row,
@@ -342,29 +346,29 @@ html {
             $vertical: start
         );
     }
-    
+
     .scene {
         min-width: (100% / 3);
         padding: 0.5rem;
         transition-property: opacity;
         transition-duration: 0.5s;
     }
-    
+
     .scene.loading {
         opacity: 0.5;
         .scene-button {
             cursor: progress;
         }
     }
-    
+
     @media (min-width: 20em) {
         .scene { min-width: (100% / 4); }
     }
-    
+
     @media (min-width: 40em) {
         .scene { min-width: (100% / 10); }
     }
-    
+
     @media (min-width: 60em) {
         .scene { min-width: (100% / 12); }
     }
@@ -372,7 +376,7 @@ html {
     @media (min-width: 80em) {
         .scene { min-width: 0; }
     }
-    
+
     .scene-button {
         position: relative;
         @include box-button;
@@ -380,7 +384,7 @@ html {
         width: 100%;
         height: 100%;
     }
-    
+
     .scene.error .scene-button:before {
         position: absolute;
         right: 0;
@@ -394,7 +398,7 @@ html {
         color: $white;
         background-color: hsl(0, 75%, 50%);
     }
-    
+
     .scene progress {
         position: absolute;
         left: 0;
@@ -405,18 +409,18 @@ html {
         transition-duration: 0.5s;
         pointer-events: none;
     }
-    
+
     .scene:not(.loading) progress {
         opacity: 0;
     }
-    
+
     .stop-button {
         width: 100%;
         padding: 0.5rem;
         text-align: center;
         font-size: 1.5rem;
     }
-    
+
     .scene-preview {
         position: relative;
         width: 100%;
@@ -426,7 +430,7 @@ html {
         background-repeat: no-repeat;
         background-position: center center;
     }
-    
+
     .scene-preview-image {
         position: absolute;
         left: 0;
@@ -438,18 +442,18 @@ html {
         transition-property: opacity;
         transition-duration: 0.5s;
     }
-    
+
     .scene-preview-image.loaded {
         opacity: 1;
     }
-    
+
     .scene-label {
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
         padding: 0.5rem;
     }
-    
+
     .scene-hotkey {
         color: $subtle-text-color;
     }
@@ -459,7 +463,7 @@ html {
     .scene-hotkey:not(:empty):after {
         content: ")";
     }
-    
+
     .group-title {
         font-family: $decorative-text-font;
         color: $white;
@@ -502,7 +506,7 @@ html:not(.menu) .menu {
     height: 100%;
     background-color: black;
     cursor: none;
-    
+
     .layer {
         position: absolute;
         left: 0;
@@ -510,7 +514,7 @@ html:not(.menu) .menu {
         width: 100%;
         height: 100%;
     }
-     
+
     .scene, .scene > * {
         position: absolute;
         left: 0;
@@ -518,7 +522,7 @@ html:not(.menu) .menu {
         width: 100%;
         height: 100%;
     }
-    
+
     .image {
         background-position: center center;
         background-repeat: no-repeat;
@@ -529,7 +533,7 @@ html:not(.menu) .menu {
 #stage:-webkit-full-screen { display: block; }
 #stage:-moz-full-screen { display: block; }
 
-.menu-button, .zoom, .error {
+.menu-button, .zoom, .scene.error {
     display: none !important;
 }
 
@@ -542,7 +546,7 @@ html:-webkit-full-screen {
     .other-menu {
         display: none;
     }
-    
+
     .scene-view {
         margin-top: 0 !important;
     }

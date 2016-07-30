@@ -23,7 +23,7 @@ namespace Storage {
     export function read():Store {
         return <Store> Persistence.read(version, defaultStore);
     }
-    
+
     export function modify(transaction:(store:Store) => {}):void {
         Persistence.modify(version, defaultStore, transaction);
     }
@@ -32,17 +32,17 @@ namespace Storage {
 dom.on(window, 'DOMContentLoaded', () => {
     let state:State = State.Loading;
     stateEntered(state);
-    
+
     const latest = {
         fade: {
             background: 0,
             foreground: 0
         }
     };
-    
+
     const appId = '907013371139';
     const library = Library(GoogleDrive(appId));
-    
+
     const views = {
         googleDrive: GoogleDriveView(dom.id('google-drive'), {
             login: () => {
@@ -59,9 +59,9 @@ dom.on(window, 'DOMContentLoaded', () => {
         loadingLibrary: LoadingLibraryView(dom.id('loading-library')),
         error: SessionErrorView(dom.id('session-error'))
     };
-    
+
     enterState(State.AccountPossiblyConnected);
-    
+
     function showPage(id:string, fade:number=0):void {
         const pages = dom.all('.page');
         const previous = R.last(pages);
@@ -75,14 +75,14 @@ dom.on(window, 'DOMContentLoaded', () => {
         document.body.insertBefore(next, previous.nextElementChild);
         hideAfter(previous, fade);
         fadeIn(next, fade);
-        
+
         function fadeIn(node:HTMLElement, duration:number):void {
             node.style.opacity = '0';
             node.style.transitionProperty = 'opacity';
             node.style.transitionDuration = duration + 's';
-            node.style.opacity = '1';
+            setTimeout(() => node.style.opacity = '1', 0);
         }
-        
+
         function hideAfter(node:HTMLElement, duration:number) {
             setTimeout(() => {
                 const pages = dom.all('.page');
@@ -94,8 +94,8 @@ dom.on(window, 'DOMContentLoaded', () => {
             }, duration * 1000);
         }
     }
-    
-    
+
+
     function loadLibrary():void {
         let adventureLimit:number = 1;
         let adventureCount:number = 0;
@@ -107,13 +107,18 @@ dom.on(window, 'DOMContentLoaded', () => {
                 adventureLimit = count;
             },
             adventureDownloadStarted: (id:string) => id,
+            adventureDownloadError: (id:string) => {
+                views.loadingLibrary.error('Error downloading adventure ' + id);
+                adventureCount += 1;
+                views.loadingLibrary.progress(adventureCount / adventureLimit);
+            },
             adventureDownloadFinished: (id:string) => {
                 views.loadingLibrary.event('Finished downloading adventure ' + id);
                 adventureCount += 1;
                 views.loadingLibrary.progress(adventureCount / adventureLimit);
             }
         };
-        
+
         enterState(State.SessionStarted);
         return library.list(signalProgress)
         .then(adventures => {
@@ -125,7 +130,7 @@ dom.on(window, 'DOMContentLoaded', () => {
             enterState(State.SessionError, error)
         });
     }
-    
+
     let selectedAdventure:any = null;
     const queueFileDownload = createQueue(3);
     const queuePreviewDownload = createQueue(50);
@@ -149,7 +154,7 @@ dom.on(window, 'DOMContentLoaded', () => {
                 }, 0);
             });
         });
-        
+
         const background = AmbienceStage(AmbienceStageDOM(dom.id('background')));
         const foreground = AmbienceStage(AmbienceStageDOM(dom.id('foreground')));
         const soundboard = SoundboardView({
@@ -167,15 +172,15 @@ dom.on(window, 'DOMContentLoaded', () => {
             Storage.read().adventure ||
             R.sortBy(id => adventures[id].title, Object.keys(adventures))[0]
         );
-        
+
         dom.on(document, 'keydown', (event:any):void => {
             playSceneWithHotkey(dom.key(event.keyCode));
         });
-        
+
         dom.on(document, 'keypress', (event:any):void => {
             playSceneWithHotkey(dom.key(event.charCode));
         });
-        
+
         function selectAdventure(id:string):void {
             const adventure = adventures[id];
             selectedAdventure = adventure;
@@ -187,7 +192,7 @@ dom.on(window, 'DOMContentLoaded', () => {
                     })
                     .then((url:string) => soundboard.previewLoaded(firstImage.file, url));
                 }
-                
+
                 const firstSound = scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
                 if (firstImage) {
                     loadFile(firstImage.file).then((url:string) => {
@@ -204,19 +209,19 @@ dom.on(window, 'DOMContentLoaded', () => {
                 return store;
             });
         }
-        
+
         function playSceneWithHotkey(hotkey:any):void {
             if (!selectedAdventure) return;
-            
+
             const scenes = selectedAdventure.scenes.filter((s:any) => s.key === hotkey);
             scenes.forEach(playScene);
         }
-        
+
         function stopAllScenes():void {
             background.start([], latest.fade.background * 1000);
             foreground.start([], latest.fade.foreground * 1000);
         }
-        
+
         function playScene(scene:any):void {
             const firstImage = scene.media.filter(m => m.type === 'image')[0];
             const firstSound = scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
@@ -247,20 +252,20 @@ dom.on(window, 'DOMContentLoaded', () => {
                         volume: firstSound.volume / 100
                     });
                 }
-                
+
                 const layer = scene.layer === 'foreground' ? foreground : background;
                 latest.fade[scene.layer] = scene.fade.out;
                 layer.start(items, scene.fade.in * 1000);
             });
         }
     }
-    
+
     function attemptImmediateLogin():void {
         library.authenticate(true)
         .then(() => enterState(State.AccountConnected))
         .catch(() => enterState(State.AccountNotConnected));
     }
-    
+
     function enterState(newState:State, arg?:any):void {
         if (R.contains(newState, transitions(state))) {
             state = newState;
@@ -270,7 +275,7 @@ dom.on(window, 'DOMContentLoaded', () => {
             throw new Error('Invalid state transition: ' + state + ' to ' + newState);
         }
     }
-    
+
     function stateEntered(state:State, arg?:any):void {
         switch(state) {
             case State.Loading: break;

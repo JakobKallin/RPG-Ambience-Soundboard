@@ -17,27 +17,28 @@ export default function(backend) {
                     signal.adventureDownloadFinished(id);
                     adventure.id = id;
                     adventures[id] = adventure;
-                });
+                })
+                .catch(() => signal.adventureDownloadError(id));
             }))
             .then(function() {
                 return adventures;
             });
         });
     }
-    
+
     function download(id, progress) {
         return backend.download.blob(id, progress)
         .then(blob => URL.createObjectURL(blob));
     }
-    
+
     function preview(id) {
         return backend.download.preview(id);
     }
-    
+
     function authenticate(immediate:boolean) {
         return backend.authenticate(immediate);
     }
-    
+
     return {
         list: list,
         download: download,
