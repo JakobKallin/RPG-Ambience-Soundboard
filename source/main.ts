@@ -184,7 +184,8 @@ dom.on(window, 'DOMContentLoaded', () => {
         function selectAdventure(id:string):void {
             const adventure = adventures[id];
             selectedAdventure = adventure;
-            adventure.scenes.forEach((scene:any) => {
+            // Reverse order of scenes because queue is FIFO.
+            R.reverse(adventure.scenes).forEach((scene:any) => {
                 const firstImage = scene.media.filter(m => m.type === 'image')[0];
                 if (firstImage && !(firstImage.file in previews)) {
                     previews[firstImage.file] = queuePreviewDownload(() => {
@@ -194,11 +195,6 @@ dom.on(window, 'DOMContentLoaded', () => {
                 }
 
                 const firstSound = scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
-                if (firstImage) {
-                    loadFile(firstImage.file).then((url:string) => {
-                        soundboard.fileLoaded(firstImage.file, url);
-                    });
-                }
                 firstSound.tracks.forEach((t:any) => loadFile(t).then((url:string) => {
                     soundboard.fileLoaded(t, url);
                 }));

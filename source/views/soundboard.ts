@@ -19,14 +19,14 @@ export default function(options:SoundboardViewCallbacks) {
     const previews = {};
     const files = {};
     const progressCallbacks = [];
-    
+
     dom.replicate(adventures, dropdown, { sort: a => a.title }, {
         'option': {
             text: adventure => adventure.title,
             value: adventure => adventure.id
         }
     });
-    
+
     const render = dom.replicate(
         scenes,
         dom.first('.scene-list'),
@@ -60,34 +60,33 @@ export default function(options:SoundboardViewCallbacks) {
             } }
         }
     );
-    
+
     function sceneFiles(scene) {
-        return firstSound(scene).tracks
-        .concat(firstImage(scene) ? firstImage(scene).file : []);
+        return firstSound(scene).tracks;
     }
-    
+
     function firstImage(scene) {
         return scene.media.filter(m => m.type === 'image')[0];
     }
-    
+
     function firstSound(scene) {
         return scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
     }
-    
+
     function hasImagePreview(scene) {
         return firstImage(scene) && typeof previews[firstImage(scene).file] === 'string';
     }
-    
+
     function renderProgress() {
         progressCallbacks.forEach(callback => callback(files));
     }
-    
+
     function combinedProgress(sceneFiles, allFiles) {
         return sceneFiles.length === 0
             ? 1
             : R.sum(sceneFiles.map(t => singleProgress(allFiles[t]))) / sceneFiles.length;
     }
-    
+
     function singleProgress(progress) {
         if (typeof progress === 'string') {
             return 1;
@@ -99,37 +98,37 @@ export default function(options:SoundboardViewCallbacks) {
             return 0;
         }
     }
-    
+
     dom.on(dom.id('stop-button'), 'click', () => {
         options.stopAllScenes();
     });
-    
+
     const volumeSlider = <HTMLInputElement> dom.id('volume-slider');
     dom.on(dom.id('volume-down'), 'click', () => {
         const volume = 0;
         volumeSlider.value = String(volume);
         options.changeVolume(volume);
     });
-    
+
     dom.on(dom.id('volume-up'), 'click', () => {
         const volume = 1;
         volumeSlider.value = String(volume);
         options.changeVolume(volume);
     });
-    
+
     dom.on(dom.id('volume-slider'), 'input', () => {
         const volume = parseFloat(volumeSlider.value);
         if (!isNaN(volume)) {
             options.changeVolume(volume);
         }
     });
-    
+
     dropdown.addEventListener('change', () => options.adventureSelected(dropdown.value));
-    
+
     function selectedAdventure() {
         return adventures[dropdown.value];
     }
-    
+
     return {
         previewLoaded: (id, url) => {
             previews[id] = url;
