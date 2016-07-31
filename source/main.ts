@@ -68,7 +68,12 @@ dom.on(window, 'DOMContentLoaded', () => {
             }
         }),
         loadingLibrary: LoadingLibraryView(dom.id('loading-library')),
-        error: SessionErrorView(dom.id('session-error'))
+        error: SessionErrorView(dom.id('session-error'), {
+            retry: () => {
+                enterState(State.StartingSession);
+                loadLibrary();
+            }
+        })
     };
 
     if (Storage.read().welcomed) {
