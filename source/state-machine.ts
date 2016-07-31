@@ -1,5 +1,6 @@
 export enum State {
     Loading,
+    NotWelcomed,
     AccountPossiblyConnected,
     AccountConnected,
     AccountNotConnected,
@@ -10,7 +11,8 @@ export enum State {
 };
 
 export function transitions(s:State):State[] {
-    if (s === State.Loading) return [State.AccountPossiblyConnected];
+    if (s === State.Loading) return [State.NotWelcomed, State.AccountPossiblyConnected];
+    if (s === State.NotWelcomed) return [State.AccountPossiblyConnected];
     if (s === State.AccountPossiblyConnected) return [State.AccountConnected, State.AccountNotConnected];
     if (s === State.AccountConnected) return [State.StartingSession];
     if (s === State.AccountNotConnected) return [State.StartingSession];

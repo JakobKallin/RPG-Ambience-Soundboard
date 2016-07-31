@@ -153,9 +153,12 @@ html {
   .page-welcome ul, .page-welcome p {
     margin-top: 1rem;
     margin-bottom: 1rem; }
-  .page-welcome .start {
+  .page-welcome a {
+    color: #00aaff;
+    text-decoration: underline; }
+  .page-welcome form {
     text-align: center; }
-  .page-welcome .start button {
+  .page-welcome form button {
     font-size: 1.5rem;
     padding: 0.5rem; }
 

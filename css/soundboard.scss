@@ -139,11 +139,16 @@ html {
         margin-bottom: 1rem;
     }
 
-    .start {
+    a {
+        color: hsl(200, 100%, 50%);
+        text-decoration: underline;
+    }
+
+    form {
         text-align: center;
     }
 
-    .start button {
+    form button {
         font-size: 1.5rem;
         padding: 0.5rem;
     }

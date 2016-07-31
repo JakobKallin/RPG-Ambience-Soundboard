@@ -1,18 +1,21 @@
 "use strict";
 (function (State) {
     State[State["Loading"] = 0] = "Loading";
-    State[State["AccountPossiblyConnected"] = 1] = "AccountPossiblyConnected";
-    State[State["AccountConnected"] = 2] = "AccountConnected";
-    State[State["AccountNotConnected"] = 3] = "AccountNotConnected";
-    State[State["StartingSession"] = 4] = "StartingSession";
-    State[State["SessionStarted"] = 5] = "SessionStarted";
-    State[State["LibraryLoaded"] = 6] = "LibraryLoaded";
-    State[State["SessionError"] = 7] = "SessionError";
+    State[State["NotWelcomed"] = 1] = "NotWelcomed";
+    State[State["AccountPossiblyConnected"] = 2] = "AccountPossiblyConnected";
+    State[State["AccountConnected"] = 3] = "AccountConnected";
+    State[State["AccountNotConnected"] = 4] = "AccountNotConnected";
+    State[State["StartingSession"] = 5] = "StartingSession";
+    State[State["SessionStarted"] = 6] = "SessionStarted";
+    State[State["LibraryLoaded"] = 7] = "LibraryLoaded";
+    State[State["SessionError"] = 8] = "SessionError";
 })(exports.State || (exports.State = {}));
 var State = exports.State;
 ;
 function transitions(s) {
     if (s === State.Loading)
+        return [State.NotWelcomed, State.AccountPossiblyConnected];
+    if (s === State.NotWelcomed)
         return [State.AccountPossiblyConnected];
     if (s === State.AccountPossiblyConnected)
         return [State.AccountConnected, State.AccountNotConnected];

@@ -869,6 +869,7 @@ const loading_library_1 = require('./views/loading-library');
 const soundboard_1 = require('./views/soundboard');
 const google_drive_2 = require('./views/google-drive');
 const session_error_1 = require('./views/session-error');
+const welcome_1 = require('./views/welcome');
 const dom = require('./document');
 const stage_1 = require('../libraries/ambience-stage/stage');
 const dom_1 = require('../libraries/ambience-stage/dom');
@@ -900,6 +901,15 @@ dom.on(window, 'DOMContentLoaded', () => {
     const appId = '907013371139';
     const library = library_1.default(google_drive_1.default(appId));
     const views = {
+        welcome: welcome_1.default(dom.id('welcome'), {
+            dismissed: () => {
+                Storage.modify(store => {
+                    store.welcomed = true;
+                    return store;
+                });
+                enterState(state_machine_1.State.AccountPossiblyConnected);
+            }
+        }),
         googleDrive: google_drive_2.default(dom.id('google-drive'), {
             login: () => {
                 library.authenticate(false)
@@ -913,9 +923,19 @@ dom.on(window, 'DOMContentLoaded', () => {
             }
         }),
         loadingLibrary: loading_library_1.default(dom.id('loading-library')),
-        error: session_error_1.default(dom.id('session-error'))
+        error: session_error_1.default(dom.id('session-error'), {
+            retry: () => {
+                enterState(state_machine_1.State.StartingSession);
+                loadLibrary();
+            }
+        })
     };
-    enterState(state_machine_1.State.AccountPossiblyConnected);
+    if (Storage.read().welcomed) {
+        enterState(state_machine_1.State.AccountPossiblyConnected);
+    }
+    else {
+        enterState(state_machine_1.State.NotWelcomed);
+    }
     function showPage(id, fade = 0) {
         const pages = dom.all('.page');
         const previous = R.last(pages);
@@ -1109,6 +1129,9 @@ dom.on(window, 'DOMContentLoaded', () => {
     function stateEntered(state, arg) {
         switch (state) {
             case state_machine_1.State.Loading: break;
+            case state_machine_1.State.NotWelcomed:
+                showPage('welcome', 0.25);
+                break;
             case state_machine_1.State.AccountPossiblyConnected:
                 attemptImmediateLogin();
                 break;
@@ -1135,7 +1158,7 @@ dom.on(window, 'DOMContentLoaded', () => {
     }
 });
 
-},{"../libraries/ambience-stage/dom":1,"../libraries/ambience-stage/stage":4,"./adventure/library":5,"./document":7,"./persistence":9,"./queue":10,"./state-machine":11,"./storage/google-drive":12,"./views/google-drive":13,"./views/loading-library":14,"./views/session-error":15,"./views/soundboard":16}],9:[function(require,module,exports){
+},{"../libraries/ambience-stage/dom":1,"../libraries/ambience-stage/stage":4,"./adventure/library":5,"./document":7,"./persistence":9,"./queue":10,"./state-machine":11,"./storage/google-drive":12,"./views/google-drive":13,"./views/loading-library":14,"./views/session-error":15,"./views/soundboard":16,"./views/welcome":17}],9:[function(require,module,exports){
 "use strict";
 function read(version, defaults) {
     const json = localStorage.getItem(version.toString());
@@ -1220,18 +1243,21 @@ exports.default = createQueue;
 "use strict";
 (function (State) {
     State[State["Loading"] = 0] = "Loading";
-    State[State["AccountPossiblyConnected"] = 1] = "AccountPossiblyConnected";
-    State[State["AccountConnected"] = 2] = "AccountConnected";
-    State[State["AccountNotConnected"] = 3] = "AccountNotConnected";
-    State[State["StartingSession"] = 4] = "StartingSession";
-    State[State["SessionStarted"] = 5] = "SessionStarted";
-    State[State["LibraryLoaded"] = 6] = "LibraryLoaded";
-    State[State["SessionError"] = 7] = "SessionError";
+    State[State["NotWelcomed"] = 1] = "NotWelcomed";
+    State[State["AccountPossiblyConnected"] = 2] = "AccountPossiblyConnected";
+    State[State["AccountConnected"] = 3] = "AccountConnected";
+    State[State["AccountNotConnected"] = 4] = "AccountNotConnected";
+    State[State["StartingSession"] = 5] = "StartingSession";
+    State[State["SessionStarted"] = 6] = "SessionStarted";
+    State[State["LibraryLoaded"] = 7] = "LibraryLoaded";
+    State[State["SessionError"] = 8] = "SessionError";
 })(exports.State || (exports.State = {}));
 var State = exports.State;
 ;
 function transitions(s) {
     if (s === State.Loading)
+        return [State.NotWelcomed, State.AccountPossiblyConnected];
+    if (s === State.NotWelcomed)
         return [State.AccountPossiblyConnected];
     if (s === State.AccountPossiblyConnected)
         return [State.AccountConnected, State.AccountNotConnected];
@@ -1469,11 +1495,15 @@ exports.default = default_1;
 },{"../document":7}],15:[function(require,module,exports){
 "use strict";
 const dom = require('../document');
-function default_1(page) {
+function default_1(page, signal) {
     function showError(message) {
         dom.id('session-error-detail').textContent = message;
     }
     showError('');
+    dom.on(dom.first('form', page), 'submit', event => {
+        event.preventDefault();
+        signal.retry();
+    });
     return {
         error: error => showError(error.message)
     };
@@ -1607,5 +1637,17 @@ function default_1(options) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 ;
+
+},{"../document":7}],17:[function(require,module,exports){
+"use strict";
+const dom = require('../document');
+function default_1(page, signal) {
+    dom.on(dom.first('form', page), 'submit', event => {
+        event.preventDefault();
+        signal.dismissed();
+    });
+}
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = default_1;
 
 },{"../document":7}]},{},[8]);

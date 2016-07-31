@@ -5,6 +5,7 @@ const loading_library_1 = require('./views/loading-library');
 const soundboard_1 = require('./views/soundboard');
 const google_drive_2 = require('./views/google-drive');
 const session_error_1 = require('./views/session-error');
+const welcome_1 = require('./views/welcome');
 const dom = require('./document');
 const stage_1 = require('../libraries/ambience-stage/stage');
 const dom_1 = require('../libraries/ambience-stage/dom');
@@ -36,6 +37,15 @@ dom.on(window, 'DOMContentLoaded', () => {
     const appId = '907013371139';
     const library = library_1.default(google_drive_1.default(appId));
     const views = {
+        welcome: welcome_1.default(dom.id('welcome'), {
+            dismissed: () => {
+                Storage.modify(store => {
+                    store.welcomed = true;
+                    return store;
+                });
+                enterState(state_machine_1.State.AccountPossiblyConnected);
+            }
+        }),
         googleDrive: google_drive_2.default(dom.id('google-drive'), {
             login: () => {
                 library.authenticate(false)
@@ -49,9 +59,19 @@ dom.on(window, 'DOMContentLoaded', () => {
             }
         }),
         loadingLibrary: loading_library_1.default(dom.id('loading-library')),
-        error: session_error_1.default(dom.id('session-error'))
+        error: session_error_1.default(dom.id('session-error'), {
+            retry: () => {
+                enterState(state_machine_1.State.StartingSession);
+                loadLibrary();
+            }
+        })
     };
-    enterState(state_machine_1.State.AccountPossiblyConnected);
+    if (Storage.read().welcomed) {
+        enterState(state_machine_1.State.AccountPossiblyConnected);
+    }
+    else {
+        enterState(state_machine_1.State.NotWelcomed);
+    }
     function showPage(id, fade = 0) {
         const pages = dom.all('.page');
         const previous = R.last(pages);
@@ -245,6 +265,9 @@ dom.on(window, 'DOMContentLoaded', () => {
     function stateEntered(state, arg) {
         switch (state) {
             case state_machine_1.State.Loading: break;
+            case state_machine_1.State.NotWelcomed:
+                showPage('welcome', 0.25);
+                break;
             case state_machine_1.State.AccountPossiblyConnected:
                 attemptImmediateLogin();
                 break;
