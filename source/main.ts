@@ -4,6 +4,7 @@ import LoadingLibraryView from './views/loading-library';
 import SoundboardView from './views/soundboard';
 import GoogleDriveView from './views/google-drive';
 import SessionErrorView from './views/session-error';
+import WelcomeView from './views/welcome';
 import * as dom from './document';
 import AmbienceStage from '../libraries/ambience-stage/stage';
 import AmbienceStageDOM from '../libraries/ambience-stage/dom';
@@ -15,7 +16,8 @@ declare var R:any;
 const version = 0;
 
 interface Store {
-    adventure?:string
+    adventure?:string,
+    welcomed?:boolean
 }
 const defaultStore:Store = {};
 
@@ -44,6 +46,15 @@ dom.on(window, 'DOMContentLoaded', () => {
     const library = Library(GoogleDrive(appId));
 
     const views = {
+        welcome: WelcomeView(dom.id('welcome'), {
+            dismissed: () => {
+                Storage.modify(store => {
+                    store.welcomed = true;
+                    return store;
+                });
+                enterState(State.AccountPossiblyConnected);
+            }
+        }),
         googleDrive: GoogleDriveView(dom.id('google-drive'), {
             login: () => {
                 library.authenticate(false)
@@ -53,14 +64,19 @@ dom.on(window, 'DOMContentLoaded', () => {
                 })
                 .catch(error => {
                     enterState(State.SessionError, error)
-                })
+                });
             }
         }),
         loadingLibrary: LoadingLibraryView(dom.id('loading-library')),
         error: SessionErrorView(dom.id('session-error'))
     };
 
-    enterState(State.AccountPossiblyConnected);
+    if (Storage.read().welcomed) {
+        enterState(State.AccountPossiblyConnected);
+    }
+    else {
+        enterState(State.NotWelcomed);
+    }
 
     function showPage(id:string, fade:number=0):void {
         const pages = dom.all('.page');
@@ -275,6 +291,7 @@ dom.on(window, 'DOMContentLoaded', () => {
     function stateEntered(state:State, arg?:any):void {
         switch(state) {
             case State.Loading: break;
+            case State.NotWelcomed: showPage('welcome', 0.25); break;
             case State.AccountPossiblyConnected: attemptImmediateLogin(); break;
             case State.AccountConnected:
                 enterState(State.StartingSession);
