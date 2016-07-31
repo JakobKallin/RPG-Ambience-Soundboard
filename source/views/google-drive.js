@@ -1,7 +1,7 @@
 "use strict";
-const dom = require('../document');
+var dom = require('../document');
 function default_1(page, signal) {
-    dom.on(dom.first('form', page), 'submit', event => {
+    dom.on(dom.first('form', page), 'submit', function (event) {
         event.preventDefault();
         signal.login();
     });

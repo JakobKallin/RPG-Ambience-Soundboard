@@ -1,12 +1,12 @@
 "use strict";
 function dom(container) {
     return {
-        time: () => new Date().getTime(),
-        scene: update => {
-            const scene = document.createElement('div');
+        time: function () { return new Date().getTime(); },
+        scene: function (update) {
+            var scene = document.createElement('div');
             scene.className = 'scene';
             container.appendChild(scene);
-            const fading = {
+            var fading = {
                 in: true,
                 out: false
             };
@@ -23,10 +23,10 @@ function dom(container) {
                 fade: {
                     in: {
                         step: step,
-                        stop: () => fading.in = false
+                        stop: function () { return fading.in = false; }
                     },
                     out: {
-                        start: () => {
+                        start: function () {
                             fading.out = true;
                             requestAnimationFrame(function frame() {
                                 if (fading.out) {
@@ -38,26 +38,26 @@ function dom(container) {
                         step: step
                     }
                 },
-                stop: () => {
+                stop: function () {
                     container.removeChild(scene);
                     fading.out = false;
                 },
                 image: function (image) {
-                    const element = document.createElement('img');
+                    var element = document.createElement('img');
                     element.src = image.url;
                     element.className = 'image';
                     scene.appendChild(element);
                     if (image.style) {
                         Object.keys(image.style).forEach(function (cssKey) {
-                            const cssValue = image.style[cssKey];
+                            var cssValue = image.style[cssKey];
                             element.style[cssKey] = cssValue;
                         });
                     }
                     return {
-                        stop: () => scene.removeChild(element)
+                        stop: function () { return scene.removeChild(element); }
                     };
                 },
-                sound: () => {
+                sound: function () {
                     // Mobile Chrome (at least) only allows audio to be played
                     // as a direct result of user interaction, which means that
                     // overlap cannot trigger audio playback directly as it
@@ -66,21 +66,21 @@ function dom(container) {
                     // on that element later in any context. We thus create a
                     // pool of two audio elements that we then alternate between
                     // in order to support overlap.
-                    const elements = {
+                    var elements = {
                         busy: [],
                         idle: []
                     };
-                    [0, 1].forEach(i => {
-                        const element = document.createElement('audio');
+                    [0, 1].forEach(function (i) {
+                        var element = document.createElement('audio');
                         element.play();
                         element.pause();
                         element.className = 'track';
                         elements.idle.push(element);
                     });
                     return {
-                        stop: () => { },
-                        track: url => {
-                            const element = elements.idle.pop();
+                        stop: function () { },
+                        track: function (url) {
+                            var element = elements.idle.pop();
                             element.src = url;
                             element.className = 'track';
                             element.addEventListener('timeupdate', update);
@@ -88,7 +88,7 @@ function dom(container) {
                             element.play();
                             elements.busy.push(element);
                             return {
-                                stop: () => {
+                                stop: function () {
                                     element.pause();
                                     scene.removeChild(element);
                                     element.currentTime = 0;
@@ -97,10 +97,10 @@ function dom(container) {
                                     elements.busy.splice(elements.busy.indexOf(element), 1);
                                     elements.idle.push(element);
                                 },
-                                fade: volume => {
+                                fade: function (volume) {
                                     element.volume = volume;
                                 },
-                                duration: () => element.duration * 1000
+                                duration: function () { return element.duration * 1000; }
                             };
                         }
                     };

@@ -1,10 +1,10 @@
 "use strict";
 function createQueue(limit) {
-    const waiting = [];
-    const running = [];
-    let timer = null;
+    var waiting = [];
+    var running = [];
+    var timer = null;
     function add(task) {
-        return new Promise((resolve, reject) => {
+        return new Promise(function (resolve, reject) {
             waiting.unshift({
                 resolve: resolve,
                 reject: reject,
@@ -20,16 +20,16 @@ function createQueue(limit) {
     }
     function execute() {
         timer = null;
-        const starting = waiting.slice(0, limit - running.length);
-        starting.forEach(entry => {
+        var starting = waiting.slice(0, limit - running.length);
+        starting.forEach(function (entry) {
             waiting.splice(waiting.indexOf(entry), 1);
             running.push(entry);
             entry.task()
-                .then((x) => {
+                .then(function (x) {
                 entry.resolve(x);
                 complete();
             })
-                .catch((e) => {
+                .catch(function (e) {
                 entry.reject(e);
                 complete();
             });

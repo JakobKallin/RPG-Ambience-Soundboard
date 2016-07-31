@@ -1,21 +1,21 @@
 "use strict";
-const dom = require('../document');
+var dom = require('../document');
 function default_1(page) {
     dom.first('progress', page).value = 0;
-    const events = dom.first('.events', page);
-    const template = events.firstElementChild;
+    var events = dom.first('.events', page);
+    var template = events.firstElementChild;
     template.remove();
     return {
-        progress: ratio => {
+        progress: function (ratio) {
             dom.first('progress', page).value = ratio;
         },
-        event: text => {
-            const instance = template.cloneNode(true);
+        event: function (text) {
+            var instance = template.cloneNode(true);
             instance.textContent = text;
             events.insertBefore(instance, events.firstElementChild);
         },
-        error: text => {
-            const instance = template.cloneNode(true);
+        error: function (text) {
+            var instance = template.cloneNode(true);
             instance.textContent = text;
             instance.classList.add('error');
             events.insertBefore(instance, events.firstElementChild);

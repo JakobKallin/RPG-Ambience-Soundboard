@@ -1,11 +1,12 @@
 "use strict";
-const scene_1 = require('./scene');
+var scene_1 = require('./scene');
 function stage(outside) {
-    let fadingOut = null;
-    let fadingIn = null;
-    let volume = 1;
+    var fadingOut = null;
+    var fadingIn = null;
+    var volume = 1;
     return {
-        start: (items, fadeInDuration = 0) => {
+        start: function (items, fadeInDuration) {
+            if (fadeInDuration === void 0) { fadeInDuration = 0; }
             if (fadingOut)
                 fadingOut.stop();
             fadingOut = fadingIn;
@@ -13,7 +14,7 @@ function stage(outside) {
                 fadingOut.stop(fadeInDuration);
             fadingIn = scene_1.default(items, fadeInDuration, volume, outside);
         },
-        volume: (newVolume) => {
+        volume: function (newVolume) {
             volume = newVolume;
             if (fadingOut)
                 fadingOut.volume(newVolume);

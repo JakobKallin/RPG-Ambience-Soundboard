@@ -1,44 +1,44 @@
 "use strict";
 function startSound(sound, outside) {
-    const loop = 'loop' in sound ? sound.loop : true;
-    const shuffle = 'shuffle' in sound ? sound.shuffle : true;
-    const overlap = sound.overlap || 0;
-    const shuffleArray = outside.shuffle || shuffleArrayRandomly;
-    let volume = 0;
-    let tracks = sound.tracks.slice();
+    var loop = 'loop' in sound ? sound.loop : true;
+    var shuffle = 'shuffle' in sound ? sound.shuffle : true;
+    var overlap = sound.overlap || 0;
+    var shuffleArray = outside.shuffle || shuffleArrayRandomly;
+    var volume = 0;
+    var tracks = sound.tracks.slice();
     if (sound.tracks.length === 0) {
         throw new Error('Cannot start sound without tracks.');
     }
     if (shuffle) {
         tracks = shuffleArray(tracks);
     }
-    const soundHandle = outside.sound();
-    const outsideTracks = [];
-    let updateLatest = startTrack(0);
-    const fadeSound = newVolume => {
+    var soundHandle = outside.sound();
+    var outsideTracks = [];
+    var updateLatest = startTrack(0);
+    var fadeSound = function (newVolume) {
         volume = newVolume;
-        outsideTracks.forEach(t => t.fade(volume));
+        outsideTracks.forEach(function (t) { return t.fade(volume); });
     };
-    const stopSound = once(() => {
-        outsideTracks.forEach(t => t.stop());
+    var stopSound = once(function () {
+        outsideTracks.forEach(function (t) { return t.stop(); });
         soundHandle.stop();
     });
     return {
         fade: fadeSound,
         stop: stopSound,
-        update: () => updateLatest()
+        update: function () { return updateLatest(); }
     };
     function startTrack(index) {
-        const startTime = outside.time();
-        const outsideTrack = soundHandle.track(tracks[index]);
+        var startTime = outside.time();
+        var outsideTrack = soundHandle.track(tracks[index]);
         outsideTrack.stop = once(outsideTrack.stop);
         outsideTracks.push(outsideTrack);
         outsideTrack.fade(volume);
-        let updateNext = nothing;
+        var updateNext = nothing;
         return function update() {
-            const currentTime = outside.time();
-            const elapsed = currentTime - startTime;
-            const duration = outsideTrack.duration();
+            var currentTime = outside.time();
+            var elapsed = currentTime - startTime;
+            var duration = outsideTrack.duration();
             // Duration not known yet, so don't attempt any overlap until it is.
             if (isNaN(duration)) {
                 return true;
@@ -74,9 +74,9 @@ function startSound(sound, outside) {
         return true;
     }
     function once(callback) {
-        const args = arguments;
-        let called = false;
-        return () => {
+        var args = arguments;
+        var called = false;
+        return function () {
             if (!called) {
                 called = true;
                 callback.apply(undefined, args);
@@ -88,10 +88,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = startSound;
 ;
 function shuffleArrayRandomly(array) {
-    const source = array.slice();
-    const result = [];
+    var source = array.slice();
+    var result = [];
     while (source.length > 0) {
-        const index = randomInteger(source.length - 1);
+        var index = randomInteger(source.length - 1);
         result.push(source[index]);
         source.splice(index, 1);
     }

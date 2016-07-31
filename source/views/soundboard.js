@@ -1,44 +1,44 @@
 "use strict";
-const dom = require('../document');
+var dom = require('../document');
 function default_1(options) {
-    const dropdown = options.dropdown;
-    const adventures = options.adventures;
-    const scenes = R.fromPairs(R.unnest(R.values(adventures).map(adventure => {
-        return adventure.scenes.map((scene, i) => [adventure.id + '/' + i, scene]);
+    var dropdown = options.dropdown;
+    var adventures = options.adventures;
+    var scenes = R.fromPairs(R.unnest(R.values(adventures).map(function (adventure) {
+        return adventure.scenes.map(function (scene, i) { return [adventure.id + '/' + i, scene]; });
     })));
-    const previews = {};
-    const files = {};
-    const progressCallbacks = [];
-    dom.replicate(adventures, dropdown, { sort: a => a.title }, {
+    var previews = {};
+    var files = {};
+    var progressCallbacks = [];
+    dom.replicate(adventures, dropdown, { sort: function (a) { return a.title; } }, {
         'option': {
-            text: adventure => adventure.title,
-            value: adventure => adventure.id
+            text: function (adventure) { return adventure.title; },
+            value: function (adventure) { return adventure.id; }
         }
     });
-    const render = dom.replicate(scenes, dom.first('.scene-list'), {
-        sort: scene => selectedAdventure().scenes.indexOf(scene),
-        filter: scene => selectedAdventure().scenes.includes(scene)
+    var render = dom.replicate(scenes, dom.first('.scene-list'), {
+        sort: function (scene) { return selectedAdventure().scenes.indexOf(scene); },
+        filter: function (scene) { return selectedAdventure().scenes.includes(scene); }
     }, {
-        '.scene': { node: (node, scene) => {
+        '.scene': { node: function (node, scene) {
                 node.classList.add('loading');
-                progressCallbacks.push(allFiles => {
-                    const loading = sceneFiles(scene).some(f => !(f in allFiles) || typeof allFiles[f] === 'number');
+                progressCallbacks.push(function (allFiles) {
+                    var loading = sceneFiles(scene).some(function (f) { return !(f in allFiles) || typeof allFiles[f] === 'number'; });
                     node.classList.toggle('loading', loading);
                 });
                 node.classList.toggle('with-image', Boolean(firstImage(scene)));
             } },
-        '.scene-title': scene => scene.name || String.fromCharCode(160),
-        '.scene-hotkey': scene => scene.key || '',
+        '.scene-title': function (scene) { return scene.name || String.fromCharCode(160); },
+        '.scene-hotkey': function (scene) { return scene.key || ''; },
         '.scene-button': { on: { click: options.playScene } },
         '.scene-preview-image': {
-            hidden: scene => !firstImage(scene),
-            on: { load: (scene, image) => image.classList.add('loaded') },
-            src: scene => hasImagePreview(scene)
+            hidden: function (scene) { return !firstImage(scene); },
+            on: { load: function (scene, image) { return image.classList.add('loaded'); } },
+            src: function (scene) { return hasImagePreview(scene)
                 ? previews[firstImage(scene).file]
-                : ''
+                : ''; }
         },
-        'progress': { node: (node, scene) => {
-                progressCallbacks.push(allFiles => {
+        'progress': { node: function (node, scene) {
+                progressCallbacks.push(function (allFiles) {
                     node.value = combinedProgress(sceneFiles(scene), allFiles);
                 });
             } }
@@ -47,21 +47,21 @@ function default_1(options) {
         return firstSound(scene).tracks;
     }
     function firstImage(scene) {
-        return scene.media.filter(m => m.type === 'image')[0];
+        return scene.media.filter(function (m) { return m.type === 'image'; })[0];
     }
     function firstSound(scene) {
-        return scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
+        return scene.media.filter(function (m) { return m.type === 'sound'; })[0] || { tracks: [] };
     }
     function hasImagePreview(scene) {
         return firstImage(scene) && typeof previews[firstImage(scene).file] === 'string';
     }
     function renderProgress() {
-        progressCallbacks.forEach(callback => callback(files));
+        progressCallbacks.forEach(function (callback) { return callback(files); });
     }
     function combinedProgress(sceneFiles, allFiles) {
         return sceneFiles.length === 0
             ? 1
-            : R.sum(sceneFiles.map(t => singleProgress(allFiles[t]))) / sceneFiles.length;
+            : R.sum(sceneFiles.map(function (t) { return singleProgress(allFiles[t]); })) / sceneFiles.length;
     }
     function singleProgress(progress) {
         if (typeof progress === 'string') {
@@ -74,47 +74,47 @@ function default_1(options) {
             return 0;
         }
     }
-    dom.on(dom.id('stop-button'), 'click', () => {
+    dom.on(dom.id('stop-button'), 'click', function () {
         options.stopAllScenes();
     });
-    const volumeSlider = dom.id('volume-slider');
-    dom.on(dom.id('volume-down'), 'click', () => {
-        const volume = 0;
+    var volumeSlider = dom.id('volume-slider');
+    dom.on(dom.id('volume-down'), 'click', function () {
+        var volume = 0;
         volumeSlider.value = String(volume);
         options.changeVolume(volume);
     });
-    dom.on(dom.id('volume-up'), 'click', () => {
-        const volume = 1;
+    dom.on(dom.id('volume-up'), 'click', function () {
+        var volume = 1;
         volumeSlider.value = String(volume);
         options.changeVolume(volume);
     });
-    dom.on(dom.id('volume-slider'), 'input', () => {
-        const volume = parseFloat(volumeSlider.value);
+    dom.on(dom.id('volume-slider'), 'input', function () {
+        var volume = parseFloat(volumeSlider.value);
         if (!isNaN(volume)) {
             options.changeVolume(volume);
         }
     });
-    dom.on(dom.id('fullscreen'), 'click', () => {
+    dom.on(dom.id('fullscreen'), 'click', function () {
         dom.toggleFullscreen();
     });
-    dropdown.addEventListener('change', () => options.adventureSelected(dropdown.value));
+    dropdown.addEventListener('change', function () { return options.adventureSelected(dropdown.value); });
     function selectedAdventure() {
         return adventures[dropdown.value];
     }
     return {
-        previewLoaded: (id, url) => {
+        previewLoaded: function (id, url) {
             previews[id] = url;
             render(scenes);
         },
-        fileProgress: (id, ratio) => {
+        fileProgress: function (id, ratio) {
             files[id] = ratio;
             renderProgress();
         },
-        fileLoaded: (id, url) => {
+        fileLoaded: function (id, url) {
             files[id] = url;
             renderProgress();
         },
-        adventureSelected: id => {
+        adventureSelected: function (id) {
             dropdown.value = id;
             render(scenes);
         }

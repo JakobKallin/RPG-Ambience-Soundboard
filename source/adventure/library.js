@@ -1,5 +1,5 @@
 "use strict";
-const upgrade_1 = require('./upgrade');
+var upgrade_1 = require('./upgrade');
 function default_1(backend) {
     function list(signal) {
         signal.adventureListDownloadStarted();
@@ -9,16 +9,16 @@ function default_1(backend) {
         })
             .then(function (ids) {
             signal.adventureListDownloadFinished(ids.length);
-            const adventures = {};
+            var adventures = {};
             return Promise.all(ids.map(function (id) {
                 signal.adventureDownloadStarted(id);
                 return backend.download.contents(id).then(function (adventureToUpgrade) {
-                    const adventure = upgrade_1.default(adventureToUpgrade);
+                    var adventure = upgrade_1.default(adventureToUpgrade);
                     signal.adventureDownloadFinished(id);
                     adventure.id = id;
                     adventures[id] = adventure;
                 })
-                    .catch(() => signal.adventureDownloadError(id));
+                    .catch(function () { return signal.adventureDownloadError(id); });
             }))
                 .then(function () {
                 return adventures;
@@ -27,7 +27,7 @@ function default_1(backend) {
     }
     function download(id, progress) {
         return backend.download.blob(id, progress)
-            .then(blob => URL.createObjectURL(blob));
+            .then(function (blob) { return URL.createObjectURL(blob); });
     }
     function preview(id) {
         return backend.download.preview(id);

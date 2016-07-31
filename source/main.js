@@ -1,19 +1,19 @@
 "use strict";
-const library_1 = require('./adventure/library');
-const google_drive_1 = require('./storage/google-drive');
-const loading_library_1 = require('./views/loading-library');
-const soundboard_1 = require('./views/soundboard');
-const google_drive_2 = require('./views/google-drive');
-const session_error_1 = require('./views/session-error');
-const welcome_1 = require('./views/welcome');
-const dom = require('./document');
-const stage_1 = require('../libraries/ambience-stage/stage');
-const dom_1 = require('../libraries/ambience-stage/dom');
-const state_machine_1 = require('./state-machine');
-const queue_1 = require('./queue');
-const Persistence = require('./persistence');
-const version = 0;
-const defaultStore = {};
+var library_1 = require('./adventure/library');
+var google_drive_1 = require('./storage/google-drive');
+var loading_library_1 = require('./views/loading-library');
+var soundboard_1 = require('./views/soundboard');
+var google_drive_2 = require('./views/google-drive');
+var session_error_1 = require('./views/session-error');
+var welcome_1 = require('./views/welcome');
+var dom = require('./document');
+var stage_1 = require('../libraries/ambience-stage/stage');
+var dom_1 = require('../libraries/ambience-stage/dom');
+var state_machine_1 = require('./state-machine');
+var queue_1 = require('./queue');
+var Persistence = require('./persistence');
+var version = 0;
+var defaultStore = {};
 var Storage;
 (function (Storage) {
     function read() {
@@ -25,21 +25,21 @@ var Storage;
     }
     Storage.modify = modify;
 })(Storage || (Storage = {}));
-dom.on(window, 'DOMContentLoaded', () => {
-    let state = state_machine_1.State.Loading;
+dom.on(window, 'DOMContentLoaded', function () {
+    var state = state_machine_1.State.Loading;
     stateEntered(state);
-    const latest = {
+    var latest = {
         fade: {
             background: 0,
             foreground: 0
         }
     };
-    const appId = '907013371139';
-    const library = library_1.default(google_drive_1.default(appId));
-    const views = {
+    var appId = '907013371139';
+    var library = library_1.default(google_drive_1.default(appId));
+    var views = {
         welcome: welcome_1.default(dom.id('welcome'), {
-            dismissed: () => {
-                Storage.modify(store => {
+            dismissed: function () {
+                Storage.modify(function (store) {
                     store.welcomed = true;
                     return store;
                 });
@@ -47,20 +47,20 @@ dom.on(window, 'DOMContentLoaded', () => {
             }
         }),
         googleDrive: google_drive_2.default(dom.id('google-drive'), {
-            login: () => {
+            login: function () {
                 library.authenticate(false)
-                    .then(() => {
+                    .then(function () {
                     enterState(state_machine_1.State.StartingSession);
                     return loadLibrary();
                 })
-                    .catch(error => {
+                    .catch(function (error) {
                     enterState(state_machine_1.State.SessionError, error);
                 });
             }
         }),
         loadingLibrary: loading_library_1.default(dom.id('loading-library')),
         error: session_error_1.default(dom.id('session-error'), {
-            retry: () => {
+            retry: function () {
                 enterState(state_machine_1.State.StartingSession);
                 loadLibrary();
             }
@@ -72,11 +72,12 @@ dom.on(window, 'DOMContentLoaded', () => {
     else {
         enterState(state_machine_1.State.NotWelcomed);
     }
-    function showPage(id, fade = 0) {
-        const pages = dom.all('.page');
-        const previous = R.last(pages);
-        const next = pages.filter(p => p.id === id)[0];
-        pages.forEach(p => {
+    function showPage(id, fade) {
+        if (fade === void 0) { fade = 0; }
+        var pages = dom.all('.page');
+        var previous = R.last(pages);
+        var next = pages.filter(function (p) { return p.id === id; })[0];
+        pages.forEach(function (p) {
             p.style.transitionProperty = '';
             p.style.transitionDuration = '';
             p.style.opacity = '';
@@ -89,11 +90,11 @@ dom.on(window, 'DOMContentLoaded', () => {
             node.style.opacity = '0';
             node.style.transitionProperty = 'opacity';
             node.style.transitionDuration = duration + 's';
-            setTimeout(() => node.style.opacity = '1', 0);
+            setTimeout(function () { return node.style.opacity = '1'; }, 0);
         }
         function hideAfter(node, duration) {
-            setTimeout(() => {
-                const pages = dom.all('.page');
+            setTimeout(function () {
+                var pages = dom.all('.page');
                 // Do not hide if this is the last page, as that means it has
                 // been shown again during the timeout.
                 if (node !== pages[pages.length - 1]) {
@@ -103,22 +104,22 @@ dom.on(window, 'DOMContentLoaded', () => {
         }
     }
     function loadLibrary() {
-        let adventureLimit = 1;
-        let adventureCount = 0;
-        const signalProgress = {
-            adventureListDownloadStarted: () => views.loadingLibrary.event('Downloading adventure list…'),
-            adventureListDownloadFinished: (count) => {
+        var adventureLimit = 1;
+        var adventureCount = 0;
+        var signalProgress = {
+            adventureListDownloadStarted: function () { return views.loadingLibrary.event('Downloading adventure list…'); },
+            adventureListDownloadFinished: function (count) {
                 views.loadingLibrary.event('Finished downloading adventure list');
                 views.loadingLibrary.event('Downloading adventures…');
                 adventureLimit = count;
             },
-            adventureDownloadStarted: (id) => id,
-            adventureDownloadError: (id) => {
+            adventureDownloadStarted: function (id) { return id; },
+            adventureDownloadError: function (id) {
                 views.loadingLibrary.error('Error downloading adventure ' + id);
                 adventureCount += 1;
                 views.loadingLibrary.progress(adventureCount / adventureLimit);
             },
-            adventureDownloadFinished: (id) => {
+            adventureDownloadFinished: function (id) {
                 views.loadingLibrary.event('Finished downloading adventure ' + id);
                 adventureCount += 1;
                 views.loadingLibrary.progress(adventureCount / adventureLimit);
@@ -126,30 +127,30 @@ dom.on(window, 'DOMContentLoaded', () => {
         };
         enterState(state_machine_1.State.SessionStarted);
         return library.list(signalProgress)
-            .then(adventures => {
+            .then(function (adventures) {
             enterState(state_machine_1.State.LibraryLoaded);
             startSoundboard(adventures);
         })
-            .catch(error => {
+            .catch(function (error) {
             console.error(error);
             enterState(state_machine_1.State.SessionError, error);
         });
     }
-    let selectedAdventure = null;
-    const queueFileDownload = queue_1.default(3);
-    const queuePreviewDownload = queue_1.default(50);
+    var selectedAdventure = null;
+    var queueFileDownload = queue_1.default(3);
+    var queuePreviewDownload = queue_1.default(50);
     function startSoundboard(adventures) {
-        const previews = {};
-        const files = {};
-        const loadFile = R.memoize((id) => {
-            return new Promise((resolve, reject) => {
+        var previews = {};
+        var files = {};
+        var loadFile = R.memoize(function (id) {
+            return new Promise(function (resolve, reject) {
                 // Immediate timeout because this is actually called before
                 // `SoundboardView` returns, so we don't have the soundboard
                 // callbacks available to us.
-                setTimeout(() => {
+                setTimeout(function () {
                     soundboard.fileProgress(id, 0);
-                    return queueFileDownload(() => {
-                        return library.download(id, (ratio) => {
+                    return queueFileDownload(function () {
+                        return library.download(id, function (ratio) {
                             soundboard.fileProgress(id, ratio);
                         });
                     })
@@ -158,46 +159,46 @@ dom.on(window, 'DOMContentLoaded', () => {
                 }, 0);
             });
         });
-        const background = stage_1.default(dom_1.default(dom.id('background')));
-        const foreground = stage_1.default(dom_1.default(dom.id('foreground')));
-        const soundboard = soundboard_1.default({
+        var background = stage_1.default(dom_1.default(dom.id('background')));
+        var foreground = stage_1.default(dom_1.default(dom.id('foreground')));
+        var soundboard = soundboard_1.default({
             adventures: adventures,
             dropdown: document.getElementById('adventure'),
             playScene: playScene,
             stopAllScenes: stopAllScenes,
-            adventureSelected: (id) => selectAdventure(id),
-            changeVolume: volume => {
+            adventureSelected: function (id) { return selectAdventure(id); },
+            changeVolume: function (volume) {
                 background.volume(volume);
                 foreground.volume(volume);
             }
         });
         selectAdventure(Storage.read().adventure ||
-            R.sortBy(id => adventures[id].title, Object.keys(adventures))[0]);
-        dom.on(document, 'keydown', (event) => {
+            R.sortBy(function (id) { return adventures[id].title; }, Object.keys(adventures))[0]);
+        dom.on(document, 'keydown', function (event) {
             playSceneWithHotkey(dom.key(event.keyCode));
         });
-        dom.on(document, 'keypress', (event) => {
+        dom.on(document, 'keypress', function (event) {
             playSceneWithHotkey(dom.key(event.charCode));
         });
         function selectAdventure(id) {
-            const adventure = adventures[id];
+            var adventure = adventures[id];
             selectedAdventure = adventure;
             // Reverse order of scenes because queue is FIFO.
-            R.reverse(adventure.scenes).forEach((scene) => {
-                const firstImage = scene.media.filter(m => m.type === 'image')[0];
+            R.reverse(adventure.scenes).forEach(function (scene) {
+                var firstImage = scene.media.filter(function (m) { return m.type === 'image'; })[0];
                 if (firstImage && !(firstImage.file in previews)) {
-                    previews[firstImage.file] = queuePreviewDownload(() => {
+                    previews[firstImage.file] = queuePreviewDownload(function () {
                         return library.preview(firstImage.file);
                     })
-                        .then((url) => soundboard.previewLoaded(firstImage.file, url));
+                        .then(function (url) { return soundboard.previewLoaded(firstImage.file, url); });
                 }
-                const firstSound = scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
-                firstSound.tracks.forEach((t) => loadFile(t).then((url) => {
+                var firstSound = scene.media.filter(function (m) { return m.type === 'sound'; })[0] || { tracks: [] };
+                firstSound.tracks.forEach(function (t) { return loadFile(t).then(function (url) {
                     soundboard.fileLoaded(t, url);
-                }));
+                }); });
             });
             soundboard.adventureSelected(id);
-            Storage.modify(store => {
+            Storage.modify(function (store) {
                 store.adventure = id;
                 return store;
             });
@@ -205,7 +206,7 @@ dom.on(window, 'DOMContentLoaded', () => {
         function playSceneWithHotkey(hotkey) {
             if (!selectedAdventure)
                 return;
-            const scenes = selectedAdventure.scenes.filter((s) => s.key === hotkey);
+            var scenes = selectedAdventure.scenes.filter(function (s) { return s.key === hotkey; });
             scenes.forEach(playScene);
         }
         function stopAllScenes() {
@@ -213,16 +214,16 @@ dom.on(window, 'DOMContentLoaded', () => {
             foreground.start([], latest.fade.foreground * 1000);
         }
         function playScene(scene) {
-            const firstImage = scene.media.filter(m => m.type === 'image')[0];
-            const firstSound = scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
+            var firstImage = scene.media.filter(function (m) { return m.type === 'image'; })[0];
+            var firstSound = scene.media.filter(function (m) { return m.type === 'sound'; })[0] || { tracks: [] };
             Promise.all([
                 firstImage ? loadFile(firstImage.file) : null,
-                Promise.all(firstSound.tracks.map((t) => loadFile(t)))
+                Promise.all(firstSound.tracks.map(function (t) { return loadFile(t); }))
             ])
-                .then(files => {
-                const imageFile = files[0];
-                const soundFiles = files[1];
-                const items = [];
+                .then(function (files) {
+                var imageFile = files[0];
+                var soundFiles = files[1];
+                var items = [];
                 if (imageFile) {
                     items.push({
                         type: 'image',
@@ -242,7 +243,7 @@ dom.on(window, 'DOMContentLoaded', () => {
                         volume: firstSound.volume / 100
                     });
                 }
-                const layer = scene.layer === 'foreground' ? foreground : background;
+                var layer = scene.layer === 'foreground' ? foreground : background;
                 latest.fade[scene.layer] = scene.fade.out;
                 layer.start(items, scene.fade.in * 1000);
             });
@@ -250,8 +251,8 @@ dom.on(window, 'DOMContentLoaded', () => {
     }
     function attemptImmediateLogin() {
         library.authenticate(true)
-            .then(() => enterState(state_machine_1.State.AccountConnected))
-            .catch(() => enterState(state_machine_1.State.AccountNotConnected));
+            .then(function () { return enterState(state_machine_1.State.AccountConnected); })
+            .catch(function () { return enterState(state_machine_1.State.AccountNotConnected); });
     }
     function enterState(newState, arg) {
         if (R.contains(newState, state_machine_1.transitions(state))) {

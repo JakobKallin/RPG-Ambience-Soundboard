@@ -1,43 +1,43 @@
 "use strict";
 function default_1(appId) {
-    const ids = {
+    var ids = {
         app: appId
     };
     ids.client = ids.app + '.apps.googleusercontent.com';
-    const urls = {
+    var urls = {
         files: 'https://www.googleapis.com/drive/v3/files',
         client: 'https://apis.google.com/js/client.js',
         scope: 'https://www.googleapis.com/auth/drive'
     };
     function downloadMetadata(id) {
-        const url = urls.files + '/' + id + '?fields=thumbnailLink';
+        var url = urls.files + '/' + id + '?fields=thumbnailLink';
         return request('GET', url);
     }
     function downloadContents(id) {
-        const url = urls.files + '/' + id + '?alt=media';
+        var url = urls.files + '/' + id + '?alt=media';
         return request('GET', url);
     }
     function downloadBlob(id, progress) {
-        const url = urls.files + '/' + id + '?alt=media';
+        var url = urls.files + '/' + id + '?alt=media';
         return request('GET', url, { responseType: 'blob', progress: progress });
     }
     function downloadPreview(id) {
-        return downloadMetadata(id).then((metadata) => {
+        return downloadMetadata(id).then(function (metadata) {
             return metadata.thumbnailLink;
         });
     }
     function search(options) {
-        const mimeType = options.mimeType;
-        const extension = options.extension;
-        const query = "trashed=false and mimeType='" + mimeType + "'";
-        const url = urls.files + '?q=' + encodeURIComponent(query);
+        var mimeType = options.mimeType;
+        var extension = options.extension;
+        var query = "trashed=false and mimeType='" + mimeType + "'";
+        var url = urls.files + '?q=' + encodeURIComponent(query);
         return searchPage(url, extension);
     }
     function searchPage(url, extension) {
         return request('GET', url)
             .then(function (listing) {
-            const items = listing.files.filter(function (item) {
-                const tokens = item.name.split('.');
+            var items = listing.files.filter(function (item) {
+                var tokens = item.name.split('.');
                 return tokens[tokens.length - 1] === extension;
             })
                 .map(function (item) {
@@ -66,9 +66,9 @@ function default_1(appId) {
     }
     function loadScript(url) {
         return new Promise(function (resolve, reject) {
-            const element = document.createElement('script');
-            element.addEventListener('load', () => resolve());
-            element.addEventListener('error', () => reject(new Error('Could not load script: ' + url)));
+            var element = document.createElement('script');
+            element.addEventListener('load', function () { return resolve(); });
+            element.addEventListener('error', function () { return reject(new Error('Could not load script: ' + url)); });
             element.async = true;
             element.src = url;
             document.head.appendChild(element);
@@ -85,9 +85,9 @@ function default_1(appId) {
                 .catch(reject);
         });
     }
-    let accessToken = null;
+    var accessToken = null;
     function loadAccessToken(immediate) {
-        return new Promise((resolve, reject) => {
+        return new Promise(function (resolve, reject) {
             if (accessToken) {
                 resolve(accessToken);
             }
@@ -104,7 +104,7 @@ function default_1(appId) {
                     client_id: ids.client,
                     scope: urls.scope,
                     immediate: immediate
-                }, result => {
+                }, function (result) {
                     if (result && !result.error) {
                         accessToken = result.access_token;
                         resolve(accessToken);
@@ -121,23 +121,23 @@ function default_1(appId) {
         options.headers = options.headers || {};
         options.responseType = options.responseType || '';
         return new Promise(function (resolve, reject) {
-            const xhr = new XMLHttpRequest();
+            var xhr = new XMLHttpRequest();
             xhr.open(method, url);
             xhr.responseType = options.responseType;
             Object.keys(options.headers).forEach(function (key) {
-                const value = options.headers[key];
+                var value = options.headers[key];
                 xhr.setRequestHeader(key, value);
             });
             xhr.addEventListener('load', function () {
-                let response = options.responseType
+                var response = options.responseType
                     ? xhr.response
                     : responseFromRequest(xhr);
                 resolve(response);
             });
-            xhr.addEventListener('error', e => reject(new Error('Could not load URL: ' + url)));
-            xhr.addEventListener('abort', e => reject(new Error('Loading of URL aborted: ' + url)));
+            xhr.addEventListener('error', function (e) { return reject(new Error('Could not load URL: ' + url)); });
+            xhr.addEventListener('abort', function (e) { return reject(new Error('Loading of URL aborted: ' + url)); });
             if (options.progress) {
-                xhr.addEventListener('progress', e => {
+                xhr.addEventListener('progress', function (e) {
                     if (e.lengthComputable) {
                         options.progress(e.loaded / e.total);
                     }
@@ -147,8 +147,8 @@ function default_1(appId) {
         });
     }
     function responseFromRequest(xhr) {
-        let mimeTypeString = xhr.getResponseHeader('Content-Type');
-        let mimeType = mimeTypeString.split(';')[0];
+        var mimeTypeString = xhr.getResponseHeader('Content-Type');
+        var mimeType = mimeTypeString.split(';')[0];
         if (mimeType === 'application/json') {
             return JSON.parse(xhr.responseText);
         }
@@ -157,7 +157,7 @@ function default_1(appId) {
         }
     }
     return {
-        authenticate: (immediate) => loadAccessToken(immediate),
+        authenticate: function (immediate) { return loadAccessToken(immediate); },
         download: {
             metadata: downloadMetadata,
             contents: downloadContents,

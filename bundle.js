@@ -2,12 +2,12 @@
 "use strict";
 function dom(container) {
     return {
-        time: () => new Date().getTime(),
-        scene: update => {
-            const scene = document.createElement('div');
+        time: function () { return new Date().getTime(); },
+        scene: function (update) {
+            var scene = document.createElement('div');
             scene.className = 'scene';
             container.appendChild(scene);
-            const fading = {
+            var fading = {
                 in: true,
                 out: false
             };
@@ -24,10 +24,10 @@ function dom(container) {
                 fade: {
                     in: {
                         step: step,
-                        stop: () => fading.in = false
+                        stop: function () { return fading.in = false; }
                     },
                     out: {
-                        start: () => {
+                        start: function () {
                             fading.out = true;
                             requestAnimationFrame(function frame() {
                                 if (fading.out) {
@@ -39,26 +39,26 @@ function dom(container) {
                         step: step
                     }
                 },
-                stop: () => {
+                stop: function () {
                     container.removeChild(scene);
                     fading.out = false;
                 },
                 image: function (image) {
-                    const element = document.createElement('img');
+                    var element = document.createElement('img');
                     element.src = image.url;
                     element.className = 'image';
                     scene.appendChild(element);
                     if (image.style) {
                         Object.keys(image.style).forEach(function (cssKey) {
-                            const cssValue = image.style[cssKey];
+                            var cssValue = image.style[cssKey];
                             element.style[cssKey] = cssValue;
                         });
                     }
                     return {
-                        stop: () => scene.removeChild(element)
+                        stop: function () { return scene.removeChild(element); }
                     };
                 },
-                sound: () => {
+                sound: function () {
                     // Mobile Chrome (at least) only allows audio to be played
                     // as a direct result of user interaction, which means that
                     // overlap cannot trigger audio playback directly as it
@@ -67,21 +67,21 @@ function dom(container) {
                     // on that element later in any context. We thus create a
                     // pool of two audio elements that we then alternate between
                     // in order to support overlap.
-                    const elements = {
+                    var elements = {
                         busy: [],
                         idle: []
                     };
-                    [0, 1].forEach(i => {
-                        const element = document.createElement('audio');
+                    [0, 1].forEach(function (i) {
+                        var element = document.createElement('audio');
                         element.play();
                         element.pause();
                         element.className = 'track';
                         elements.idle.push(element);
                     });
                     return {
-                        stop: () => { },
-                        track: url => {
-                            const element = elements.idle.pop();
+                        stop: function () { },
+                        track: function (url) {
+                            var element = elements.idle.pop();
                             element.src = url;
                             element.className = 'track';
                             element.addEventListener('timeupdate', update);
@@ -89,7 +89,7 @@ function dom(container) {
                             element.play();
                             elements.busy.push(element);
                             return {
-                                stop: () => {
+                                stop: function () {
                                     element.pause();
                                     scene.removeChild(element);
                                     element.currentTime = 0;
@@ -98,10 +98,10 @@ function dom(container) {
                                     elements.busy.splice(elements.busy.indexOf(element), 1);
                                     elements.idle.push(element);
                                 },
-                                fade: volume => {
+                                fade: function (volume) {
                                     element.volume = volume;
                                 },
-                                duration: () => element.duration * 1000
+                                duration: function () { return element.duration * 1000; }
                             };
                         }
                     };
@@ -116,7 +116,7 @@ exports.default = dom;
 
 },{}],2:[function(require,module,exports){
 "use strict";
-const sound_1 = require('./sound');
+var sound_1 = require('./sound');
 var SceneState;
 (function (SceneState) {
     SceneState[SceneState["Starting"] = 0] = "Starting";
@@ -125,15 +125,17 @@ var SceneState;
     SceneState[SceneState["FadingOut"] = 3] = "FadingOut";
     SceneState[SceneState["Ended"] = 4] = "Ended";
 })(SceneState || (SceneState = {}));
-function startScene(items, fadeInDuration = 0, volume = 1, outside) {
-    let fadeOutDuration = null;
-    let started = null;
-    let stopped = null;
-    const handles = {
+function startScene(items, fadeInDuration, volume, outside) {
+    if (fadeInDuration === void 0) { fadeInDuration = 0; }
+    if (volume === void 0) { volume = 1; }
+    var fadeOutDuration = null;
+    var started = null;
+    var stopped = null;
+    var handles = {
         scene: null,
         items: null
     };
-    let state = SceneState.Starting;
+    var state = SceneState.Starting;
     enterState(SceneState.FadingIn);
     function validTransition(before, after) {
         switch (after) {
@@ -153,13 +155,13 @@ function startScene(items, fadeInDuration = 0, volume = 1, outside) {
         if (!validTransition(state, newState)) {
             throw new Error('Invalid transition: ' + state + ' to ' + newState);
         }
-        const time = outside.time();
+        var time = outside.time();
         if (newState === SceneState.FadingIn) {
             started = time;
             handles.scene = outside.scene(update);
             handles.items = items.map(function (item) {
                 if (item.type === 'sound') {
-                    const callbacks = {
+                    var callbacks = {
                         time: outside.time,
                         shuffle: outside.shuffle,
                         sound: handles.scene.sound,
@@ -209,13 +211,13 @@ function startScene(items, fadeInDuration = 0, volume = 1, outside) {
         state = newState;
     }
     function update() {
-        const time = outside.time();
-        let scenesPlaying = [];
+        var time = outside.time();
+        var scenesPlaying = [];
         if (state === SceneState.FadingIn) {
-            const progress = fadeInDuration === 0 ? 1 : bound(0, 1, (time - started) / fadeInDuration);
+            var progress = fadeInDuration === 0 ? 1 : bound(0, 1, (time - started) / fadeInDuration);
             invariant(0 <= progress && progress <= 1, 'Fade-in progress between 0 and 1', progress);
-            const fadeInEnding = progress === 1;
-            const opacity = progress;
+            var fadeInEnding = progress === 1;
+            var opacity = progress;
             scenesPlaying = updateHandles(time, opacity);
             if (fadeInEnding) {
                 enterState(SceneState.Playing);
@@ -225,15 +227,15 @@ function startScene(items, fadeInDuration = 0, volume = 1, outside) {
             }
         }
         else if (state === SceneState.Playing) {
-            const opacity = 1;
+            var opacity = 1;
             scenesPlaying = updateHandles(time, opacity);
         }
         else if (state === SceneState.FadingOut) {
-            const progress = fadeOutDuration === 0 ? 1 : bound(0, 1, (time - stopped) / fadeOutDuration);
+            var progress = fadeOutDuration === 0 ? 1 : bound(0, 1, (time - stopped) / fadeOutDuration);
             invariant(0 <= progress && progress <= 1, 'Fade-out progress between 0 and 1', progress);
-            const opacity = 1 - progress;
+            var opacity = 1 - progress;
             scenesPlaying = updateHandles(time, opacity);
-            const isEnding = time >= stopped + fadeOutDuration;
+            var isEnding = time >= stopped + fadeOutDuration;
             if (isEnding) {
                 enterState(SceneState.Ended);
             }
@@ -241,7 +243,7 @@ function startScene(items, fadeInDuration = 0, volume = 1, outside) {
                 handles.scene.fade.out.step(opacity);
             }
         }
-        if (scenesPlaying.some(p => p === false) && onlySound(items)) {
+        if (scenesPlaying.some(function (p) { return p === false; }) && onlySound(items)) {
             end();
         }
     }
@@ -251,7 +253,7 @@ function startScene(items, fadeInDuration = 0, volume = 1, outside) {
         }
     }
     function updateHandles(time, opacity) {
-        const scenesPlaying = handles.items.map(handle => {
+        var scenesPlaying = handles.items.map(function (handle) {
             if (handle.callback.update) {
                 if (handle.type === 'sound') {
                     return handle.callback.update();
@@ -264,7 +266,7 @@ function startScene(items, fadeInDuration = 0, volume = 1, outside) {
                 return true;
             }
         });
-        handles.items.forEach(handle => {
+        handles.items.forEach(function (handle) {
             if (handle.callback.fade) {
                 if (handle.type === 'sound') {
                     handle.callback.fade(opacity * volume);
@@ -276,7 +278,8 @@ function startScene(items, fadeInDuration = 0, volume = 1, outside) {
         });
         return scenesPlaying;
     }
-    const stop = (fadeDuration = 0) => {
+    var stop = function (fadeDuration) {
+        if (fadeDuration === void 0) { fadeDuration = 0; }
         if (state === SceneState.FadingIn || state === SceneState.Playing) {
             stopped = outside.time();
             fadeOutDuration = fadeDuration;
@@ -287,7 +290,7 @@ function startScene(items, fadeInDuration = 0, volume = 1, outside) {
             end();
         }
     };
-    const end = () => {
+    var end = function () {
         if (state !== SceneState.Ended) {
             fadeOutDuration = 0;
             if (state === SceneState.FadingIn || state === SceneState.Playing) {
@@ -298,17 +301,17 @@ function startScene(items, fadeInDuration = 0, volume = 1, outside) {
     };
     return {
         stop: stop,
-        volume: (newVolume) => {
+        volume: function (newVolume) {
             volume = newVolume;
             update();
         }
     };
     function onlySound(items) {
-        return items.every(i => i.type === 'sound');
+        return items.every(function (i) { return i.type === 'sound'; });
     }
     function nothing() { }
     function once(callback) {
-        let called = false;
+        var called = false;
         // Function keyword in order to capture arguments.
         return function () {
             if (called) {
@@ -322,10 +325,14 @@ function startScene(items, fadeInDuration = 0, volume = 1, outside) {
     }
     function bound(min, max, value) {
         invariant(min <= max, 'Lower bound lower than upper bound', min, max);
-        const boundedAbove = Math.min(value, max);
+        var boundedAbove = Math.min(value, max);
         return Math.max(min, boundedAbove);
     }
-    function invariant(expression, description, ...values) {
+    function invariant(expression, description) {
+        var values = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            values[_i - 2] = arguments[_i];
+        }
         if (expression !== true) {
             throw new Error('Invariant broken: ' + description + '\n' +
                 'Values: ' + values.join(', '));
@@ -339,45 +346,45 @@ exports.default = startScene;
 },{"./sound":3}],3:[function(require,module,exports){
 "use strict";
 function startSound(sound, outside) {
-    const loop = 'loop' in sound ? sound.loop : true;
-    const shuffle = 'shuffle' in sound ? sound.shuffle : true;
-    const overlap = sound.overlap || 0;
-    const shuffleArray = outside.shuffle || shuffleArrayRandomly;
-    let volume = 0;
-    let tracks = sound.tracks.slice();
+    var loop = 'loop' in sound ? sound.loop : true;
+    var shuffle = 'shuffle' in sound ? sound.shuffle : true;
+    var overlap = sound.overlap || 0;
+    var shuffleArray = outside.shuffle || shuffleArrayRandomly;
+    var volume = 0;
+    var tracks = sound.tracks.slice();
     if (sound.tracks.length === 0) {
         throw new Error('Cannot start sound without tracks.');
     }
     if (shuffle) {
         tracks = shuffleArray(tracks);
     }
-    const soundHandle = outside.sound();
-    const outsideTracks = [];
-    let updateLatest = startTrack(0);
-    const fadeSound = newVolume => {
+    var soundHandle = outside.sound();
+    var outsideTracks = [];
+    var updateLatest = startTrack(0);
+    var fadeSound = function (newVolume) {
         volume = newVolume;
-        outsideTracks.forEach(t => t.fade(volume));
+        outsideTracks.forEach(function (t) { return t.fade(volume); });
     };
-    const stopSound = once(() => {
-        outsideTracks.forEach(t => t.stop());
+    var stopSound = once(function () {
+        outsideTracks.forEach(function (t) { return t.stop(); });
         soundHandle.stop();
     });
     return {
         fade: fadeSound,
         stop: stopSound,
-        update: () => updateLatest()
+        update: function () { return updateLatest(); }
     };
     function startTrack(index) {
-        const startTime = outside.time();
-        const outsideTrack = soundHandle.track(tracks[index]);
+        var startTime = outside.time();
+        var outsideTrack = soundHandle.track(tracks[index]);
         outsideTrack.stop = once(outsideTrack.stop);
         outsideTracks.push(outsideTrack);
         outsideTrack.fade(volume);
-        let updateNext = nothing;
+        var updateNext = nothing;
         return function update() {
-            const currentTime = outside.time();
-            const elapsed = currentTime - startTime;
-            const duration = outsideTrack.duration();
+            var currentTime = outside.time();
+            var elapsed = currentTime - startTime;
+            var duration = outsideTrack.duration();
             // Duration not known yet, so don't attempt any overlap until it is.
             if (isNaN(duration)) {
                 return true;
@@ -413,9 +420,9 @@ function startSound(sound, outside) {
         return true;
     }
     function once(callback) {
-        const args = arguments;
-        let called = false;
-        return () => {
+        var args = arguments;
+        var called = false;
+        return function () {
             if (!called) {
                 called = true;
                 callback.apply(undefined, args);
@@ -427,10 +434,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = startSound;
 ;
 function shuffleArrayRandomly(array) {
-    const source = array.slice();
-    const result = [];
+    var source = array.slice();
+    var result = [];
     while (source.length > 0) {
-        const index = randomInteger(source.length - 1);
+        var index = randomInteger(source.length - 1);
         result.push(source[index]);
         source.splice(index, 1);
     }
@@ -445,13 +452,14 @@ function remove(value, array) {
 
 },{}],4:[function(require,module,exports){
 "use strict";
-const scene_1 = require('./scene');
+var scene_1 = require('./scene');
 function stage(outside) {
-    let fadingOut = null;
-    let fadingIn = null;
-    let volume = 1;
+    var fadingOut = null;
+    var fadingIn = null;
+    var volume = 1;
     return {
-        start: (items, fadeInDuration = 0) => {
+        start: function (items, fadeInDuration) {
+            if (fadeInDuration === void 0) { fadeInDuration = 0; }
             if (fadingOut)
                 fadingOut.stop();
             fadingOut = fadingIn;
@@ -459,7 +467,7 @@ function stage(outside) {
                 fadingOut.stop(fadeInDuration);
             fadingIn = scene_1.default(items, fadeInDuration, volume, outside);
         },
-        volume: (newVolume) => {
+        volume: function (newVolume) {
             volume = newVolume;
             if (fadingOut)
                 fadingOut.volume(newVolume);
@@ -474,7 +482,7 @@ exports.default = stage;
 
 },{"./scene":2}],5:[function(require,module,exports){
 "use strict";
-const upgrade_1 = require('./upgrade');
+var upgrade_1 = require('./upgrade');
 function default_1(backend) {
     function list(signal) {
         signal.adventureListDownloadStarted();
@@ -484,16 +492,16 @@ function default_1(backend) {
         })
             .then(function (ids) {
             signal.adventureListDownloadFinished(ids.length);
-            const adventures = {};
+            var adventures = {};
             return Promise.all(ids.map(function (id) {
                 signal.adventureDownloadStarted(id);
                 return backend.download.contents(id).then(function (adventureToUpgrade) {
-                    const adventure = upgrade_1.default(adventureToUpgrade);
+                    var adventure = upgrade_1.default(adventureToUpgrade);
                     signal.adventureDownloadFinished(id);
                     adventure.id = id;
                     adventures[id] = adventure;
                 })
-                    .catch(() => signal.adventureDownloadError(id));
+                    .catch(function () { return signal.adventureDownloadError(id); });
             }))
                 .then(function () {
                 return adventures;
@@ -502,7 +510,7 @@ function default_1(backend) {
     }
     function download(id, progress) {
         return backend.download.blob(id, progress)
-            .then(blob => URL.createObjectURL(blob));
+            .then(function (blob) { return URL.createObjectURL(blob); });
     }
     function preview(id) {
         return backend.download.preview(id);
@@ -536,9 +544,9 @@ function default_1(adventure) {
             scene.key = null;
         }
         delete scene.mixin;
-        const fadesIn = scene.fade.direction.indexOf('in') !== -1;
+        var fadesIn = scene.fade.direction.indexOf('in') !== -1;
         scene.fade.in = fadesIn ? scene.fade.duration : 0;
-        const fadesOut = scene.fade.direction.indexOf('out') !== -1;
+        var fadesOut = scene.fade.direction.indexOf('out') !== -1;
         scene.fade.out = fadesOut ? scene.fade.duration : 0;
         delete scene.fade.duration;
         delete scene.fade.direction;
@@ -569,7 +577,7 @@ function default_1(adventure) {
         if (scene.sound.tracks.length > 0) {
             scene.media.push({
                 type: 'sound',
-                tracks: scene.sound.tracks.map(t => t.id),
+                tracks: scene.sound.tracks.map(function (t) { return t.id; }),
                 loop: scene.sound.loop,
                 shuffle: scene.sound.shuffle,
                 volume: scene.sound.volume / 100,
@@ -646,8 +654,8 @@ function capture(node, event, listener) {
 }
 exports.capture = capture;
 function toggleClass(node, table) {
-    Object.keys(table).forEach(className => {
-        const value = table[className];
+    Object.keys(table).forEach(function (className) {
+        var value = table[className];
         value ? node.classList.add(className) : node.classList.remove(className);
     });
 }
@@ -660,17 +668,17 @@ function replicate(table, container, options, mapping, state) {
             first: true
         };
     }
-    R.mapObjIndexed((node, key) => {
+    R.mapObjIndexed(function (node, key) {
         if (!(key in table)) {
             node.remove();
         }
     }, state.nodes);
-    const keys = Object.keys(table);
-    const order = options.sort || R.identity;
-    const filter = options.filter || (() => true);
-    const nodes = R.sortBy(key => order(table[key]), keys).map(key => {
-        const object = table[key];
-        const instance = key in state.nodes
+    var keys = Object.keys(table);
+    var order = options.sort || R.identity;
+    var filter = options.filter || (function () { return true; });
+    var nodes = R.sortBy(function (key) { return order(table[key]); }, keys).map(function (key) {
+        var object = table[key];
+        var instance = key in state.nodes
             ? state.nodes[key]
             : state.template.cloneNode(true);
         instance.hidden = !filter(object);
@@ -678,39 +686,39 @@ function replicate(table, container, options, mapping, state) {
         state.nodes[key] = instance;
         return instance;
     });
-    nodes.forEach((node, index) => {
+    nodes.forEach(function (node, index) {
         if (node.parent !== container) {
             container.insertBefore(node, container.children[index]);
         }
     });
     state.first = false;
-    return (table) => {
+    return function (table) {
         return replicate(table, container, options, mapping, state);
     };
 }
 exports.replicate = replicate;
 function map(selectors, object, ancestor, first) {
-    R.mapObjIndexed((values, selector) => {
+    R.mapObjIndexed(function (values, selector) {
         if (typeof values !== 'object') {
             values = { text: values };
         }
-        const matching = all(selector, ancestor).concat(ancestor.matches(selector) ? [ancestor] : []);
-        matching.forEach(node => {
-            R.mapObjIndexed((createValue, key) => {
+        var matching = all(selector, ancestor).concat(ancestor.matches(selector) ? [ancestor] : []);
+        matching.forEach(function (node) {
+            R.mapObjIndexed(function (createValue, key) {
                 if (key === 'text') {
-                    const value = createValue(object);
+                    var value = createValue(object);
                     if (node.textContent !== value) {
                         node.textContent = value;
                     }
                 }
                 else if (key === 'class') {
-                    R.mapObjIndexed((active, className) => {
+                    R.mapObjIndexed(function (active, className) {
                         node.classList.toggle(className, active(object));
                     }, createValue);
                 }
                 else if (key === 'style') {
-                    R.mapObjIndexed((createCssValue, cssKey) => {
-                        const cssValue = createCssValue(object);
+                    R.mapObjIndexed(function (createCssValue, cssKey) {
+                        var cssValue = createCssValue(object);
                         if (node.style[cssKey] !== cssValue) {
                             node.style[cssKey] = cssValue;
                         }
@@ -718,8 +726,8 @@ function map(selectors, object, ancestor, first) {
                 }
                 else if (key === 'on') {
                     if (first) {
-                        R.mapObjIndexed((callback, eventName) => {
-                            node.addEventListener(eventName, () => callback(object, node));
+                        R.mapObjIndexed(function (callback, eventName) {
+                            node.addEventListener(eventName, function () { return callback(object, node); });
                         }, createValue);
                     }
                 }
@@ -728,7 +736,7 @@ function map(selectors, object, ancestor, first) {
                         createValue(node, object);
                 }
                 else {
-                    const value = createValue(object);
+                    var value = createValue(object);
                     if (node[key] !== value) {
                         node[key] = value;
                     }
@@ -776,20 +784,20 @@ function origin(link) {
 }
 exports.origin = origin;
 function selectText(element) {
-    const selection = window.getSelection();
-    const range = document.createRange();
+    var selection = window.getSelection();
+    var range = document.createRange();
     range.selectNodeContents(element);
     selection.removeAllRanges();
     selection.addRange(range);
 }
 exports.selectText = selectText;
 function loadScript(url) {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
+    return new Promise(function (resolve, reject) {
+        var script = document.createElement('script');
         script.src = url;
         script.async = true;
-        script.addEventListener('load', () => resolve());
-        script.addEventListener('error', () => reject());
+        script.addEventListener('load', function () { return resolve(); });
+        script.addEventListener('error', function () { return reject(); });
         document.head.appendChild(script);
     });
 }
@@ -802,7 +810,7 @@ function enterFullscreen(element) {
         'mozRequestFullscreen',
         'mozRequestFullScreen',
         'requestFullscreen'
-    ].forEach(f => {
+    ].forEach(function (f) {
         if (f in element)
             element[f]();
     });
@@ -815,7 +823,7 @@ function toggleFullscreen(element) {
         'mozFullscreenElement',
         'mozFullScreenElement',
         'fullscreenElement'
-    ].forEach(p => {
+    ].forEach(function (p) {
         if (p in document) {
             if (document[p]) {
                 [
@@ -824,7 +832,7 @@ function toggleFullscreen(element) {
                     'mozExitFullScreen',
                     'mozExitFullScreen',
                     'exitFullscreen'
-                ].forEach(f => {
+                ].forEach(function (f) {
                     if (f in document)
                         document[f]();
                 });
@@ -837,7 +845,7 @@ function toggleFullscreen(element) {
 }
 exports.toggleFullscreen = toggleFullscreen;
 function key(code) {
-    const keys = {
+    var keys = {
         8: 'Backspace',
         9: 'Tab',
         13: 'Enter',
@@ -863,21 +871,21 @@ exports.key = key;
 
 },{}],8:[function(require,module,exports){
 "use strict";
-const library_1 = require('./adventure/library');
-const google_drive_1 = require('./storage/google-drive');
-const loading_library_1 = require('./views/loading-library');
-const soundboard_1 = require('./views/soundboard');
-const google_drive_2 = require('./views/google-drive');
-const session_error_1 = require('./views/session-error');
-const welcome_1 = require('./views/welcome');
-const dom = require('./document');
-const stage_1 = require('../libraries/ambience-stage/stage');
-const dom_1 = require('../libraries/ambience-stage/dom');
-const state_machine_1 = require('./state-machine');
-const queue_1 = require('./queue');
-const Persistence = require('./persistence');
-const version = 0;
-const defaultStore = {};
+var library_1 = require('./adventure/library');
+var google_drive_1 = require('./storage/google-drive');
+var loading_library_1 = require('./views/loading-library');
+var soundboard_1 = require('./views/soundboard');
+var google_drive_2 = require('./views/google-drive');
+var session_error_1 = require('./views/session-error');
+var welcome_1 = require('./views/welcome');
+var dom = require('./document');
+var stage_1 = require('../libraries/ambience-stage/stage');
+var dom_1 = require('../libraries/ambience-stage/dom');
+var state_machine_1 = require('./state-machine');
+var queue_1 = require('./queue');
+var Persistence = require('./persistence');
+var version = 0;
+var defaultStore = {};
 var Storage;
 (function (Storage) {
     function read() {
@@ -889,21 +897,21 @@ var Storage;
     }
     Storage.modify = modify;
 })(Storage || (Storage = {}));
-dom.on(window, 'DOMContentLoaded', () => {
-    let state = state_machine_1.State.Loading;
+dom.on(window, 'DOMContentLoaded', function () {
+    var state = state_machine_1.State.Loading;
     stateEntered(state);
-    const latest = {
+    var latest = {
         fade: {
             background: 0,
             foreground: 0
         }
     };
-    const appId = '907013371139';
-    const library = library_1.default(google_drive_1.default(appId));
-    const views = {
+    var appId = '907013371139';
+    var library = library_1.default(google_drive_1.default(appId));
+    var views = {
         welcome: welcome_1.default(dom.id('welcome'), {
-            dismissed: () => {
-                Storage.modify(store => {
+            dismissed: function () {
+                Storage.modify(function (store) {
                     store.welcomed = true;
                     return store;
                 });
@@ -911,20 +919,20 @@ dom.on(window, 'DOMContentLoaded', () => {
             }
         }),
         googleDrive: google_drive_2.default(dom.id('google-drive'), {
-            login: () => {
+            login: function () {
                 library.authenticate(false)
-                    .then(() => {
+                    .then(function () {
                     enterState(state_machine_1.State.StartingSession);
                     return loadLibrary();
                 })
-                    .catch(error => {
+                    .catch(function (error) {
                     enterState(state_machine_1.State.SessionError, error);
                 });
             }
         }),
         loadingLibrary: loading_library_1.default(dom.id('loading-library')),
         error: session_error_1.default(dom.id('session-error'), {
-            retry: () => {
+            retry: function () {
                 enterState(state_machine_1.State.StartingSession);
                 loadLibrary();
             }
@@ -936,11 +944,12 @@ dom.on(window, 'DOMContentLoaded', () => {
     else {
         enterState(state_machine_1.State.NotWelcomed);
     }
-    function showPage(id, fade = 0) {
-        const pages = dom.all('.page');
-        const previous = R.last(pages);
-        const next = pages.filter(p => p.id === id)[0];
-        pages.forEach(p => {
+    function showPage(id, fade) {
+        if (fade === void 0) { fade = 0; }
+        var pages = dom.all('.page');
+        var previous = R.last(pages);
+        var next = pages.filter(function (p) { return p.id === id; })[0];
+        pages.forEach(function (p) {
             p.style.transitionProperty = '';
             p.style.transitionDuration = '';
             p.style.opacity = '';
@@ -953,11 +962,11 @@ dom.on(window, 'DOMContentLoaded', () => {
             node.style.opacity = '0';
             node.style.transitionProperty = 'opacity';
             node.style.transitionDuration = duration + 's';
-            setTimeout(() => node.style.opacity = '1', 0);
+            setTimeout(function () { return node.style.opacity = '1'; }, 0);
         }
         function hideAfter(node, duration) {
-            setTimeout(() => {
-                const pages = dom.all('.page');
+            setTimeout(function () {
+                var pages = dom.all('.page');
                 // Do not hide if this is the last page, as that means it has
                 // been shown again during the timeout.
                 if (node !== pages[pages.length - 1]) {
@@ -967,22 +976,22 @@ dom.on(window, 'DOMContentLoaded', () => {
         }
     }
     function loadLibrary() {
-        let adventureLimit = 1;
-        let adventureCount = 0;
-        const signalProgress = {
-            adventureListDownloadStarted: () => views.loadingLibrary.event('Downloading adventure list…'),
-            adventureListDownloadFinished: (count) => {
+        var adventureLimit = 1;
+        var adventureCount = 0;
+        var signalProgress = {
+            adventureListDownloadStarted: function () { return views.loadingLibrary.event('Downloading adventure list…'); },
+            adventureListDownloadFinished: function (count) {
                 views.loadingLibrary.event('Finished downloading adventure list');
                 views.loadingLibrary.event('Downloading adventures…');
                 adventureLimit = count;
             },
-            adventureDownloadStarted: (id) => id,
-            adventureDownloadError: (id) => {
+            adventureDownloadStarted: function (id) { return id; },
+            adventureDownloadError: function (id) {
                 views.loadingLibrary.error('Error downloading adventure ' + id);
                 adventureCount += 1;
                 views.loadingLibrary.progress(adventureCount / adventureLimit);
             },
-            adventureDownloadFinished: (id) => {
+            adventureDownloadFinished: function (id) {
                 views.loadingLibrary.event('Finished downloading adventure ' + id);
                 adventureCount += 1;
                 views.loadingLibrary.progress(adventureCount / adventureLimit);
@@ -990,30 +999,30 @@ dom.on(window, 'DOMContentLoaded', () => {
         };
         enterState(state_machine_1.State.SessionStarted);
         return library.list(signalProgress)
-            .then(adventures => {
+            .then(function (adventures) {
             enterState(state_machine_1.State.LibraryLoaded);
             startSoundboard(adventures);
         })
-            .catch(error => {
+            .catch(function (error) {
             console.error(error);
             enterState(state_machine_1.State.SessionError, error);
         });
     }
-    let selectedAdventure = null;
-    const queueFileDownload = queue_1.default(3);
-    const queuePreviewDownload = queue_1.default(50);
+    var selectedAdventure = null;
+    var queueFileDownload = queue_1.default(3);
+    var queuePreviewDownload = queue_1.default(50);
     function startSoundboard(adventures) {
-        const previews = {};
-        const files = {};
-        const loadFile = R.memoize((id) => {
-            return new Promise((resolve, reject) => {
+        var previews = {};
+        var files = {};
+        var loadFile = R.memoize(function (id) {
+            return new Promise(function (resolve, reject) {
                 // Immediate timeout because this is actually called before
                 // `SoundboardView` returns, so we don't have the soundboard
                 // callbacks available to us.
-                setTimeout(() => {
+                setTimeout(function () {
                     soundboard.fileProgress(id, 0);
-                    return queueFileDownload(() => {
-                        return library.download(id, (ratio) => {
+                    return queueFileDownload(function () {
+                        return library.download(id, function (ratio) {
                             soundboard.fileProgress(id, ratio);
                         });
                     })
@@ -1022,46 +1031,46 @@ dom.on(window, 'DOMContentLoaded', () => {
                 }, 0);
             });
         });
-        const background = stage_1.default(dom_1.default(dom.id('background')));
-        const foreground = stage_1.default(dom_1.default(dom.id('foreground')));
-        const soundboard = soundboard_1.default({
+        var background = stage_1.default(dom_1.default(dom.id('background')));
+        var foreground = stage_1.default(dom_1.default(dom.id('foreground')));
+        var soundboard = soundboard_1.default({
             adventures: adventures,
             dropdown: document.getElementById('adventure'),
             playScene: playScene,
             stopAllScenes: stopAllScenes,
-            adventureSelected: (id) => selectAdventure(id),
-            changeVolume: volume => {
+            adventureSelected: function (id) { return selectAdventure(id); },
+            changeVolume: function (volume) {
                 background.volume(volume);
                 foreground.volume(volume);
             }
         });
         selectAdventure(Storage.read().adventure ||
-            R.sortBy(id => adventures[id].title, Object.keys(adventures))[0]);
-        dom.on(document, 'keydown', (event) => {
+            R.sortBy(function (id) { return adventures[id].title; }, Object.keys(adventures))[0]);
+        dom.on(document, 'keydown', function (event) {
             playSceneWithHotkey(dom.key(event.keyCode));
         });
-        dom.on(document, 'keypress', (event) => {
+        dom.on(document, 'keypress', function (event) {
             playSceneWithHotkey(dom.key(event.charCode));
         });
         function selectAdventure(id) {
-            const adventure = adventures[id];
+            var adventure = adventures[id];
             selectedAdventure = adventure;
             // Reverse order of scenes because queue is FIFO.
-            R.reverse(adventure.scenes).forEach((scene) => {
-                const firstImage = scene.media.filter(m => m.type === 'image')[0];
+            R.reverse(adventure.scenes).forEach(function (scene) {
+                var firstImage = scene.media.filter(function (m) { return m.type === 'image'; })[0];
                 if (firstImage && !(firstImage.file in previews)) {
-                    previews[firstImage.file] = queuePreviewDownload(() => {
+                    previews[firstImage.file] = queuePreviewDownload(function () {
                         return library.preview(firstImage.file);
                     })
-                        .then((url) => soundboard.previewLoaded(firstImage.file, url));
+                        .then(function (url) { return soundboard.previewLoaded(firstImage.file, url); });
                 }
-                const firstSound = scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
-                firstSound.tracks.forEach((t) => loadFile(t).then((url) => {
+                var firstSound = scene.media.filter(function (m) { return m.type === 'sound'; })[0] || { tracks: [] };
+                firstSound.tracks.forEach(function (t) { return loadFile(t).then(function (url) {
                     soundboard.fileLoaded(t, url);
-                }));
+                }); });
             });
             soundboard.adventureSelected(id);
-            Storage.modify(store => {
+            Storage.modify(function (store) {
                 store.adventure = id;
                 return store;
             });
@@ -1069,7 +1078,7 @@ dom.on(window, 'DOMContentLoaded', () => {
         function playSceneWithHotkey(hotkey) {
             if (!selectedAdventure)
                 return;
-            const scenes = selectedAdventure.scenes.filter((s) => s.key === hotkey);
+            var scenes = selectedAdventure.scenes.filter(function (s) { return s.key === hotkey; });
             scenes.forEach(playScene);
         }
         function stopAllScenes() {
@@ -1077,16 +1086,16 @@ dom.on(window, 'DOMContentLoaded', () => {
             foreground.start([], latest.fade.foreground * 1000);
         }
         function playScene(scene) {
-            const firstImage = scene.media.filter(m => m.type === 'image')[0];
-            const firstSound = scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
+            var firstImage = scene.media.filter(function (m) { return m.type === 'image'; })[0];
+            var firstSound = scene.media.filter(function (m) { return m.type === 'sound'; })[0] || { tracks: [] };
             Promise.all([
                 firstImage ? loadFile(firstImage.file) : null,
-                Promise.all(firstSound.tracks.map((t) => loadFile(t)))
+                Promise.all(firstSound.tracks.map(function (t) { return loadFile(t); }))
             ])
-                .then(files => {
-                const imageFile = files[0];
-                const soundFiles = files[1];
-                const items = [];
+                .then(function (files) {
+                var imageFile = files[0];
+                var soundFiles = files[1];
+                var items = [];
                 if (imageFile) {
                     items.push({
                         type: 'image',
@@ -1106,7 +1115,7 @@ dom.on(window, 'DOMContentLoaded', () => {
                         volume: firstSound.volume / 100
                     });
                 }
-                const layer = scene.layer === 'foreground' ? foreground : background;
+                var layer = scene.layer === 'foreground' ? foreground : background;
                 latest.fade[scene.layer] = scene.fade.out;
                 layer.start(items, scene.fade.in * 1000);
             });
@@ -1114,8 +1123,8 @@ dom.on(window, 'DOMContentLoaded', () => {
     }
     function attemptImmediateLogin() {
         library.authenticate(true)
-            .then(() => enterState(state_machine_1.State.AccountConnected))
-            .catch(() => enterState(state_machine_1.State.AccountNotConnected));
+            .then(function () { return enterState(state_machine_1.State.AccountConnected); })
+            .catch(function () { return enterState(state_machine_1.State.AccountNotConnected); });
     }
     function enterState(newState, arg) {
         if (R.contains(newState, state_machine_1.transitions(state))) {
@@ -1161,13 +1170,13 @@ dom.on(window, 'DOMContentLoaded', () => {
 },{"../libraries/ambience-stage/dom":1,"../libraries/ambience-stage/stage":4,"./adventure/library":5,"./document":7,"./persistence":9,"./queue":10,"./state-machine":11,"./storage/google-drive":12,"./views/google-drive":13,"./views/loading-library":14,"./views/session-error":15,"./views/soundboard":16,"./views/welcome":17}],9:[function(require,module,exports){
 "use strict";
 function read(version, defaults) {
-    const json = localStorage.getItem(version.toString());
+    var json = localStorage.getItem(version.toString());
     if (json === null) {
         return Object.assign({}, defaults);
     }
     else {
         try {
-            const store = JSON.parse(json);
+            var store = JSON.parse(json);
             if (typeof store === 'object' && !Array.isArray(store)) {
                 return Object.assign({}, defaults, store);
             }
@@ -1182,24 +1191,24 @@ function read(version, defaults) {
 }
 exports.read = read;
 function modify(version, defaults, transaction) {
-    const before = read(version, defaults);
-    const after = transaction(before);
+    var before = read(version, defaults);
+    var after = transaction(before);
     write(version, after);
 }
 exports.modify = modify;
 function write(version, store) {
-    const json = JSON.stringify(store);
+    var json = JSON.stringify(store);
     localStorage.setItem(version.toString(), json);
 }
 
 },{}],10:[function(require,module,exports){
 "use strict";
 function createQueue(limit) {
-    const waiting = [];
-    const running = [];
-    let timer = null;
+    var waiting = [];
+    var running = [];
+    var timer = null;
     function add(task) {
-        return new Promise((resolve, reject) => {
+        return new Promise(function (resolve, reject) {
             waiting.unshift({
                 resolve: resolve,
                 reject: reject,
@@ -1215,16 +1224,16 @@ function createQueue(limit) {
     }
     function execute() {
         timer = null;
-        const starting = waiting.slice(0, limit - running.length);
-        starting.forEach(entry => {
+        var starting = waiting.slice(0, limit - running.length);
+        starting.forEach(function (entry) {
             waiting.splice(waiting.indexOf(entry), 1);
             running.push(entry);
             entry.task()
-                .then((x) => {
+                .then(function (x) {
                 entry.resolve(x);
                 complete();
             })
-                .catch((e) => {
+                .catch(function (e) {
                 entry.reject(e);
                 complete();
             });
@@ -1280,44 +1289,44 @@ exports.transitions = transitions;
 },{}],12:[function(require,module,exports){
 "use strict";
 function default_1(appId) {
-    const ids = {
+    var ids = {
         app: appId
     };
     ids.client = ids.app + '.apps.googleusercontent.com';
-    const urls = {
+    var urls = {
         files: 'https://www.googleapis.com/drive/v3/files',
         client: 'https://apis.google.com/js/client.js',
         scope: 'https://www.googleapis.com/auth/drive'
     };
     function downloadMetadata(id) {
-        const url = urls.files + '/' + id + '?fields=thumbnailLink';
+        var url = urls.files + '/' + id + '?fields=thumbnailLink';
         return request('GET', url);
     }
     function downloadContents(id) {
-        const url = urls.files + '/' + id + '?alt=media';
+        var url = urls.files + '/' + id + '?alt=media';
         return request('GET', url);
     }
     function downloadBlob(id, progress) {
-        const url = urls.files + '/' + id + '?alt=media';
+        var url = urls.files + '/' + id + '?alt=media';
         return request('GET', url, { responseType: 'blob', progress: progress });
     }
     function downloadPreview(id) {
-        return downloadMetadata(id).then((metadata) => {
+        return downloadMetadata(id).then(function (metadata) {
             return metadata.thumbnailLink;
         });
     }
     function search(options) {
-        const mimeType = options.mimeType;
-        const extension = options.extension;
-        const query = "trashed=false and mimeType='" + mimeType + "'";
-        const url = urls.files + '?q=' + encodeURIComponent(query);
+        var mimeType = options.mimeType;
+        var extension = options.extension;
+        var query = "trashed=false and mimeType='" + mimeType + "'";
+        var url = urls.files + '?q=' + encodeURIComponent(query);
         return searchPage(url, extension);
     }
     function searchPage(url, extension) {
         return request('GET', url)
             .then(function (listing) {
-            const items = listing.files.filter(function (item) {
-                const tokens = item.name.split('.');
+            var items = listing.files.filter(function (item) {
+                var tokens = item.name.split('.');
                 return tokens[tokens.length - 1] === extension;
             })
                 .map(function (item) {
@@ -1346,9 +1355,9 @@ function default_1(appId) {
     }
     function loadScript(url) {
         return new Promise(function (resolve, reject) {
-            const element = document.createElement('script');
-            element.addEventListener('load', () => resolve());
-            element.addEventListener('error', () => reject(new Error('Could not load script: ' + url)));
+            var element = document.createElement('script');
+            element.addEventListener('load', function () { return resolve(); });
+            element.addEventListener('error', function () { return reject(new Error('Could not load script: ' + url)); });
             element.async = true;
             element.src = url;
             document.head.appendChild(element);
@@ -1365,9 +1374,9 @@ function default_1(appId) {
                 .catch(reject);
         });
     }
-    let accessToken = null;
+    var accessToken = null;
     function loadAccessToken(immediate) {
-        return new Promise((resolve, reject) => {
+        return new Promise(function (resolve, reject) {
             if (accessToken) {
                 resolve(accessToken);
             }
@@ -1384,7 +1393,7 @@ function default_1(appId) {
                     client_id: ids.client,
                     scope: urls.scope,
                     immediate: immediate
-                }, result => {
+                }, function (result) {
                     if (result && !result.error) {
                         accessToken = result.access_token;
                         resolve(accessToken);
@@ -1401,23 +1410,23 @@ function default_1(appId) {
         options.headers = options.headers || {};
         options.responseType = options.responseType || '';
         return new Promise(function (resolve, reject) {
-            const xhr = new XMLHttpRequest();
+            var xhr = new XMLHttpRequest();
             xhr.open(method, url);
             xhr.responseType = options.responseType;
             Object.keys(options.headers).forEach(function (key) {
-                const value = options.headers[key];
+                var value = options.headers[key];
                 xhr.setRequestHeader(key, value);
             });
             xhr.addEventListener('load', function () {
-                let response = options.responseType
+                var response = options.responseType
                     ? xhr.response
                     : responseFromRequest(xhr);
                 resolve(response);
             });
-            xhr.addEventListener('error', e => reject(new Error('Could not load URL: ' + url)));
-            xhr.addEventListener('abort', e => reject(new Error('Loading of URL aborted: ' + url)));
+            xhr.addEventListener('error', function (e) { return reject(new Error('Could not load URL: ' + url)); });
+            xhr.addEventListener('abort', function (e) { return reject(new Error('Loading of URL aborted: ' + url)); });
             if (options.progress) {
-                xhr.addEventListener('progress', e => {
+                xhr.addEventListener('progress', function (e) {
                     if (e.lengthComputable) {
                         options.progress(e.loaded / e.total);
                     }
@@ -1427,8 +1436,8 @@ function default_1(appId) {
         });
     }
     function responseFromRequest(xhr) {
-        let mimeTypeString = xhr.getResponseHeader('Content-Type');
-        let mimeType = mimeTypeString.split(';')[0];
+        var mimeTypeString = xhr.getResponseHeader('Content-Type');
+        var mimeType = mimeTypeString.split(';')[0];
         if (mimeType === 'application/json') {
             return JSON.parse(xhr.responseText);
         }
@@ -1437,7 +1446,7 @@ function default_1(appId) {
         }
     }
     return {
-        authenticate: (immediate) => loadAccessToken(immediate),
+        authenticate: function (immediate) { return loadAccessToken(immediate); },
         download: {
             metadata: downloadMetadata,
             contents: downloadContents,
@@ -1453,9 +1462,9 @@ exports.default = default_1;
 
 },{}],13:[function(require,module,exports){
 "use strict";
-const dom = require('../document');
+var dom = require('../document');
 function default_1(page, signal) {
-    dom.on(dom.first('form', page), 'submit', event => {
+    dom.on(dom.first('form', page), 'submit', function (event) {
         event.preventDefault();
         signal.login();
     });
@@ -1466,23 +1475,23 @@ exports.default = default_1;
 
 },{"../document":7}],14:[function(require,module,exports){
 "use strict";
-const dom = require('../document');
+var dom = require('../document');
 function default_1(page) {
     dom.first('progress', page).value = 0;
-    const events = dom.first('.events', page);
-    const template = events.firstElementChild;
+    var events = dom.first('.events', page);
+    var template = events.firstElementChild;
     template.remove();
     return {
-        progress: ratio => {
+        progress: function (ratio) {
             dom.first('progress', page).value = ratio;
         },
-        event: text => {
-            const instance = template.cloneNode(true);
+        event: function (text) {
+            var instance = template.cloneNode(true);
             instance.textContent = text;
             events.insertBefore(instance, events.firstElementChild);
         },
-        error: text => {
-            const instance = template.cloneNode(true);
+        error: function (text) {
+            var instance = template.cloneNode(true);
             instance.textContent = text;
             instance.classList.add('error');
             events.insertBefore(instance, events.firstElementChild);
@@ -1494,18 +1503,18 @@ exports.default = default_1;
 
 },{"../document":7}],15:[function(require,module,exports){
 "use strict";
-const dom = require('../document');
+var dom = require('../document');
 function default_1(page, signal) {
     function showError(message) {
         dom.id('session-error-detail').textContent = message;
     }
     showError('');
-    dom.on(dom.first('form', page), 'submit', event => {
+    dom.on(dom.first('form', page), 'submit', function (event) {
         event.preventDefault();
         signal.retry();
     });
     return {
-        error: error => showError(error.message)
+        error: function (error) { return showError(error.message); }
     };
 }
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -1513,46 +1522,46 @@ exports.default = default_1;
 
 },{"../document":7}],16:[function(require,module,exports){
 "use strict";
-const dom = require('../document');
+var dom = require('../document');
 function default_1(options) {
-    const dropdown = options.dropdown;
-    const adventures = options.adventures;
-    const scenes = R.fromPairs(R.unnest(R.values(adventures).map(adventure => {
-        return adventure.scenes.map((scene, i) => [adventure.id + '/' + i, scene]);
+    var dropdown = options.dropdown;
+    var adventures = options.adventures;
+    var scenes = R.fromPairs(R.unnest(R.values(adventures).map(function (adventure) {
+        return adventure.scenes.map(function (scene, i) { return [adventure.id + '/' + i, scene]; });
     })));
-    const previews = {};
-    const files = {};
-    const progressCallbacks = [];
-    dom.replicate(adventures, dropdown, { sort: a => a.title }, {
+    var previews = {};
+    var files = {};
+    var progressCallbacks = [];
+    dom.replicate(adventures, dropdown, { sort: function (a) { return a.title; } }, {
         'option': {
-            text: adventure => adventure.title,
-            value: adventure => adventure.id
+            text: function (adventure) { return adventure.title; },
+            value: function (adventure) { return adventure.id; }
         }
     });
-    const render = dom.replicate(scenes, dom.first('.scene-list'), {
-        sort: scene => selectedAdventure().scenes.indexOf(scene),
-        filter: scene => selectedAdventure().scenes.includes(scene)
+    var render = dom.replicate(scenes, dom.first('.scene-list'), {
+        sort: function (scene) { return selectedAdventure().scenes.indexOf(scene); },
+        filter: function (scene) { return selectedAdventure().scenes.includes(scene); }
     }, {
-        '.scene': { node: (node, scene) => {
+        '.scene': { node: function (node, scene) {
                 node.classList.add('loading');
-                progressCallbacks.push(allFiles => {
-                    const loading = sceneFiles(scene).some(f => !(f in allFiles) || typeof allFiles[f] === 'number');
+                progressCallbacks.push(function (allFiles) {
+                    var loading = sceneFiles(scene).some(function (f) { return !(f in allFiles) || typeof allFiles[f] === 'number'; });
                     node.classList.toggle('loading', loading);
                 });
                 node.classList.toggle('with-image', Boolean(firstImage(scene)));
             } },
-        '.scene-title': scene => scene.name || String.fromCharCode(160),
-        '.scene-hotkey': scene => scene.key || '',
+        '.scene-title': function (scene) { return scene.name || String.fromCharCode(160); },
+        '.scene-hotkey': function (scene) { return scene.key || ''; },
         '.scene-button': { on: { click: options.playScene } },
         '.scene-preview-image': {
-            hidden: scene => !firstImage(scene),
-            on: { load: (scene, image) => image.classList.add('loaded') },
-            src: scene => hasImagePreview(scene)
+            hidden: function (scene) { return !firstImage(scene); },
+            on: { load: function (scene, image) { return image.classList.add('loaded'); } },
+            src: function (scene) { return hasImagePreview(scene)
                 ? previews[firstImage(scene).file]
-                : ''
+                : ''; }
         },
-        'progress': { node: (node, scene) => {
-                progressCallbacks.push(allFiles => {
+        'progress': { node: function (node, scene) {
+                progressCallbacks.push(function (allFiles) {
                     node.value = combinedProgress(sceneFiles(scene), allFiles);
                 });
             } }
@@ -1561,21 +1570,21 @@ function default_1(options) {
         return firstSound(scene).tracks;
     }
     function firstImage(scene) {
-        return scene.media.filter(m => m.type === 'image')[0];
+        return scene.media.filter(function (m) { return m.type === 'image'; })[0];
     }
     function firstSound(scene) {
-        return scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
+        return scene.media.filter(function (m) { return m.type === 'sound'; })[0] || { tracks: [] };
     }
     function hasImagePreview(scene) {
         return firstImage(scene) && typeof previews[firstImage(scene).file] === 'string';
     }
     function renderProgress() {
-        progressCallbacks.forEach(callback => callback(files));
+        progressCallbacks.forEach(function (callback) { return callback(files); });
     }
     function combinedProgress(sceneFiles, allFiles) {
         return sceneFiles.length === 0
             ? 1
-            : R.sum(sceneFiles.map(t => singleProgress(allFiles[t]))) / sceneFiles.length;
+            : R.sum(sceneFiles.map(function (t) { return singleProgress(allFiles[t]); })) / sceneFiles.length;
     }
     function singleProgress(progress) {
         if (typeof progress === 'string') {
@@ -1588,47 +1597,47 @@ function default_1(options) {
             return 0;
         }
     }
-    dom.on(dom.id('stop-button'), 'click', () => {
+    dom.on(dom.id('stop-button'), 'click', function () {
         options.stopAllScenes();
     });
-    const volumeSlider = dom.id('volume-slider');
-    dom.on(dom.id('volume-down'), 'click', () => {
-        const volume = 0;
+    var volumeSlider = dom.id('volume-slider');
+    dom.on(dom.id('volume-down'), 'click', function () {
+        var volume = 0;
         volumeSlider.value = String(volume);
         options.changeVolume(volume);
     });
-    dom.on(dom.id('volume-up'), 'click', () => {
-        const volume = 1;
+    dom.on(dom.id('volume-up'), 'click', function () {
+        var volume = 1;
         volumeSlider.value = String(volume);
         options.changeVolume(volume);
     });
-    dom.on(dom.id('volume-slider'), 'input', () => {
-        const volume = parseFloat(volumeSlider.value);
+    dom.on(dom.id('volume-slider'), 'input', function () {
+        var volume = parseFloat(volumeSlider.value);
         if (!isNaN(volume)) {
             options.changeVolume(volume);
         }
     });
-    dom.on(dom.id('fullscreen'), 'click', () => {
+    dom.on(dom.id('fullscreen'), 'click', function () {
         dom.toggleFullscreen();
     });
-    dropdown.addEventListener('change', () => options.adventureSelected(dropdown.value));
+    dropdown.addEventListener('change', function () { return options.adventureSelected(dropdown.value); });
     function selectedAdventure() {
         return adventures[dropdown.value];
     }
     return {
-        previewLoaded: (id, url) => {
+        previewLoaded: function (id, url) {
             previews[id] = url;
             render(scenes);
         },
-        fileProgress: (id, ratio) => {
+        fileProgress: function (id, ratio) {
             files[id] = ratio;
             renderProgress();
         },
-        fileLoaded: (id, url) => {
+        fileLoaded: function (id, url) {
             files[id] = url;
             renderProgress();
         },
-        adventureSelected: id => {
+        adventureSelected: function (id) {
             dropdown.value = id;
             render(scenes);
         }
@@ -1640,9 +1649,9 @@ exports.default = default_1;
 
 },{"../document":7}],17:[function(require,module,exports){
 "use strict";
-const dom = require('../document');
+var dom = require('../document');
 function default_1(page, signal) {
-    dom.on(dom.first('form', page), 'submit', event => {
+    dom.on(dom.first('form', page), 'submit', function (event) {
         event.preventDefault();
         signal.dismissed();
     });

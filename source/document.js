@@ -32,8 +32,8 @@ function capture(node, event, listener) {
 }
 exports.capture = capture;
 function toggleClass(node, table) {
-    Object.keys(table).forEach(className => {
-        const value = table[className];
+    Object.keys(table).forEach(function (className) {
+        var value = table[className];
         value ? node.classList.add(className) : node.classList.remove(className);
     });
 }
@@ -46,17 +46,17 @@ function replicate(table, container, options, mapping, state) {
             first: true
         };
     }
-    R.mapObjIndexed((node, key) => {
+    R.mapObjIndexed(function (node, key) {
         if (!(key in table)) {
             node.remove();
         }
     }, state.nodes);
-    const keys = Object.keys(table);
-    const order = options.sort || R.identity;
-    const filter = options.filter || (() => true);
-    const nodes = R.sortBy(key => order(table[key]), keys).map(key => {
-        const object = table[key];
-        const instance = key in state.nodes
+    var keys = Object.keys(table);
+    var order = options.sort || R.identity;
+    var filter = options.filter || (function () { return true; });
+    var nodes = R.sortBy(function (key) { return order(table[key]); }, keys).map(function (key) {
+        var object = table[key];
+        var instance = key in state.nodes
             ? state.nodes[key]
             : state.template.cloneNode(true);
         instance.hidden = !filter(object);
@@ -64,39 +64,39 @@ function replicate(table, container, options, mapping, state) {
         state.nodes[key] = instance;
         return instance;
     });
-    nodes.forEach((node, index) => {
+    nodes.forEach(function (node, index) {
         if (node.parent !== container) {
             container.insertBefore(node, container.children[index]);
         }
     });
     state.first = false;
-    return (table) => {
+    return function (table) {
         return replicate(table, container, options, mapping, state);
     };
 }
 exports.replicate = replicate;
 function map(selectors, object, ancestor, first) {
-    R.mapObjIndexed((values, selector) => {
+    R.mapObjIndexed(function (values, selector) {
         if (typeof values !== 'object') {
             values = { text: values };
         }
-        const matching = all(selector, ancestor).concat(ancestor.matches(selector) ? [ancestor] : []);
-        matching.forEach(node => {
-            R.mapObjIndexed((createValue, key) => {
+        var matching = all(selector, ancestor).concat(ancestor.matches(selector) ? [ancestor] : []);
+        matching.forEach(function (node) {
+            R.mapObjIndexed(function (createValue, key) {
                 if (key === 'text') {
-                    const value = createValue(object);
+                    var value = createValue(object);
                     if (node.textContent !== value) {
                         node.textContent = value;
                     }
                 }
                 else if (key === 'class') {
-                    R.mapObjIndexed((active, className) => {
+                    R.mapObjIndexed(function (active, className) {
                         node.classList.toggle(className, active(object));
                     }, createValue);
                 }
                 else if (key === 'style') {
-                    R.mapObjIndexed((createCssValue, cssKey) => {
-                        const cssValue = createCssValue(object);
+                    R.mapObjIndexed(function (createCssValue, cssKey) {
+                        var cssValue = createCssValue(object);
                         if (node.style[cssKey] !== cssValue) {
                             node.style[cssKey] = cssValue;
                         }
@@ -104,8 +104,8 @@ function map(selectors, object, ancestor, first) {
                 }
                 else if (key === 'on') {
                     if (first) {
-                        R.mapObjIndexed((callback, eventName) => {
-                            node.addEventListener(eventName, () => callback(object, node));
+                        R.mapObjIndexed(function (callback, eventName) {
+                            node.addEventListener(eventName, function () { return callback(object, node); });
                         }, createValue);
                     }
                 }
@@ -114,7 +114,7 @@ function map(selectors, object, ancestor, first) {
                         createValue(node, object);
                 }
                 else {
-                    const value = createValue(object);
+                    var value = createValue(object);
                     if (node[key] !== value) {
                         node[key] = value;
                     }
@@ -162,20 +162,20 @@ function origin(link) {
 }
 exports.origin = origin;
 function selectText(element) {
-    const selection = window.getSelection();
-    const range = document.createRange();
+    var selection = window.getSelection();
+    var range = document.createRange();
     range.selectNodeContents(element);
     selection.removeAllRanges();
     selection.addRange(range);
 }
 exports.selectText = selectText;
 function loadScript(url) {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
+    return new Promise(function (resolve, reject) {
+        var script = document.createElement('script');
         script.src = url;
         script.async = true;
-        script.addEventListener('load', () => resolve());
-        script.addEventListener('error', () => reject());
+        script.addEventListener('load', function () { return resolve(); });
+        script.addEventListener('error', function () { return reject(); });
         document.head.appendChild(script);
     });
 }
@@ -188,7 +188,7 @@ function enterFullscreen(element) {
         'mozRequestFullscreen',
         'mozRequestFullScreen',
         'requestFullscreen'
-    ].forEach(f => {
+    ].forEach(function (f) {
         if (f in element)
             element[f]();
     });
@@ -201,7 +201,7 @@ function toggleFullscreen(element) {
         'mozFullscreenElement',
         'mozFullScreenElement',
         'fullscreenElement'
-    ].forEach(p => {
+    ].forEach(function (p) {
         if (p in document) {
             if (document[p]) {
                 [
@@ -210,7 +210,7 @@ function toggleFullscreen(element) {
                     'mozExitFullScreen',
                     'mozExitFullScreen',
                     'exitFullscreen'
-                ].forEach(f => {
+                ].forEach(function (f) {
                     if (f in document)
                         document[f]();
                 });
@@ -223,7 +223,7 @@ function toggleFullscreen(element) {
 }
 exports.toggleFullscreen = toggleFullscreen;
 function key(code) {
-    const keys = {
+    var keys = {
         8: 'Backspace',
         9: 'Tab',
         13: 'Enter',
