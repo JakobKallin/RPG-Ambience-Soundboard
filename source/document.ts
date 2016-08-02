@@ -87,7 +87,7 @@ function map(selectors, object, ancestor, first) {
         }
 
         const matching = all(selector, ancestor).concat(
-            ancestor.matches(selector) ? [ancestor] : []
+            matches(ancestor, selector) ? [ancestor] : []
         );
 
         matching.forEach(node => {

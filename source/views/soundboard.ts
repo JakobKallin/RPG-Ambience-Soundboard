@@ -32,7 +32,7 @@ export default function(options:SoundboardViewCallbacks) {
         dom.first('.scene-list'),
         {
             sort: scene => selectedAdventure().scenes.indexOf(scene),
-            filter: scene => selectedAdventure().scenes.includes(scene)
+            filter: scene => selectedAdventure().scenes.indexOf(scene) !== -1
         },
         {
             '.scene': { node: (node, scene) => {
