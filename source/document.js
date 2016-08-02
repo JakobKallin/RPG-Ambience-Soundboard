@@ -80,7 +80,7 @@ function map(selectors, object, ancestor, first) {
         if (typeof values !== 'object') {
             values = { text: values };
         }
-        var matching = all(selector, ancestor).concat(ancestor.matches(selector) ? [ancestor] : []);
+        var matching = all(selector, ancestor).concat(matches(ancestor, selector) ? [ancestor] : []);
         matching.forEach(function (node) {
             R.mapObjIndexed(function (createValue, key) {
                 if (key === 'text') {

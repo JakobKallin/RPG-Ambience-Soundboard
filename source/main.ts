@@ -31,7 +31,7 @@ namespace Storage {
     }
 }
 
-dom.on(window, 'DOMContentLoaded', () => {
+function start() {
     let state:State = State.Loading;
     stateEntered(state);
 
@@ -312,5 +312,19 @@ dom.on(window, 'DOMContentLoaded', () => {
                 break;
             default: throw new Error('Unhandled state: ' + state);
         }
+    }
+}
+
+dom.on(window, 'DOMContentLoaded', () => {
+    try {
+        start();
+    }
+    catch(error) {
+        // This code intentionally uses only direct DOM manipulation with old
+        // APIs, as we want maximum browser support for this section.
+        const loadingPage = document.getElementById('loading-app');
+        loadingPage.parentNode.removeChild(loadingPage);
+        document.getElementById('loading-error-text').textContent = error.stack;
+        document.getElementById('loading-error-browser-id').textContent = navigator.userAgent;
     }
 });

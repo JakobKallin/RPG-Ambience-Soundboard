@@ -68,6 +68,32 @@ html {
     margin-right: auto;
 }
 
+.page-loading-error {
+    padding: 1rem;
+    text-align: center;
+
+    h2 {
+        @include heading;
+    }
+
+    p {
+        margin-top: 1rem;
+        max-width: 50em;
+    }
+
+    #loading-error-text {
+        display: inline-block;
+        white-space: pre;
+        font-family: monospace;
+        text-align: left;
+        color: $error-color;
+    }
+
+    #loading-error-browser-id {
+        font-family: monospace;
+    }
+}
+
 .page-loading-app, .page-loading-library {
     padding: 1rem;
     text-align: center;
@@ -103,7 +129,7 @@ html {
         }
 
         > .error {
-            color: hsl(0, 50%, 50%);
+            color: $error-color;
         }
 
         :nth-child(1) { opacity: 1; }

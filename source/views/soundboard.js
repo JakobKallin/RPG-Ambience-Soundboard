@@ -17,7 +17,7 @@ function default_1(options) {
     });
     var render = dom.replicate(scenes, dom.first('.scene-list'), {
         sort: function (scene) { return selectedAdventure().scenes.indexOf(scene); },
-        filter: function (scene) { return selectedAdventure().scenes.includes(scene); }
+        filter: function (scene) { return selectedAdventure().scenes.indexOf(scene) !== -1; }
     }, {
         '.scene': { node: function (node, scene) {
                 node.classList.add('loading');

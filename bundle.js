@@ -702,7 +702,7 @@ function map(selectors, object, ancestor, first) {
         if (typeof values !== 'object') {
             values = { text: values };
         }
-        var matching = all(selector, ancestor).concat(ancestor.matches(selector) ? [ancestor] : []);
+        var matching = all(selector, ancestor).concat(matches(ancestor, selector) ? [ancestor] : []);
         matching.forEach(function (node) {
             R.mapObjIndexed(function (createValue, key) {
                 if (key === 'text') {
@@ -897,7 +897,7 @@ var Storage;
     }
     Storage.modify = modify;
 })(Storage || (Storage = {}));
-dom.on(window, 'DOMContentLoaded', function () {
+function start() {
     var state = state_machine_1.State.Loading;
     stateEntered(state);
     var latest = {
@@ -1164,6 +1164,19 @@ dom.on(window, 'DOMContentLoaded', function () {
                 break;
             default: throw new Error('Unhandled state: ' + state);
         }
+    }
+}
+dom.on(window, 'DOMContentLoaded', function () {
+    try {
+        start();
+    }
+    catch (error) {
+        // This code intentionally uses only direct DOM manipulation with old
+        // APIs, as we want maximum browser support for this section.
+        var loadingPage = document.getElementById('loading-app');
+        loadingPage.parentNode.removeChild(loadingPage);
+        document.getElementById('loading-error-text').textContent = error.stack;
+        document.getElementById('loading-error-browser-id').textContent = navigator.userAgent;
     }
 });
 
@@ -1540,7 +1553,7 @@ function default_1(options) {
     });
     var render = dom.replicate(scenes, dom.first('.scene-list'), {
         sort: function (scene) { return selectedAdventure().scenes.indexOf(scene); },
-        filter: function (scene) { return selectedAdventure().scenes.includes(scene); }
+        filter: function (scene) { return selectedAdventure().scenes.indexOf(scene) !== -1; }
     }, {
         '.scene': { node: function (node, scene) {
                 node.classList.add('loading');
