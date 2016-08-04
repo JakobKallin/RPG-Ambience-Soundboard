@@ -189,7 +189,9 @@ function start() {
                 foreground.volume(volume);
             }
         });
+
         selectAdventure(
+            adventureInUrl(location.pathname) ||
             Storage.read().adventure ||
             R.sortBy(id => adventures[id].title, Object.keys(adventures))[0]
         );
@@ -203,6 +205,14 @@ function start() {
         });
 
         function selectAdventure(id:string):void {
+            go('/' + id);
+        }
+
+        function adventureSelected(id:string):void {
+            if (!(id in adventures)) {
+                return;
+            }
+
             const adventure = adventures[id];
             selectedAdventure = adventure;
             // Reverse order of scenes because queue is FIFO.
@@ -226,6 +236,26 @@ function start() {
                 return store;
             });
         }
+
+        function adventureInUrl(path:string):string {
+            const id = path.substring(1);
+            return id ? id : null;
+        }
+
+        function go(path:string):void {
+            history.pushState(null, '', path);
+            onPageChange(location.pathname);
+        }
+
+        function onPageChange(path:string):void {
+            if (adventureInUrl(path)) {
+                adventureSelected(adventureInUrl(path));
+            }
+        }
+
+        dom.on(window, 'popstate', () => {
+            onPageChange(location.pathname);
+        });
 
         function playSceneWithHotkey(hotkey:any):void {
             if (!selectedAdventure) return;
