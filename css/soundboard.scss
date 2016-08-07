@@ -223,10 +223,20 @@ html {
             height: 2.5rem;
         }
 
+        #zoom-in,
+        #zoom-out,
         #volume-down,
         #volume-up,
         #volume-slider {
             vertical-align: middle;
+        }
+
+        #zoom-out:before {
+            @include icon($fa-var-search-minus);
+        }
+
+        #zoom-in:before {
+            @include icon($fa-var-search-plus);
         }
     }
 
@@ -273,10 +283,6 @@ html {
             ul {
                 @include flex(column, $vertical-spacing: 1rem);
             }
-
-            .zoom {
-                position: static;
-            }
         }
 
         .error {
@@ -317,39 +323,6 @@ html {
             .other-menu {
                 display: none;
             }
-        }
-
-        .zoom {
-            position: absolute;
-            right: 0;
-            top: 0;
-
-            & > * {
-                vertical-align: middle;
-            }
-        }
-
-        .zoom-slider {
-            margin-left: 0.5rem;
-            margin-right: 0.5rem;
-        }
-
-        .zoom-in, .zoom-out {
-            width: 2rem;
-            height: 2rem;
-            padding: 0;
-        }
-
-        .zoom-in:before, .zoom-out:before {
-            font-family: FontAwesome;
-        }
-
-        .zoom-out:before {
-            content: $fa-var-search-minus;
-        }
-
-        .zoom-in:before {
-            content: $fa-var-search-plus;
         }
     }
 
@@ -511,24 +484,7 @@ html:not(.menu) .menu {
     display: none;
 }
 
-.zoom-16 { .scene { width: 100%; } }
-.zoom-15 { .scene { width: (100% / 2); } }
-.zoom-14 { .scene { width: (100% / 3); } }
-.zoom-13 { .scene { width: (100% / 4); } }
-.zoom-12 { .scene { width: (100% / 5); } }
-.zoom-11 { .scene { width: (100% / 6); } }
-.zoom-10 { .scene { width: (100% / 7); } }
-.zoom-9 { .scene { width: (100% / 8); } }
-.zoom-8 { .scene { width: (100% / 9); } }
-.zoom-7 { .scene { width: (100% / 10); } }
-.zoom-6 { .scene { width: (100% / 11); } }
-.zoom-5 { .scene { width: (100% / 12); } }
-.zoom-4 { .scene { width: (100% / 13); } }
-.zoom-3 { .scene { width: (100% / 14); } }
-.zoom-2 { .scene { width: (100% / 15); } }
-.zoom-1 { .scene { width: (100% / 16); } }
-
-.menu-button, .zoom, .scene.error {
+.menu-button, .scene.error {
     display: none !important;
 }
 
