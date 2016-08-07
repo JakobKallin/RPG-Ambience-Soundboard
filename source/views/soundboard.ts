@@ -46,9 +46,12 @@ export default function(options:SoundboardViewCallbacks) {
                 });
                 node.classList.toggle('with-image', Boolean(firstImage(scene)));
             } },
-            '.scene-title': scene => scene.name || String.fromCharCode(160),
+            '.scene-name': scene => scene.name || String.fromCharCode(160),
             '.scene-hotkey': scene => scene.key || '',
-            '.scene-button': { on: { click: options.playScene } },
+            '.scene-button': {
+                on: { click: options.playScene },
+                title: scene => 'Play scene' + (scene.name ? ' ' + scene.name : ''),
+            },
             '.scene-preview-image': {
                 hidden: scene => !firstImage(scene),
                 on: { load: (scene, image) => image.classList.add('loaded') },
@@ -107,24 +110,42 @@ export default function(options:SoundboardViewCallbacks) {
     });
 
     const volumeSlider = <HTMLInputElement> dom.id('volume-slider');
-    dom.on(dom.id('volume-down'), 'click', () => {
-        const volume = 0;
-        volumeSlider.value = String(volume);
-        options.changeVolume(volume);
-    });
+    let mutedVolume = currentVolume();
+    setVolume(currentVolume());
 
-    dom.on(dom.id('volume-up'), 'click', () => {
-        const volume = 1;
-        volumeSlider.value = String(volume);
-        options.changeVolume(volume);
+    dom.on(dom.id('mute'), 'click', () => {
+        setVolume(0);
+        dom.id('unmute').focus();
+    });
+    dom.on(dom.id('unmute'), 'click', () => {
+        setVolume(mutedVolume);
+        dom.id('mute').focus();
     });
 
     dom.on(dom.id('volume-slider'), 'input', () => {
-        const volume = parseFloat(volumeSlider.value);
-        if (!isNaN(volume)) {
-            options.changeVolume(volume);
+        setVolume(currentVolume());
+    });
+
+    dom.on(dom.id('volume-slider'), 'change', () => {
+        if (currentVolume() > 0) {
+            mutedVolume = currentVolume();
         }
     });
+
+    function currentVolume() {
+        return parseNumber(volumeSlider.value);
+    }
+
+    function setVolume(volume) {
+        volumeSlider.value = String(volume);
+        options.changeVolume(volume);
+        allowMute(volume > 0);
+    }
+
+    function allowMute(canMute) {
+        dom.id('mute').hidden = !canMute;
+        dom.id('unmute').hidden = canMute;
+    }
 
     (() => {
         const percentages = R.range(1, 20+1).map(n => 1 / n);

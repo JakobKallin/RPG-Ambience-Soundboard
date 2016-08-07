@@ -17,14 +17,14 @@
                     <select class="adventure" id="adventure">
                         <option data-repeat="10">Some Adventure</option>
                     </select>
-                    <button type="button" id="fullscreen">Fullscreen</button>
+                    <button type="button" id="fullscreen" title="Fullscreen">Fullscreen</button>
                 </div>
                 <div>
-                    <button type="button" id="zoom-out"></button>
-                    <button type="button" id="zoom-in"></button>
-                    <button type="button" id="volume-down">🔇</button>
-                    <input type="range" min="0" step="0.01" max="1" value="1" id="volume-slider">
-                    <button type="button" id="volume-up">🔊</button>
+                    <button type="button" id="zoom-out" title="Zoom out"></button>
+                    <button type="button" id="zoom-in" title="Zoom in"></button>
+                    <button type="button" id="mute" title="Mute">🔇</button>
+                    <button type="button" id="unmute" title="Unmute">🔊</button>
+                    <input type="range" min="0" step="0.01" max="1" value="1" id="volume-slider" title="Volume">
                 </div>
             </div>
             <div class="scene-view flex">
@@ -36,7 +36,7 @@
                                     <img src="" alt="" class="scene-preview-image">
                                 </div>
                                 <div class="scene-label">
-                                    <span class="scene-title">Wizard's Library in the Evil Forest</span>
+                                    <span class="scene-name">Wizard's Library in the Evil Forest</span>
                                     <span class="scene-hotkey"></span>
                                 </div>
                                 <progress value="0">0%</progress>
@@ -54,7 +54,7 @@
                                     <img src="" alt="" class="scene-preview-image">
                                 </div>
                                 <div class="scene-label">
-                                    <span class="scene-title">Wizard's Library in the Evil Forest</span>
+                                    <span class="scene-name">Wizard's Library in the Evil Forest</span>
                                     <span class="scene-hotkey"></span>
                                 </div>
                             </button>
@@ -69,7 +69,7 @@
                                     <img src="" alt="" class="scene-preview-image">
                                 </div>
                                 <div class="scene-label">
-                                    <span class="scene-title">Wizard's Library in the Evil Forest</span>
+                                    <span class="scene-name">Wizard's Library in the Evil Forest</span>
                                     <span class="scene-hotkey"></span>
                                 </div>
                             </button>
@@ -78,7 +78,7 @@
                 </div>
             </div>
             <div>
-                <button type="button" id="stop-button">Stop All</button>
+                <button type="button" id="stop-button" title="Stop all scenes">Stop All</button>
             </div>
             <!-- <div class="content">
                 <div id="options">
@@ -143,7 +143,7 @@
                                         <img src="" alt="" class="scene-preview-image">
                                     </div>
                                     <div class="scene-label">
-                                        <span class="scene-title">Wizard's Library in the Evil Forest</span>
+                                        <span class="scene-name">Wizard's Library in the Evil Forest</span>
                                         <span class="scene-hotkey"></span>
                                     </div>
                                     <progress value="0">0%</progress>
@@ -161,7 +161,7 @@
                                         <img src="" alt="" class="scene-preview-image">
                                     </div>
                                     <div class="scene-label">
-                                        <span class="scene-title">Wizard's Library in the Evil Forest</span>
+                                        <span class="scene-name">Wizard's Library in the Evil Forest</span>
                                         <span class="scene-hotkey"></span>
                                     </div>
                                 </button>
@@ -176,7 +176,7 @@
                                         <img src="" alt="" class="scene-preview-image">
                                     </div>
                                     <div class="scene-label">
-                                        <span class="scene-title">Wizard's Library in the Evil Forest</span>
+                                        <span class="scene-name">Wizard's Library in the Evil Forest</span>
                                         <span class="scene-hotkey"></span>
                                     </div>
                                 </button>

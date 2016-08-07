@@ -223,11 +223,11 @@ html {
             height: 2.5rem;
         }
 
-        #zoom-in,
-        #zoom-out,
-        #volume-down,
-        #volume-up,
-        #volume-slider {
+        #zoom-in, #zoom-out, #mute, #unmute {
+            width: 2.5rem;
+        }
+
+        #zoom-in, #zoom-out, #mute, #unmute, #volume-slider {
             vertical-align: middle;
         }
 
