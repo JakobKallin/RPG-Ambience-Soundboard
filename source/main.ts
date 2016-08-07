@@ -17,7 +17,8 @@ const version = 0;
 
 interface Store {
     adventure?:string,
-    welcomed?:boolean
+    welcomed?:boolean,
+    zoom?:number
 }
 const defaultStore:Store = {};
 
@@ -187,6 +188,13 @@ function start() {
             changeVolume: volume => {
                 background.volume(volume);
                 foreground.volume(volume);
+            },
+            zoomLevel: Storage.read().zoom || 10,
+            zoomed: level => {
+                Storage.modify(store => {
+                    store.zoom = level;
+                    return store;
+                });
             }
         });
         selectAdventure(

@@ -232,10 +232,18 @@ html {
   padding: 0.25em 0.5em; }
 .page-soundboard #top-menu select, .page-soundboard #top-menu button {
   height: 2.5rem; }
+.page-soundboard #top-menu #zoom-in,
+.page-soundboard #top-menu #zoom-out,
 .page-soundboard #top-menu #volume-down,
 .page-soundboard #top-menu #volume-up,
 .page-soundboard #top-menu #volume-slider {
   vertical-align: middle; }
+.page-soundboard #top-menu #zoom-out:before {
+  font-family: FontAwesome;
+  content: ""; }
+.page-soundboard #top-menu #zoom-in:before {
+  font-family: FontAwesome;
+  content: ""; }
 .page-soundboard #stop-button {
   font-size: 2em;
   width: 100%; }
@@ -274,8 +282,6 @@ html {
       align-items: flex-start; }
       .page-soundboard #options .menu ul > * + * {
         margin-top: 1rem; }
-    .page-soundboard #options .menu .zoom {
-      position: static; }
   .page-soundboard #options .error {
     display: flex;
     flex-direction: row;
@@ -312,25 +318,6 @@ html {
   @media (max-width: 40em) {
     .page-soundboard #options .other-menu {
       display: none; } }
-  .page-soundboard #options .zoom {
-    position: absolute;
-    right: 0;
-    top: 0; }
-    .page-soundboard #options .zoom > * {
-      vertical-align: middle; }
-  .page-soundboard #options .zoom-slider {
-    margin-left: 0.5rem;
-    margin-right: 0.5rem; }
-  .page-soundboard #options .zoom-in, .page-soundboard #options .zoom-out {
-    width: 2rem;
-    height: 2rem;
-    padding: 0; }
-  .page-soundboard #options .zoom-in:before, .page-soundboard #options .zoom-out:before {
-    font-family: FontAwesome; }
-  .page-soundboard #options .zoom-out:before {
-    content: ""; }
-  .page-soundboard #options .zoom-in:before {
-    content: ""; }
 .page-soundboard .scene-view {
   position: relative;
   flex: 1;
@@ -463,55 +450,7 @@ html {
 html:not(.menu) .menu {
   display: none; }
 
-.zoom-16 .scene {
-  width: 100%; }
-
-.zoom-15 .scene {
-  width: 50%; }
-
-.zoom-14 .scene {
-  width: 33.33333%; }
-
-.zoom-13 .scene {
-  width: 25%; }
-
-.zoom-12 .scene {
-  width: 20%; }
-
-.zoom-11 .scene {
-  width: 16.66667%; }
-
-.zoom-10 .scene {
-  width: 14.28571%; }
-
-.zoom-9 .scene {
-  width: 12.5%; }
-
-.zoom-8 .scene {
-  width: 11.11111%; }
-
-.zoom-7 .scene {
-  width: 10%; }
-
-.zoom-6 .scene {
-  width: 9.09091%; }
-
-.zoom-5 .scene {
-  width: 8.33333%; }
-
-.zoom-4 .scene {
-  width: 7.69231%; }
-
-.zoom-3 .scene {
-  width: 7.14286%; }
-
-.zoom-2 .scene {
-  width: 6.66667%; }
-
-.zoom-1 .scene {
-  width: 6.25%; }
-
-.menu-button, .zoom, .scene.error {
+.menu-button, .scene.error {
   display: none !important; }
 
 .other-menu {

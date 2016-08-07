@@ -31,6 +31,15 @@ function capture(node, event, listener) {
     node.addEventListener(event, listener, true);
 }
 exports.capture = capture;
+function array(arraylike) {
+    if ('from' in Array) {
+        return Array.from(arraylike);
+    }
+    else {
+        return Array.prototype.slice.call(arraylike);
+    }
+}
+exports.array = array;
 function toggleClass(node, table) {
     Object.keys(table).forEach(function (className) {
         var value = table[className];

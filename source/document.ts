@@ -15,7 +15,7 @@ export function all(selector, node?):HTMLElement[] {
     return [].slice.call(node.querySelectorAll(selector));
 }
 
-export function first(selector, node?) {
+export function first(selector, node?):HTMLElement {
     node = node || document;
     return node.querySelector(selector)
 }
@@ -30,6 +30,15 @@ export function on(node:any, event:string, listener:(e:Event) => void) {
 
 export function capture(node, event, listener) {
     node.addEventListener(event, listener, true);
+}
+
+export function array(arraylike) {
+    if ('from' in Array) {
+        return Array.from(arraylike);
+    }
+    else {
+        return Array.prototype.slice.call(arraylike);
+    }
 }
 
 export function toggleClass(node, table) {

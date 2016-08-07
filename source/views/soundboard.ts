@@ -1,4 +1,5 @@
 import * as dom from '../document';
+import { bound, parseNumber } from '../utils';
 declare var R:any;
 
 interface SoundboardViewCallbacks {
@@ -7,7 +8,9 @@ interface SoundboardViewCallbacks {
     playScene: (scene:any) => void,
     stopAllScenes: () => void,
     adventureSelected: (s:string) => void,
-    changeVolume: (volume:number) => void
+    changeVolume: (volume:number) => void,
+    zoomLevel: number,
+    zoomed: (level:number) => void
 }
 
 export default function(options:SoundboardViewCallbacks) {
@@ -122,6 +125,29 @@ export default function(options:SoundboardViewCallbacks) {
             options.changeVolume(volume);
         }
     });
+
+    (() => {
+        const percentages = R.range(1, 20+1).map(n => 1 / n);
+        const nodes = dom.first('.scene-list').children; // Live
+        dom.on(dom.id('zoom-out'), 'click', () => zoom(zoomLevel() + 1));
+        dom.on(dom.id('zoom-in'), 'click', () => zoom(zoomLevel() - 1));
+        zoom(options.zoomLevel - 1);
+
+        function zoom(level) {
+            const boundedLevel = bound(0, percentages.length - 1, level);
+            const newPercentage = percentages[boundedLevel];
+            Array.from(nodes).forEach(n => n.style.width = (newPercentage * 100) + '%');
+            options.zoomed(boundedLevel + 1);
+        }
+
+        function zoomLevel() {
+            const reference = R.find(n => !n.hidden, nodes);
+            const percentage = reference.getBoundingClientRect().width / reference.parentNode.getBoundingClientRect().width;
+            const closestPercentage = R.sortBy(p => Math.abs(percentage - p), percentages)[0];
+            const level = percentages.indexOf(closestPercentage);
+            return level;
+        }
+    })();
 
     dom.on(dom.id('fullscreen'), 'click', () => {
         dom.toggleFullscreen();

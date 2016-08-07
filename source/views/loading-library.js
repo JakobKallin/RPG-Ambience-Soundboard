@@ -1,13 +1,14 @@
 "use strict";
 var dom = require('../document');
 function default_1(page) {
-    dom.first('progress', page).value = 0;
+    var meter = dom.first('progress', page);
+    meter.value = 0;
     var events = dom.first('.events', page);
     var template = events.firstElementChild;
     template.remove();
     return {
         progress: function (ratio) {
-            dom.first('progress', page).value = ratio;
+            meter.value = ratio;
         },
         event: function (text) {
             var instance = template.cloneNode(true);

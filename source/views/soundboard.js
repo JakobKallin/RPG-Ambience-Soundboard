@@ -1,5 +1,6 @@
 "use strict";
 var dom = require('../document');
+var utils_1 = require('../utils');
 function default_1(options) {
     var dropdown = options.dropdown;
     var adventures = options.adventures;
@@ -94,6 +95,26 @@ function default_1(options) {
             options.changeVolume(volume);
         }
     });
+    (function () {
+        var percentages = R.range(1, 20 + 1).map(function (n) { return 1 / n; });
+        var nodes = dom.first('.scene-list').children; // Live
+        dom.on(dom.id('zoom-out'), 'click', function () { return zoom(zoomLevel() + 1); });
+        dom.on(dom.id('zoom-in'), 'click', function () { return zoom(zoomLevel() - 1); });
+        zoom(options.zoomLevel - 1);
+        function zoom(level) {
+            var boundedLevel = utils_1.bound(0, percentages.length - 1, level);
+            var newPercentage = percentages[boundedLevel];
+            Array.from(nodes).forEach(function (n) { return n.style.width = (newPercentage * 100) + '%'; });
+            options.zoomed(boundedLevel + 1);
+        }
+        function zoomLevel() {
+            var reference = R.find(function (n) { return !n.hidden; }, nodes);
+            var percentage = reference.getBoundingClientRect().width / reference.parentNode.getBoundingClientRect().width;
+            var closestPercentage = R.sortBy(function (p) { return Math.abs(percentage - p); }, percentages)[0];
+            var level = percentages.indexOf(closestPercentage);
+            return level;
+        }
+    })();
     dom.on(dom.id('fullscreen'), 'click', function () {
         dom.toggleFullscreen();
     });

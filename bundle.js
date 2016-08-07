@@ -653,6 +653,15 @@ function capture(node, event, listener) {
     node.addEventListener(event, listener, true);
 }
 exports.capture = capture;
+function array(arraylike) {
+    if ('from' in Array) {
+        return Array.from(arraylike);
+    }
+    else {
+        return Array.prototype.slice.call(arraylike);
+    }
+}
+exports.array = array;
 function toggleClass(node, table) {
     Object.keys(table).forEach(function (className) {
         var value = table[className];
@@ -1042,6 +1051,13 @@ function start() {
             changeVolume: function (volume) {
                 background.volume(volume);
                 foreground.volume(volume);
+            },
+            zoomLevel: Storage.read().zoom || 10,
+            zoomed: function (level) {
+                Storage.modify(function (store) {
+                    store.zoom = level;
+                    return store;
+                });
             }
         });
         selectAdventure(Storage.read().adventure ||
@@ -1180,7 +1196,7 @@ dom.on(window, 'DOMContentLoaded', function () {
     }
 });
 
-},{"../libraries/ambience-stage/dom":1,"../libraries/ambience-stage/stage":4,"./adventure/library":5,"./document":7,"./persistence":9,"./queue":10,"./state-machine":11,"./storage/google-drive":12,"./views/google-drive":13,"./views/loading-library":14,"./views/session-error":15,"./views/soundboard":16,"./views/welcome":17}],9:[function(require,module,exports){
+},{"../libraries/ambience-stage/dom":1,"../libraries/ambience-stage/stage":4,"./adventure/library":5,"./document":7,"./persistence":9,"./queue":10,"./state-machine":11,"./storage/google-drive":12,"./views/google-drive":14,"./views/loading-library":15,"./views/session-error":16,"./views/soundboard":17,"./views/welcome":18}],9:[function(require,module,exports){
 "use strict";
 function read(version, defaults) {
     var json = localStorage.getItem(version.toString());
@@ -1475,6 +1491,24 @@ exports.default = default_1;
 
 },{}],13:[function(require,module,exports){
 "use strict";
+function bound(min, max, value) {
+    var boundedAbove = Math.min(value, max);
+    return Math.max(min, boundedAbove);
+}
+exports.bound = bound;
+function parseNumber(str) {
+    var number = parseFloat(str);
+    if (isNaN(number)) {
+        throw new Error('Cannot parse string to number: ' + str);
+    }
+    else {
+        return number;
+    }
+}
+exports.parseNumber = parseNumber;
+
+},{}],14:[function(require,module,exports){
+"use strict";
 var dom = require('../document');
 function default_1(page, signal) {
     dom.on(dom.first('form', page), 'submit', function (event) {
@@ -1486,17 +1520,18 @@ function default_1(page, signal) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 
-},{"../document":7}],14:[function(require,module,exports){
+},{"../document":7}],15:[function(require,module,exports){
 "use strict";
 var dom = require('../document');
 function default_1(page) {
-    dom.first('progress', page).value = 0;
+    var meter = dom.first('progress', page);
+    meter.value = 0;
     var events = dom.first('.events', page);
     var template = events.firstElementChild;
     template.remove();
     return {
         progress: function (ratio) {
-            dom.first('progress', page).value = ratio;
+            meter.value = ratio;
         },
         event: function (text) {
             var instance = template.cloneNode(true);
@@ -1514,7 +1549,7 @@ function default_1(page) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 
-},{"../document":7}],15:[function(require,module,exports){
+},{"../document":7}],16:[function(require,module,exports){
 "use strict";
 var dom = require('../document');
 function default_1(page, signal) {
@@ -1533,9 +1568,10 @@ function default_1(page, signal) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 
-},{"../document":7}],16:[function(require,module,exports){
+},{"../document":7}],17:[function(require,module,exports){
 "use strict";
 var dom = require('../document');
+var utils_1 = require('../utils');
 function default_1(options) {
     var dropdown = options.dropdown;
     var adventures = options.adventures;
@@ -1630,6 +1666,26 @@ function default_1(options) {
             options.changeVolume(volume);
         }
     });
+    (function () {
+        var percentages = R.range(1, 20 + 1).map(function (n) { return 1 / n; });
+        var nodes = dom.first('.scene-list').children; // Live
+        dom.on(dom.id('zoom-out'), 'click', function () { return zoom(zoomLevel() + 1); });
+        dom.on(dom.id('zoom-in'), 'click', function () { return zoom(zoomLevel() - 1); });
+        zoom(options.zoomLevel - 1);
+        function zoom(level) {
+            var boundedLevel = utils_1.bound(0, percentages.length - 1, level);
+            var newPercentage = percentages[boundedLevel];
+            Array.from(nodes).forEach(function (n) { return n.style.width = (newPercentage * 100) + '%'; });
+            options.zoomed(boundedLevel + 1);
+        }
+        function zoomLevel() {
+            var reference = R.find(function (n) { return !n.hidden; }, nodes);
+            var percentage = reference.getBoundingClientRect().width / reference.parentNode.getBoundingClientRect().width;
+            var closestPercentage = R.sortBy(function (p) { return Math.abs(percentage - p); }, percentages)[0];
+            var level = percentages.indexOf(closestPercentage);
+            return level;
+        }
+    })();
     dom.on(dom.id('fullscreen'), 'click', function () {
         dom.toggleFullscreen();
     });
@@ -1660,7 +1716,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 ;
 
-},{"../document":7}],17:[function(require,module,exports){
+},{"../document":7,"../utils":13}],18:[function(require,module,exports){
 "use strict";
 var dom = require('../document');
 function default_1(page, signal) {

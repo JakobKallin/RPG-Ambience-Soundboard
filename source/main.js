@@ -170,6 +170,13 @@ function start() {
             changeVolume: function (volume) {
                 background.volume(volume);
                 foreground.volume(volume);
+            },
+            zoomLevel: Storage.read().zoom || 10,
+            zoomed: function (level) {
+                Storage.modify(function (store) {
+                    store.zoom = level;
+                    return store;
+                });
             }
         });
         selectAdventure(Storage.read().adventure ||
