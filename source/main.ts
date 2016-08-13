@@ -49,11 +49,8 @@ function start() {
     const views = {
         welcome: WelcomeView(dom.id('welcome'), {
             dismissed: () => {
-                Storage.modify(store => {
-                    store.welcomed = true;
-                    return store;
-                });
-                enterState(State.AccountPossiblyConnected);
+                // The storage is updated inside the `hideDialog` function.
+                hideDialog();
             }
         }),
         googleDrive: GoogleDriveView(dom.id('google-drive'), {
@@ -77,12 +74,16 @@ function start() {
         })
     };
 
-    if (Storage.read().welcomed) {
-        enterState(State.AccountPossiblyConnected);
+    enterState(State.AccountPossiblyConnected);
+    if (!Storage.read().welcomed) {
+        showDialog('welcome');
     }
-    else {
-        enterState(State.NotWelcomed);
-    }
+
+    dom.on(dom.id('dialog'), 'click', event => {
+        if (event.target === dom.id('dialog')) {
+            hideDialog();
+        }
+    });
 
     function showPage(id:string, fade:number=0):void {
         const pages = dom.all('.page');
@@ -94,7 +95,7 @@ function start() {
             p.style.opacity = '';
             p.hidden = p !== previous && p !== next;
         });
-        document.body.insertBefore(next, previous.nextElementChild);
+        document.body.insertBefore(next, previous.nextElementSibling);
         hideAfter(previous, fade);
         fadeIn(next, fade);
 
@@ -117,6 +118,28 @@ function start() {
         }
     }
 
+    function showDialog(id:string):void {
+        const container = dom.id('dialog');
+        const dialogs = dom.all('.dialog');
+        const active = dialogs.filter(d => d.id === id)[0];
+        const inactive = dialogs.filter(d => d.id !== id);
+        container.hidden = false;
+        active.hidden = false;
+        inactive.forEach(d => d.hidden = true);
+    }
+
+    function hideDialog():void {
+        // TODO: Solve this in a more flexible way.
+        if (!dom.id('welcome').hidden) {
+            Storage.modify(store => {
+                store.welcomed = true;
+                return store;
+            });
+        }
+
+        const container = dom.id('dialog');
+        container.hidden = true;
+    }
 
     function loadLibrary():void {
         let adventureLimit:number = 1;
@@ -334,7 +357,6 @@ function start() {
     function stateEntered(state:State, arg?:any):void {
         switch(state) {
             case State.Loading: break;
-            case State.NotWelcomed: showPage('welcome', 0.25); break;
             case State.AccountPossiblyConnected: attemptImmediateLogin(); break;
             case State.AccountConnected:
                 enterState(State.StartingSession);

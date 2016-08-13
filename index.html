@@ -208,23 +208,8 @@
                 </form>
             </div>
         </div>
-        <div class="page page-welcome" id="welcome">
-            <div class="center">
-                <h2>Welcome to the RPG Ambience Soundboard alpha!</h2>
-                <p>This app works like <a href="http://rpg-ambience.com/" target="_blank">RPG Ambience</a>, with a few exceptions:</p>
-                <ul>
-                    <li>You can only play audio, not display images or text.</li>
-                    <li>You cannot create or edit adventures. (You must use <a href="http://rpg-ambience.com/" target="_blank">RPG Ambience</a> for that.)</li>
-                    <li>It works on mobile devices.</li>
-                </ul>
-                <p>RPG Ambience Soundboard is currently in alpha. Read the full details <a href="http://blog.rpg-ambience.com/articles/soundboard-alpha" target="_blank">on the RPG Ambience blog</a>.</p>
-                <form>
-                    <button type="submit">Start!</a>
-                </form>
-            </div>
-        </div>
         <div class="page page-loading-library" id="loading-library">
-            <div class="center">
+            <div class="center content">
                 <p>Loading adventure library…</p>
                 <progress value="0"></progress>
                 <ul class="events" data-gradual>
@@ -241,11 +226,28 @@
             </div>
         </div>
         <div class="page page-loading-app" id="loading-app">
-            <div class="center">
+            <div class="center content">
                 <p>Loading RPG Ambience Soundboard…</p>
             </div>
         </div>
-        <div id="stage">
+        <div id="dialog" hidden>
+            <div class="dialog dialog-welcome" id="welcome">
+                <div class="center">
+                    <h2>Welcome to the RPG Ambience Soundboard alpha!</h2>
+                    <p>This app works like <a href="http://rpg-ambience.com/" target="_blank">RPG Ambience</a>, with a few exceptions:</p>
+                    <ul>
+                        <li>You can only play audio, not display images or text.</li>
+                        <li>You cannot create or edit adventures. (You must use <a href="http://rpg-ambience.com/" target="_blank">RPG Ambience</a> for that.)</li>
+                        <li>It works on mobile devices.</li>
+                    </ul>
+                    <p>RPG Ambience Soundboard is currently in alpha. Read the full details <a href="http://blog.rpg-ambience.com/articles/soundboard-alpha" target="_blank">on the RPG Ambience blog</a>.</p>
+                    <form>
+                        <button type="submit">Start!</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div id="stage" hidden>
             <div id="background" class="layer"></div>
             <div id="foreground" class="layer"></div>
         </div>
