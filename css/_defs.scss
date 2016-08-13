@@ -115,7 +115,11 @@ $highlighted-border-color: hsl(220, 50%, 50%);
     font-size: inherit;
 }
 
-@mixin icon($text) {
+@mixin icon($text, $position: none) {
     font-family: FontAwesome;
     content: $text;
+
+    @if $position == left {
+        margin-right: 0.5em;
+    }
 }

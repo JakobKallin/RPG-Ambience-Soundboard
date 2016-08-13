@@ -5,12 +5,16 @@ import SoundboardView from './views/soundboard';
 import GoogleDriveView from './views/google-drive';
 import SessionErrorView from './views/session-error';
 import WelcomeView from './views/welcome';
+import OnlinePlayView from './views/online-play';
 import * as dom from './document';
+import * as ui from './ui';
 import AmbienceStage from '../libraries/ambience-stage/stage';
 import AmbienceStageDOM from '../libraries/ambience-stage/dom';
 import { State, transitions } from './state-machine';
 import createQueue from './queue';
 import * as Persistence from './persistence';
+import Network, {Session as NetworkSession} from './network';
+import { parseQuery } from './utils';
 declare var R:any;
 
 const version = 0;
@@ -18,7 +22,8 @@ const version = 0;
 interface Store {
     adventure?:string,
     welcomed?:boolean,
-    zoom?:number
+    zoom?:number,
+    session?:string
 }
 const defaultStore:Store = {};
 
@@ -36,10 +41,15 @@ function start() {
     let state:State = State.Loading;
     stateEntered(state);
 
-    const latest = {
+    const latest:{fade:any, session:NetworkSession} = {
         fade: {
             background: 0,
             foreground: 0
+        },
+        session: {
+            id: null,
+            trigger: () => {},
+            pause: () => {}
         }
     };
 
@@ -48,10 +58,7 @@ function start() {
 
     const views = {
         welcome: WelcomeView(dom.id('welcome'), {
-            dismissed: () => {
-                // The storage is updated inside the `hideDialog` function.
-                hideDialog();
-            }
+            dismiss: () => Storage.modify(store => store.welcomed = true)
         }),
         googleDrive: GoogleDriveView(dom.id('google-drive'), {
             login: () => {
@@ -76,14 +83,8 @@ function start() {
 
     enterState(State.AccountPossiblyConnected);
     if (!Storage.read().welcomed) {
-        showDialog('welcome');
+        ui.showDialog('welcome');
     }
-
-    dom.on(dom.id('dialog'), 'click', event => {
-        if (event.target === dom.id('dialog')) {
-            hideDialog();
-        }
-    });
 
     function showPage(id:string, fade:number=0):void {
         const pages = dom.all('.page');
@@ -118,29 +119,6 @@ function start() {
         }
     }
 
-    function showDialog(id:string):void {
-        const container = dom.id('dialog');
-        const dialogs = dom.all('.dialog');
-        const active = dialogs.filter(d => d.id === id)[0];
-        const inactive = dialogs.filter(d => d.id !== id);
-        container.hidden = false;
-        active.hidden = false;
-        inactive.forEach(d => d.hidden = true);
-    }
-
-    function hideDialog():void {
-        // TODO: Solve this in a more flexible way.
-        if (!dom.id('welcome').hidden) {
-            Storage.modify(store => {
-                store.welcomed = true;
-                return store;
-            });
-        }
-
-        const container = dom.id('dialog');
-        container.hidden = true;
-    }
-
     function loadLibrary():void {
         let adventureLimit:number = 1;
         let adventureCount:number = 0;
@@ -167,8 +145,8 @@ function start() {
         enterState(State.SessionStarted);
         return library.list(signalProgress)
         .then(adventures => {
-            enterState(State.LibraryLoaded);
             startSoundboard(adventures);
+            enterState(State.LibraryLoaded);
         })
         .catch(error => {
             console.error(error);
@@ -180,6 +158,14 @@ function start() {
     const queueFileDownload = createQueue(3);
     const queuePreviewDownload = createQueue(50);
     function startSoundboard(adventures:any):void {
+        const network = Network(appId, (event, index) => {
+            latest.session.pause(() => {
+                if (event.type === 'name') playSceneWithName(event.name);
+                if (event.type === 'hotkey') playSceneWithHotkey(event.hotkey);
+                if (event.type === 'stop') stopAllScenes();
+            });
+        });
+
         const previews = {};
         const files = {};
         const loadFile = R.memoize((id:string) => {
@@ -214,12 +200,30 @@ function start() {
             },
             zoomLevel: Storage.read().zoom || 10,
             zoomed: level => {
-                Storage.modify(store => {
-                    store.zoom = level;
-                    return store;
-                });
-            }
+                Storage.modify(store => store.zoom = level);
+            },
+            playOnline: () => ui.showDialog('online-play')
         });
+        const joinSession = (id?) => {
+            (id ? network.joinSession(id) : network.startSession(Storage.read().session)).then(session => {
+                latest.session = session;
+                const url = location.protocol + '//' + location.host + '/?session=' + encodeURIComponent(session.id);
+                onlinePlayView.sessionJoined(url);
+                Storage.modify(store => store.session = session.id);
+            })
+            .catch(error => onlinePlayView.sessionError(error.message))
+        }
+        const onlinePlayView = OnlinePlayView(dom.id('online-play'), {
+            startSession: joinSession,
+            joinSession: joinSession,
+            dismiss: () => {}
+        });
+
+        if (sessionInUrl()) {
+            ui.showDialog('online-play');
+            onlinePlayView.joiningSession();
+            joinSession(sessionInUrl());
+        }
 
         selectAdventure(
             adventureInUrl(location.pathname) ||
@@ -233,6 +237,10 @@ function start() {
 
         dom.on(document, 'keypress', (event:any):void => {
             playSceneWithHotkey(dom.key(event.charCode));
+        });
+
+        dom.on(window, 'popstate', () => {
+            onPageChange(location.pathname);
         });
 
         function selectAdventure(id:string):void {
@@ -262,10 +270,7 @@ function start() {
                 }));
             });
             soundboard.adventureSelected(id);
-            Storage.modify(store => {
-                store.adventure = id;
-                return store;
-            });
+            Storage.modify(store => store.adventure = id);
         }
 
         function adventureInUrl(path:string):string {
@@ -284,10 +289,6 @@ function start() {
             }
         }
 
-        dom.on(window, 'popstate', () => {
-            onPageChange(location.pathname);
-        });
-
         function playSceneWithHotkey(hotkey:any):void {
             if (!selectedAdventure) return;
 
@@ -295,12 +296,27 @@ function start() {
             scenes.forEach(playScene);
         }
 
+        function playSceneWithName(name:string):void {
+            if (!selectedAdventure) return;
+
+            const scenes = selectedAdventure.scenes.filter((s:any) => s.name === name);
+            scenes.forEach(playScene);
+        }
+
         function stopAllScenes():void {
+            latest.session.trigger({ type: 'stop' });
             background.start([], latest.fade.background * 1000);
             foreground.start([], latest.fade.foreground * 1000);
         }
 
         function playScene(scene:any):void {
+            if (scene.name) {
+                latest.session.trigger({ type: 'name', name: scene.name });
+            }
+            else if (scene.hotkey) {
+                latest.session.trigger({ type: 'hotkey', name: scene.hotkey });
+            }
+
             const firstImage = scene.media.filter(m => m.type === 'image')[0];
             const firstSound = scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
             Promise.all([
@@ -372,6 +388,10 @@ function start() {
                 break;
             default: throw new Error('Unhandled state: ' + state);
         }
+    }
+
+    function sessionInUrl():string {
+        return parseQuery(location)['session'];
     }
 }
 

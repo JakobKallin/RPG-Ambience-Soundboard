@@ -12,3 +12,18 @@ export function parseNumber(str:string) {
         return number;
     }
 }
+
+export function parseQuery(location:Location):{} {
+    const query = {};
+    if (location.search.substring(1) !== '') {
+        location.search.substring(1)
+        .split('&')
+        .forEach(s => {
+            const kv = s.split('=').map(decodeURIComponent);
+            const k = kv[0];
+            const v = kv[1];
+            query[k] = v;
+        });
+    }
+    return query;
+}

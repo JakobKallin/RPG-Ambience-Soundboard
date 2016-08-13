@@ -26,6 +26,10 @@ html {
     @include flex(row, $horizontal: center, $vertical: stretch);
 }
 
+.horizontal.spacing > * + * {
+    margin-left: 1rem;
+}
+
 .vertical {
     @include flex(column, $horizontal: stretch, $vertical: center);
 }
@@ -54,18 +58,8 @@ html {
     @include flex(column, $horizontal: stretch, $vertical: center);
 }
 
-.center:not(.vertical):not(.horizontal) {
+.center {
     margin: auto;
-}
-
-.center.vertical {
-    margin-top: auto;
-    margin-right: auto;
-}
-
-.center.horizontal {
-    margin-left: auto;
-    margin-right: auto;
 }
 
 .page-loading-error {
@@ -163,14 +157,29 @@ html {
 }
 
 .dialog {
+    position: relative;
     margin: auto;
-    padding: 2rem;
     @include box;
+
+    .content {
+        margin: 1.5rem;
+    }
 }
 
-.dialog-welcome {
+#welcome, #online-play {
     width: 100%;
     max-width: 50rem;
+
+    .close {
+        @include reset-control;
+        position: absolute;
+        right: 0;
+        top: 0;
+        padding: 1rem;
+        font-size: 2rem;
+        line-height: 1rem;
+        font-weight: bold;
+    }
 
     h2 {
         @include heading;
@@ -197,9 +206,86 @@ html {
         text-align: center;
     }
 
-    form button {
+    form button, form input {
         font-size: 1.5rem;
         padding: 0.5rem;
+    }
+
+    .note {
+        font-size: 0.8rem;
+        color: $subtle-text-color;
+    }
+}
+
+#welcome {
+    form {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+}
+
+#online-play {
+    text-align: center;
+
+    #online-play-error-message {
+        display: inline-block;
+        white-space: pre;
+        font-family: monospace;
+        text-align: left;
+        color: $error-color;
+        margin: 0;
+    }
+
+    #start-session-form button:before {
+        @include icon($fa-var-users, left);
+    }
+
+    #join-session-form button:before {
+        @include icon($fa-var-user-plus, left);
+    }
+
+    .url {
+        font-size: 1.5rem;
+        font-family: monospace;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+    }
+
+    .connecting-to-session {
+        font-size: 1.5rem;
+
+        p:before {
+            display: inline-block;
+            content: "";
+            vertical-align: middle;
+            width: 3rem;
+            height: 3rem;
+            background-image: url("/images/google-drive.png");
+            background-repeat: no-repeat;
+            background-size: cover;
+            animation-duration: 1s;
+            animation-name: spin;
+            animation-iteration-count: infinite;
+            animation-timing-function: linear;
+            transform-origin: center;
+            margin-right: 1rem;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0);
+            }
+
+            to {
+                transform: rotate(1turn);
+            }
+        }
+    }
+
+    .joining-session {
+        input {
+            font-family: monospace;
+        }
     }
 }
 
@@ -254,12 +340,15 @@ html {
             vertical-align: middle;
         }
 
-        #zoom-out:before {
-            @include icon($fa-var-search-minus);
-        }
+        #fullscreen:before { @include icon($fa-var-arrows-alt, left) }
+        #zoom-out:before { @include icon($fa-var-search-minus) }
+        #zoom-in:before { @include icon($fa-var-search-plus) }
+        #mute:before { @include icon($fa-var-volume-off) }
+        #unmute:before { @include icon($fa-var-volume-up) }
 
-        #zoom-in:before {
-            @include icon($fa-var-search-plus);
+        .icon {
+            vertical-align: middle;
+            height: 1rem;
         }
     }
 

@@ -10,7 +10,8 @@ interface SoundboardViewCallbacks {
     adventureSelected: (s:string) => void,
     changeVolume: (volume:number) => void,
     zoomLevel: number,
-    zoomed: (level:number) => void
+    zoomed: (level:number) => void,
+    playOnline: () => void
 }
 
 export default function(options:SoundboardViewCallbacks) {
@@ -175,6 +176,8 @@ export default function(options:SoundboardViewCallbacks) {
     });
 
     dropdown.addEventListener('change', () => options.adventureSelected(dropdown.value));
+
+    dom.on(dom.id('online-play-button'), 'click', () => options.playOnline());
 
     function selectedAdventure() {
         return adventures[dropdown.value];

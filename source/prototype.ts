@@ -69,6 +69,25 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    dom.all('[data-cycle]').forEach(container => {
+        const classNames = container.dataset['cycle'].split(/\s+/);
+        const elements = <HTMLElement[]> classNames.map(n => container.getElementsByClassName(n)[0]);
+        elements.forEach(e => {
+            dom.on(e, 'click', event => cycle());
+            e.hidden = true;
+        });
+        cycle();
+
+        function cycle() {
+            const next = elements[elements.indexOf(active()) + 1] || elements[0];
+            elements.forEach(e => e.hidden = e !== next);
+        }
+
+        function active() {
+            return R.find(e => !e.hidden, elements);
+        }
+    });
+
     (() => {
         let url = '/boom.wav';
         const req = new XMLHttpRequest();
@@ -159,4 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return R.find(d => !d.hidden, dialogs);
         }
     })();
+});
+
+document.addEventListener('submit', event => {
+    event.preventDefault();
 });

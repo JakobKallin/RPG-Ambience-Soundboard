@@ -18,12 +18,16 @@
                         <option data-repeat="10">Some Adventure</option>
                     </select>
                     <button type="button" id="fullscreen" title="Fullscreen">Fullscreen</button>
+                    <button type="button" id="online-play-button" title="Play Online">
+                        <img src="/images/google-drive.png" alt="" class="icon">
+                        <span class="label">Play Online</span>
+                    </button>
                 </div>
                 <div>
                     <button type="button" id="zoom-out" title="Zoom out"></button>
                     <button type="button" id="zoom-in" title="Zoom in"></button>
-                    <button type="button" id="mute" title="Mute">🔇</button>
-                    <button type="button" id="unmute" title="Unmute">🔊</button>
+                    <button type="button" id="mute" title="Mute"></button>
+                    <button type="button" id="unmute" title="Unmute"></button>
                     <input type="range" min="0" step="0.01" max="1" value="1" id="volume-slider" title="Volume">
                 </div>
             </div>
@@ -231,8 +235,9 @@
             </div>
         </div>
         <div id="dialog" hidden>
-            <div class="dialog dialog-welcome" id="welcome">
-                <div class="center">
+            <div class="dialog" id="welcome">
+                <button type="button" class="close">×</button>
+                <div class="center content">
                     <h2>Welcome to the RPG Ambience Soundboard alpha!</h2>
                     <p>This app works like <a href="http://rpg-ambience.com/" target="_blank">RPG Ambience</a>, with a few exceptions:</p>
                     <ul>
@@ -244,6 +249,48 @@
                     <form>
                         <button type="submit">Start!</a>
                     </form>
+                </div>
+            </div>
+            <div class="dialog" id="online-play">
+                <button type="button" class="close">×</button>
+                <div class="center content" data-cycle="no-session join-session-id connecting-to-session session-active">
+                    <div class="no-session">
+                        <p>Use RPG Ambience together with other players who have Google accounts.</p>
+                        <div class="horizontal center spacing">
+                            <form id="start-session-form">
+                                <button type="submit">Start session</button>
+                            </form>
+                            <form id="join-session-form">
+                                <button type="submit">Join session</button>
+                            </form>
+                        </div>
+                        <div id="online-play-error" hidden>
+                            <p>There was an error connecting to the session:</p>
+                            <p id="online-play-error-message">Error message</p>
+                        </div>
+                        <p class="note">
+                            Online play is implemented using the
+                            <a href="https://developers.google.com/google-apps/realtime/overview" target="_blank">Google Realtime API</a>.
+                        </p>
+                    </div>
+                    <div class="joining-session">
+                        <p>Please enter the URL received from the host:</p>
+                        <form class="horizontal spacing" id="join-session-id-form">
+                            <input type="text" placeholder="http://" id="join-session-id" class="flex">
+                            <button type="submit">Go!</button>
+                        </form>
+                    </div>
+                    <div class="connecting-to-session">
+                        <p>Connecting to session…</p>
+                    </div>
+                    <div class="session-active">
+                        <div class="link">
+                            <p class="label">To invite other players, send them this link:</p>
+                            <p class="url">
+                                <a href="" target="_blank" id="join-session-link">http://sound.rpg-ambience.com/?session=abcdefghijklmnopqrstuvwxyz1234567890</a>
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
