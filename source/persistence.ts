@@ -19,10 +19,10 @@ export function read(version:number, defaults:{}):{} {
     }
 }
 
-export function modify(version:number, defaults:{}, transaction:(store:{}) => {}):void {
-    const before = read(version, defaults);
-    const after = transaction(before);
-    write(version, after);
+export function modify(version:number, defaults:{}, transaction:(store:{}) => any):void {
+    const store = read(version, defaults);
+    transaction(store);
+    write(version, store);
 }
 
 function write(version:number, store:{}):void {

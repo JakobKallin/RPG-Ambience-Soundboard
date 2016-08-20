@@ -10,13 +10,17 @@
 a {
   color: inherit; }
 
-button,
-input,
-select,
-label {
-  cursor: pointer;
+button, select, label, input {
   font-size: inherit;
   font-family: inherit; }
+
+button,
+select,
+label,
+input[type="radio"],
+input[type="checkbox"],
+input[type="range"] {
+  cursor: pointer; }
 
 li {
   display: block; }
@@ -26,7 +30,7 @@ li {
 
 @font-face {
   font-family: 'FontAwesome';
-  src: url("/fonts/fontawesome-webfont.woff2?v=4.5.0") format("woff2");
+  src: url("/fonts/fontawesome-webfont.woff2?v=4.6.3") format("woff2");
   font-weight: normal;
   font-style: normal; }
 html, body, .page {
@@ -45,6 +49,9 @@ html {
   flex-direction: row;
   justify-content: center;
   align-items: stretch; }
+
+.horizontal.spacing > * + * {
+  margin-left: 1rem; }
 
 .vertical {
   display: flex;
@@ -77,16 +84,8 @@ html {
   justify-content: center;
   align-items: stretch; }
 
-.center:not(.vertical):not(.horizontal) {
+.center {
   margin: auto; }
-
-.center.vertical {
-  margin-top: auto;
-  margin-right: auto; }
-
-.center.horizontal {
-  margin-left: auto;
-  margin-right: auto; }
 
 .page-loading-error {
   padding: 1rem;
@@ -113,6 +112,8 @@ html {
   .page-loading-app .center, .page-loading-library .center {
     position: relative;
     width: 100%;
+    max-width: 50rem; }
+  .page-loading-app .content, .page-loading-library .content {
     max-width: 50rem; }
   .page-loading-app p, .page-loading-library p {
     position: relative;
@@ -158,28 +159,116 @@ html {
     .page-loading-app .events :nth-child(n+10), .page-loading-library .events :nth-child(n+10) {
       display: none; }
 
-.page-welcome {
-  padding: 1rem; }
-  .page-welcome h2 {
+#dialog {
+  position: absolute;
+  z-index: 100;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.75);
+  display: flex;
+  flex-direction: row; }
+
+.dialog {
+  position: relative;
+  margin: auto;
+  background-color: #1a1a1a;
+  border: 1px solid #404040; }
+  .dialog .content {
+    margin: 1.5rem; }
+
+#welcome, #online-play {
+  width: 100%;
+  max-width: 50rem; }
+  #welcome .close, #online-play .close {
+    border: 0;
+    padding: 0;
+    color: inherit;
+    background-color: transparent;
+    font-family: inherit;
+    font-size: inherit;
+    position: absolute;
+    right: 0;
+    top: 0;
+    padding: 1rem;
+    font-size: 2rem;
+    line-height: 1rem;
+    font-weight: bold; }
+  #welcome h2, #online-play h2 {
     font-size: 2rem;
     font-family: Constantia, Georgia, serif;
     color: white;
     text-align: center; }
-  .page-welcome li {
+  #welcome li, #online-play li {
     display: list-item;
     margin-left: 2rem;
     margin-right: 2rem; }
-  .page-welcome ul, .page-welcome p {
+  #welcome ul, #welcome p, #online-play ul, #online-play p {
     margin-top: 1rem;
     margin-bottom: 1rem; }
-  .page-welcome a {
+  #welcome a, #online-play a {
     color: #00aaff;
     text-decoration: underline; }
-  .page-welcome form {
+  #welcome form, #online-play form {
     text-align: center; }
-  .page-welcome form button {
+  #welcome form button, #welcome form input, #online-play form button, #online-play form input {
     font-size: 1.5rem;
     padding: 0.5rem; }
+  #welcome .note, #online-play .note {
+    font-size: 0.8rem;
+    color: gray; }
+
+#welcome form {
+  margin-top: 1rem;
+  margin-bottom: 1rem; }
+
+#online-play {
+  text-align: center; }
+  #online-play #online-play-error-message {
+    display: inline-block;
+    white-space: pre;
+    font-family: monospace;
+    text-align: left;
+    color: #bf4040;
+    margin: 0; }
+  #online-play #start-session-form button:before {
+    font-family: FontAwesome;
+    content: "";
+    margin-right: 0.5em; }
+  #online-play #join-session-form button:before {
+    font-family: FontAwesome;
+    content: "";
+    margin-right: 0.5em; }
+  #online-play .url {
+    font-size: 1.5rem;
+    font-family: monospace;
+    overflow-wrap: break-word;
+    word-wrap: break-word; }
+  #online-play .connecting-to-session {
+    font-size: 1.5rem; }
+    #online-play .connecting-to-session p:before {
+      display: inline-block;
+      content: "";
+      vertical-align: middle;
+      width: 3rem;
+      height: 3rem;
+      background-image: url("/images/google-drive.png");
+      background-repeat: no-repeat;
+      background-size: cover;
+      animation-duration: 1s;
+      animation-name: spin;
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
+      transform-origin: center;
+      margin-right: 1rem; }
+@keyframes spin {
+  from {
+    transform: rotate(0); }
+  to {
+    transform: rotate(1turn); } }
+  #online-play .joining-session input {
+    font-family: monospace; }
 
 .page-google-drive,
 .page-session-error {
@@ -232,18 +321,29 @@ html {
   padding: 0.25em 0.5em; }
 .page-soundboard #top-menu select, .page-soundboard #top-menu button {
   height: 2.5rem; }
-.page-soundboard #top-menu #zoom-in,
-.page-soundboard #top-menu #zoom-out,
-.page-soundboard #top-menu #volume-down,
-.page-soundboard #top-menu #volume-up,
-.page-soundboard #top-menu #volume-slider {
+.page-soundboard #top-menu #zoom-in, .page-soundboard #top-menu #zoom-out, .page-soundboard #top-menu #mute, .page-soundboard #top-menu #unmute {
+  width: 2.5rem; }
+.page-soundboard #top-menu #zoom-in, .page-soundboard #top-menu #zoom-out, .page-soundboard #top-menu #mute, .page-soundboard #top-menu #unmute, .page-soundboard #top-menu #volume-slider {
   vertical-align: middle; }
+.page-soundboard #top-menu #fullscreen:before {
+  font-family: FontAwesome;
+  content: "";
+  margin-right: 0.5em; }
 .page-soundboard #top-menu #zoom-out:before {
   font-family: FontAwesome;
   content: ""; }
 .page-soundboard #top-menu #zoom-in:before {
   font-family: FontAwesome;
   content: ""; }
+.page-soundboard #top-menu #mute:before {
+  font-family: FontAwesome;
+  content: ""; }
+.page-soundboard #top-menu #unmute:before {
+  font-family: FontAwesome;
+  content: ""; }
+.page-soundboard #top-menu .icon {
+  vertical-align: middle;
+  height: 1rem; }
 .page-soundboard #stop-button {
   font-size: 2em;
   width: 100%; }

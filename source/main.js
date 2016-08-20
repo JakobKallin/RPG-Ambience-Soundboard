@@ -6,12 +6,16 @@ var soundboard_1 = require('./views/soundboard');
 var google_drive_2 = require('./views/google-drive');
 var session_error_1 = require('./views/session-error');
 var welcome_1 = require('./views/welcome');
+var online_play_1 = require('./views/online-play');
 var dom = require('./document');
+var ui = require('./ui');
 var stage_1 = require('../libraries/ambience-stage/stage');
 var dom_1 = require('../libraries/ambience-stage/dom');
 var state_machine_1 = require('./state-machine');
 var queue_1 = require('./queue');
 var Persistence = require('./persistence');
+var network_1 = require('./network');
+var utils_1 = require('./utils');
 var version = 0;
 var defaultStore = {};
 var Storage;
@@ -32,19 +36,18 @@ function start() {
         fade: {
             background: 0,
             foreground: 0
+        },
+        session: {
+            id: null,
+            trigger: function () { },
+            pause: function () { }
         }
     };
     var appId = '907013371139';
     var library = library_1.default(google_drive_1.default(appId));
     var views = {
         welcome: welcome_1.default(dom.id('welcome'), {
-            dismissed: function () {
-                Storage.modify(function (store) {
-                    store.welcomed = true;
-                    return store;
-                });
-                enterState(state_machine_1.State.AccountPossiblyConnected);
-            }
+            dismiss: function () { return Storage.modify(function (store) { return store.welcomed = true; }); }
         }),
         googleDrive: google_drive_2.default(dom.id('google-drive'), {
             login: function () {
@@ -66,11 +69,9 @@ function start() {
             }
         })
     };
-    if (Storage.read().welcomed) {
-        enterState(state_machine_1.State.AccountPossiblyConnected);
-    }
-    else {
-        enterState(state_machine_1.State.NotWelcomed);
+    enterState(state_machine_1.State.AccountPossiblyConnected);
+    if (!Storage.read().welcomed) {
+        ui.showDialog('welcome');
     }
     function showPage(id, fade) {
         if (fade === void 0) { fade = 0; }
@@ -83,7 +84,7 @@ function start() {
             p.style.opacity = '';
             p.hidden = p !== previous && p !== next;
         });
-        document.body.insertBefore(next, previous.nextElementChild);
+        document.body.insertBefore(next, previous.nextElementSibling);
         hideAfter(previous, fade);
         fadeIn(next, fade);
         function fadeIn(node, duration) {
@@ -128,8 +129,8 @@ function start() {
         enterState(state_machine_1.State.SessionStarted);
         return library.list(signalProgress)
             .then(function (adventures) {
-            enterState(state_machine_1.State.LibraryLoaded);
             startSoundboard(adventures);
+            enterState(state_machine_1.State.LibraryLoaded);
         })
             .catch(function (error) {
             console.error(error);
@@ -140,6 +141,16 @@ function start() {
     var queueFileDownload = queue_1.default(3);
     var queuePreviewDownload = queue_1.default(50);
     function startSoundboard(adventures) {
+        var network = network_1.default(appId, function (event, index) {
+            latest.session.pause(function () {
+                if (event.type === 'name')
+                    playSceneWithName(event.name);
+                if (event.type === 'hotkey')
+                    playSceneWithHotkey(event.hotkey);
+                if (event.type === 'stop')
+                    stopAllScenes();
+            });
+        });
         var previews = {};
         var files = {};
         var loadFile = R.memoize(function (id) {
@@ -173,13 +184,31 @@ function start() {
             },
             zoomLevel: Storage.read().zoom || 10,
             zoomed: function (level) {
-                Storage.modify(function (store) {
-                    store.zoom = level;
-                    return store;
-                });
-            }
+                Storage.modify(function (store) { return store.zoom = level; });
+            },
+            playOnline: function () { return ui.showDialog('online-play'); }
         });
-        selectAdventure(Storage.read().adventure ||
+        var joinSession = function (id) {
+            (id ? network.joinSession(id) : network.startSession(Storage.read().session)).then(function (session) {
+                latest.session = session;
+                var url = location.protocol + '//' + location.host + '/?session=' + encodeURIComponent(session.id);
+                onlinePlayView.sessionJoined(url);
+                Storage.modify(function (store) { return store.session = session.id; });
+            })
+                .catch(function (error) { return onlinePlayView.sessionError(error.message); });
+        };
+        var onlinePlayView = online_play_1.default(dom.id('online-play'), {
+            startSession: joinSession,
+            joinSession: joinSession,
+            dismiss: function () { }
+        });
+        if (sessionInUrl()) {
+            ui.showDialog('online-play');
+            onlinePlayView.joiningSession();
+            joinSession(sessionInUrl());
+        }
+        selectAdventure(adventureInUrl(location.pathname) ||
+            Storage.read().adventure ||
             R.sortBy(function (id) { return adventures[id].title; }, Object.keys(adventures))[0]);
         dom.on(document, 'keydown', function (event) {
             playSceneWithHotkey(dom.key(event.keyCode));
@@ -187,7 +216,16 @@ function start() {
         dom.on(document, 'keypress', function (event) {
             playSceneWithHotkey(dom.key(event.charCode));
         });
+        dom.on(window, 'popstate', function () {
+            onPageChange(location.pathname);
+        });
         function selectAdventure(id) {
+            go('/' + id);
+        }
+        function adventureSelected(id) {
+            if (!(id in adventures)) {
+                return;
+            }
             var adventure = adventures[id];
             selectedAdventure = adventure;
             // Reverse order of scenes because queue is FIFO.
@@ -205,10 +243,20 @@ function start() {
                 }); });
             });
             soundboard.adventureSelected(id);
-            Storage.modify(function (store) {
-                store.adventure = id;
-                return store;
-            });
+            Storage.modify(function (store) { return store.adventure = id; });
+        }
+        function adventureInUrl(path) {
+            var id = path.substring(1);
+            return id ? id : null;
+        }
+        function go(path) {
+            history.pushState(null, '', path);
+            onPageChange(location.pathname);
+        }
+        function onPageChange(path) {
+            if (adventureInUrl(path)) {
+                adventureSelected(adventureInUrl(path));
+            }
         }
         function playSceneWithHotkey(hotkey) {
             if (!selectedAdventure)
@@ -216,30 +264,29 @@ function start() {
             var scenes = selectedAdventure.scenes.filter(function (s) { return s.key === hotkey; });
             scenes.forEach(playScene);
         }
+        function playSceneWithName(name) {
+            if (!selectedAdventure)
+                return;
+            var scenes = selectedAdventure.scenes.filter(function (s) { return s.name === name; });
+            scenes.forEach(playScene);
+        }
         function stopAllScenes() {
+            latest.session.trigger({ type: 'stop' });
             background.start([], latest.fade.background * 1000);
             foreground.start([], latest.fade.foreground * 1000);
         }
         function playScene(scene) {
+            if (scene.name) {
+                latest.session.trigger({ type: 'name', name: scene.name });
+            }
+            else if (scene.hotkey) {
+                latest.session.trigger({ type: 'hotkey', name: scene.hotkey });
+            }
             var firstImage = scene.media.filter(function (m) { return m.type === 'image'; })[0];
             var firstSound = scene.media.filter(function (m) { return m.type === 'sound'; })[0] || { tracks: [] };
-            Promise.all([
-                firstImage ? loadFile(firstImage.file) : null,
-                Promise.all(firstSound.tracks.map(function (t) { return loadFile(t); }))
-            ])
-                .then(function (files) {
-                var imageFile = files[0];
-                var soundFiles = files[1];
+            Promise.all(firstSound.tracks.map(function (t) { return loadFile(t); }))
+                .then(function (soundFiles) {
                 var items = [];
-                if (imageFile) {
-                    items.push({
-                        type: 'image',
-                        url: imageFile,
-                        style: {
-                            backgroundSize: firstImage.size
-                        }
-                    });
-                }
                 if (soundFiles.length > 0) {
                     items.push({
                         type: 'sound',
@@ -273,9 +320,6 @@ function start() {
     function stateEntered(state, arg) {
         switch (state) {
             case state_machine_1.State.Loading: break;
-            case state_machine_1.State.NotWelcomed:
-                showPage('welcome', 0.25);
-                break;
             case state_machine_1.State.AccountPossiblyConnected:
                 attemptImmediateLogin();
                 break;
@@ -299,6 +343,9 @@ function start() {
                 break;
             default: throw new Error('Unhandled state: ' + state);
         }
+    }
+    function sessionInUrl() {
+        return utils_1.parseQuery(location)['session'];
     }
 }
 dom.on(window, 'DOMContentLoaded', function () {

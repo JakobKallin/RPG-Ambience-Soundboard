@@ -1,12 +1,15 @@
 import * as dom from '../document';
+import * as ui from '../ui';
 
 interface Callbacks {
-    dismissed: () => void
+    dismiss: () => void
 }
 
-export default function(page:Element, signal:Callbacks) {
+export default function(page:HTMLElement, signal:Callbacks) {
+    ui.dialog(page, signal.dismiss);
     dom.on(dom.first('form', page), 'submit', event => {
         event.preventDefault();
-        signal.dismissed();
+        ui.hideDialog();
+        signal.dismiss();
     });
 }

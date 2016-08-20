@@ -11,13 +11,18 @@ a {
     color: inherit;
 }
 
-button,
-input,
-select,
-label {
-    cursor: pointer;
+button, select, label, input {
     font-size: inherit;
     font-family: inherit;
+}
+
+button,
+select,
+label,
+input[type="radio"],
+input[type="checkbox"],
+input[type="range"] {
+    cursor: pointer;
 }
 
 li {

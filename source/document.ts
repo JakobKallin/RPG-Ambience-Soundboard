@@ -262,3 +262,15 @@ export function key(code) {
     };
     return code in keys ? keys[code] : String.fromCharCode(code);
 }
+
+export function stateful(container:HTMLElement, states:string[]):(s:string) => void {
+    const enterState = (newState) => {
+        states.forEach(state => {
+            const element = <HTMLElement> container.getElementsByClassName(state)[0];
+            element.hidden = state !== newState;
+        });
+        enterState['current'] = newState;
+    };
+    enterState(states[0]);
+    return enterState;
+}

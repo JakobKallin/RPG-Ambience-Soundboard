@@ -21,9 +21,9 @@ function read(version, defaults) {
 }
 exports.read = read;
 function modify(version, defaults, transaction) {
-    var before = read(version, defaults);
-    var after = transaction(before);
-    write(version, after);
+    var store = read(version, defaults);
+    transaction(store);
+    write(version, store);
 }
 exports.modify = modify;
 function write(version, store) {

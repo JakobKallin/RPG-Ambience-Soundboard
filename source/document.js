@@ -255,3 +255,15 @@ function key(code) {
     return code in keys ? keys[code] : String.fromCharCode(code);
 }
 exports.key = key;
+function stateful(container, states) {
+    var enterState = function (newState) {
+        states.forEach(function (state) {
+            var element = container.getElementsByClassName(state)[0];
+            element.hidden = state !== newState;
+        });
+        enterState['current'] = newState;
+    };
+    enterState(states[0]);
+    return enterState;
+}
+exports.stateful = stateful;

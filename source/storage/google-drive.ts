@@ -9,6 +9,7 @@ export default function(appId) {
     const urls = {
         files: 'https://www.googleapis.com/drive/v3/files',
         client: 'https://apis.google.com/js/client.js',
+        api: 'https://apis.google.com/js/api.js',
         scope: 'https://www.googleapis.com/auth/drive'
     };
 
@@ -89,12 +90,21 @@ export default function(appId) {
 
     function loadGoogleApi() {
         return new Promise(function(resolve, reject) {
-            loadScript(urls.client)
-            .then(function() {
-                gapi.load('client', { callback: function() {
-                    resolve();
-                }});
-            })
+            Promise.all([
+                loadScript(urls.client)
+                .then(() => {
+                    return new Promise((resolve, reject) => {
+                        gapi.load('client', { callback: () => resolve() });
+                    });
+                }),
+                loadScript(urls.api)
+                .then(() => {
+                    return new Promise((resolve, reject) => {
+                        gapi.load('drive-share', () => resolve());
+                    });
+                })
+            ])
+            .then(() => resolve())
             .catch(reject);
         });
     }

@@ -877,6 +877,18 @@ function key(code) {
     return code in keys ? keys[code] : String.fromCharCode(code);
 }
 exports.key = key;
+function stateful(container, states) {
+    var enterState = function (newState) {
+        states.forEach(function (state) {
+            var element = container.getElementsByClassName(state)[0];
+            element.hidden = state !== newState;
+        });
+        enterState['current'] = newState;
+    };
+    enterState(states[0]);
+    return enterState;
+}
+exports.stateful = stateful;
 
 },{}],8:[function(require,module,exports){
 "use strict";
@@ -887,12 +899,16 @@ var soundboard_1 = require('./views/soundboard');
 var google_drive_2 = require('./views/google-drive');
 var session_error_1 = require('./views/session-error');
 var welcome_1 = require('./views/welcome');
+var online_play_1 = require('./views/online-play');
 var dom = require('./document');
+var ui = require('./ui');
 var stage_1 = require('../libraries/ambience-stage/stage');
 var dom_1 = require('../libraries/ambience-stage/dom');
 var state_machine_1 = require('./state-machine');
 var queue_1 = require('./queue');
 var Persistence = require('./persistence');
+var network_1 = require('./network');
+var utils_1 = require('./utils');
 var version = 0;
 var defaultStore = {};
 var Storage;
@@ -913,19 +929,18 @@ function start() {
         fade: {
             background: 0,
             foreground: 0
+        },
+        session: {
+            id: null,
+            trigger: function () { },
+            pause: function () { }
         }
     };
     var appId = '907013371139';
     var library = library_1.default(google_drive_1.default(appId));
     var views = {
         welcome: welcome_1.default(dom.id('welcome'), {
-            dismissed: function () {
-                Storage.modify(function (store) {
-                    store.welcomed = true;
-                    return store;
-                });
-                enterState(state_machine_1.State.AccountPossiblyConnected);
-            }
+            dismiss: function () { return Storage.modify(function (store) { return store.welcomed = true; }); }
         }),
         googleDrive: google_drive_2.default(dom.id('google-drive'), {
             login: function () {
@@ -947,11 +962,9 @@ function start() {
             }
         })
     };
-    if (Storage.read().welcomed) {
-        enterState(state_machine_1.State.AccountPossiblyConnected);
-    }
-    else {
-        enterState(state_machine_1.State.NotWelcomed);
+    enterState(state_machine_1.State.AccountPossiblyConnected);
+    if (!Storage.read().welcomed) {
+        ui.showDialog('welcome');
     }
     function showPage(id, fade) {
         if (fade === void 0) { fade = 0; }
@@ -964,7 +977,7 @@ function start() {
             p.style.opacity = '';
             p.hidden = p !== previous && p !== next;
         });
-        document.body.insertBefore(next, previous.nextElementChild);
+        document.body.insertBefore(next, previous.nextElementSibling);
         hideAfter(previous, fade);
         fadeIn(next, fade);
         function fadeIn(node, duration) {
@@ -1009,8 +1022,8 @@ function start() {
         enterState(state_machine_1.State.SessionStarted);
         return library.list(signalProgress)
             .then(function (adventures) {
-            enterState(state_machine_1.State.LibraryLoaded);
             startSoundboard(adventures);
+            enterState(state_machine_1.State.LibraryLoaded);
         })
             .catch(function (error) {
             console.error(error);
@@ -1021,6 +1034,16 @@ function start() {
     var queueFileDownload = queue_1.default(3);
     var queuePreviewDownload = queue_1.default(50);
     function startSoundboard(adventures) {
+        var network = network_1.default(appId, function (event, index) {
+            latest.session.pause(function () {
+                if (event.type === 'name')
+                    playSceneWithName(event.name);
+                if (event.type === 'hotkey')
+                    playSceneWithHotkey(event.hotkey);
+                if (event.type === 'stop')
+                    stopAllScenes();
+            });
+        });
         var previews = {};
         var files = {};
         var loadFile = R.memoize(function (id) {
@@ -1054,13 +1077,31 @@ function start() {
             },
             zoomLevel: Storage.read().zoom || 10,
             zoomed: function (level) {
-                Storage.modify(function (store) {
-                    store.zoom = level;
-                    return store;
-                });
-            }
+                Storage.modify(function (store) { return store.zoom = level; });
+            },
+            playOnline: function () { return ui.showDialog('online-play'); }
         });
-        selectAdventure(Storage.read().adventure ||
+        var joinSession = function (id) {
+            (id ? network.joinSession(id) : network.startSession(Storage.read().session)).then(function (session) {
+                latest.session = session;
+                var url = location.protocol + '//' + location.host + '/?session=' + encodeURIComponent(session.id);
+                onlinePlayView.sessionJoined(url);
+                Storage.modify(function (store) { return store.session = session.id; });
+            })
+                .catch(function (error) { return onlinePlayView.sessionError(error.message); });
+        };
+        var onlinePlayView = online_play_1.default(dom.id('online-play'), {
+            startSession: joinSession,
+            joinSession: joinSession,
+            dismiss: function () { }
+        });
+        if (sessionInUrl()) {
+            ui.showDialog('online-play');
+            onlinePlayView.joiningSession();
+            joinSession(sessionInUrl());
+        }
+        selectAdventure(adventureInUrl(location.pathname) ||
+            Storage.read().adventure ||
             R.sortBy(function (id) { return adventures[id].title; }, Object.keys(adventures))[0]);
         dom.on(document, 'keydown', function (event) {
             playSceneWithHotkey(dom.key(event.keyCode));
@@ -1068,7 +1109,16 @@ function start() {
         dom.on(document, 'keypress', function (event) {
             playSceneWithHotkey(dom.key(event.charCode));
         });
+        dom.on(window, 'popstate', function () {
+            onPageChange(location.pathname);
+        });
         function selectAdventure(id) {
+            go('/' + id);
+        }
+        function adventureSelected(id) {
+            if (!(id in adventures)) {
+                return;
+            }
             var adventure = adventures[id];
             selectedAdventure = adventure;
             // Reverse order of scenes because queue is FIFO.
@@ -1086,10 +1136,20 @@ function start() {
                 }); });
             });
             soundboard.adventureSelected(id);
-            Storage.modify(function (store) {
-                store.adventure = id;
-                return store;
-            });
+            Storage.modify(function (store) { return store.adventure = id; });
+        }
+        function adventureInUrl(path) {
+            var id = path.substring(1);
+            return id ? id : null;
+        }
+        function go(path) {
+            history.pushState(null, '', path);
+            onPageChange(location.pathname);
+        }
+        function onPageChange(path) {
+            if (adventureInUrl(path)) {
+                adventureSelected(adventureInUrl(path));
+            }
         }
         function playSceneWithHotkey(hotkey) {
             if (!selectedAdventure)
@@ -1097,30 +1157,29 @@ function start() {
             var scenes = selectedAdventure.scenes.filter(function (s) { return s.key === hotkey; });
             scenes.forEach(playScene);
         }
+        function playSceneWithName(name) {
+            if (!selectedAdventure)
+                return;
+            var scenes = selectedAdventure.scenes.filter(function (s) { return s.name === name; });
+            scenes.forEach(playScene);
+        }
         function stopAllScenes() {
+            latest.session.trigger({ type: 'stop' });
             background.start([], latest.fade.background * 1000);
             foreground.start([], latest.fade.foreground * 1000);
         }
         function playScene(scene) {
+            if (scene.name) {
+                latest.session.trigger({ type: 'name', name: scene.name });
+            }
+            else if (scene.hotkey) {
+                latest.session.trigger({ type: 'hotkey', name: scene.hotkey });
+            }
             var firstImage = scene.media.filter(function (m) { return m.type === 'image'; })[0];
             var firstSound = scene.media.filter(function (m) { return m.type === 'sound'; })[0] || { tracks: [] };
-            Promise.all([
-                firstImage ? loadFile(firstImage.file) : null,
-                Promise.all(firstSound.tracks.map(function (t) { return loadFile(t); }))
-            ])
-                .then(function (files) {
-                var imageFile = files[0];
-                var soundFiles = files[1];
+            Promise.all(firstSound.tracks.map(function (t) { return loadFile(t); }))
+                .then(function (soundFiles) {
                 var items = [];
-                if (imageFile) {
-                    items.push({
-                        type: 'image',
-                        url: imageFile,
-                        style: {
-                            backgroundSize: firstImage.size
-                        }
-                    });
-                }
                 if (soundFiles.length > 0) {
                     items.push({
                         type: 'sound',
@@ -1154,9 +1213,6 @@ function start() {
     function stateEntered(state, arg) {
         switch (state) {
             case state_machine_1.State.Loading: break;
-            case state_machine_1.State.NotWelcomed:
-                showPage('welcome', 0.25);
-                break;
             case state_machine_1.State.AccountPossiblyConnected:
                 attemptImmediateLogin();
                 break;
@@ -1181,6 +1237,9 @@ function start() {
             default: throw new Error('Unhandled state: ' + state);
         }
     }
+    function sessionInUrl() {
+        return utils_1.parseQuery(location)['session'];
+    }
 }
 dom.on(window, 'DOMContentLoaded', function () {
     try {
@@ -1196,7 +1255,137 @@ dom.on(window, 'DOMContentLoaded', function () {
     }
 });
 
-},{"../libraries/ambience-stage/dom":1,"../libraries/ambience-stage/stage":4,"./adventure/library":5,"./document":7,"./persistence":9,"./queue":10,"./state-machine":11,"./storage/google-drive":12,"./views/google-drive":14,"./views/loading-library":15,"./views/session-error":16,"./views/soundboard":17,"./views/welcome":18}],9:[function(require,module,exports){
+},{"../libraries/ambience-stage/dom":1,"../libraries/ambience-stage/stage":4,"./adventure/library":5,"./document":7,"./network":9,"./persistence":10,"./queue":11,"./state-machine":12,"./storage/google-drive":13,"./ui":14,"./utils":15,"./views/google-drive":16,"./views/loading-library":17,"./views/online-play":18,"./views/session-error":19,"./views/soundboard":20,"./views/welcome":21}],9:[function(require,module,exports){
+"use strict";
+var dom = require('./document');
+function default_1(appId, onEvent) {
+    var loadOnce = R.memoize(load);
+    return {
+        startSession: function (id) { return loadOnce().then(function () { return host(id, onEvent); }); },
+        joinSession: function (id) { return loadOnce().then(function () { return connect(id, onEvent); }); }
+    };
+}
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = default_1;
+function host(id, onEvent) {
+    if (id) {
+        console.log('Hosting existing session: ' + id);
+        return connect(id, onEvent).catch(function () {
+            console.log('Error using existing file: ' + id + '; creating new file');
+            return create().then(function (newId) { return connect(newId, onEvent); });
+        });
+    }
+    else {
+        console.log('Hosting new session');
+        return create().then(function (newId) { return connect(newId, onEvent); });
+    }
+}
+function connect(id, onEvent) {
+    return new Promise(function (resolve, reject) {
+        console.log('Connecting to session: ' + id);
+        gapi.drive.realtime.load(id, startEditing, createModel, function (error) {
+            // If the provided file does not exist (for example if its ID was
+            // saved in the app but the file itself was removed from Google
+            // Drive), simply create a new one.
+            if (error.type === 'not_found') {
+                host(null, onEvent).then(resolve).catch(reject);
+            }
+            else {
+                reject(error);
+            }
+        });
+        function startEditing(doc) {
+            try {
+                console.log('Connected to session: ' + id);
+                var events_1 = doc.getModel().getRoot().get('events');
+                events_1.addEventListener(gapi.drive.realtime.EventType.VALUES_ADDED, function (event) {
+                    if (!event.isLocal) {
+                        event.values.forEach(function (v, i) { return onEvent(v, i + event.index); });
+                    }
+                });
+                var paused_1 = false;
+                resolve({
+                    id: id,
+                    trigger: function (newEvent) {
+                        if (!paused_1) {
+                            events_1.push(newEvent);
+                        }
+                    },
+                    pause: function (callback) {
+                        paused_1 = true;
+                        callback();
+                        paused_1 = false;
+                    }
+                });
+            }
+            catch (error) {
+                reject(error);
+                throw error;
+            }
+        }
+        function createModel(model) {
+            try {
+                model.getRoot().set('events', model.createList());
+            }
+            catch (error) {
+                reject(error);
+                throw error;
+            }
+        }
+    });
+}
+function create() {
+    return new Promise(function (resolve, reject) {
+        console.log('Creating new file');
+        gapi.client.drive.files.create({
+            resource: {
+                name: 'RPG Ambience Soundboard ' + new Date().toLocaleString(),
+                mimeType: 'application/vnd.google-apps.drive-sdk'
+            }
+        })
+            .execute(function (file) {
+            if (file.error) {
+                reject(file.error);
+            }
+            else {
+                console.log('Created new file: ' + file.id);
+                gapi.client.drive.permissions.create({
+                    fileId: file.id,
+                    resource: {
+                        type: 'anyone',
+                        role: 'writer'
+                    }
+                })
+                    .execute(function (permission) {
+                    if (permission.error) {
+                        reject(permission.error);
+                    }
+                    else {
+                        resolve(file.id);
+                    }
+                });
+            }
+        });
+    });
+}
+function load() {
+    var scripts = [
+        'https://apis.google.com/js/api.js',
+        'https://www.gstatic.com/realtime/realtime-client-utils.js'
+    ];
+    return Promise.all(scripts.map(dom.loadScript))
+        .then(function () {
+        return new Promise(function (resolve, reject) {
+            gapi.load('auth:client,drive-realtime,drive-share', function () {
+                gapi.client.load('drive', 'v3').then(function () {
+                    resolve();
+                }, reject);
+            }, reject);
+        });
+    });
+}
+
+},{"./document":7}],10:[function(require,module,exports){
 "use strict";
 function read(version, defaults) {
     var json = localStorage.getItem(version.toString());
@@ -1220,9 +1409,9 @@ function read(version, defaults) {
 }
 exports.read = read;
 function modify(version, defaults, transaction) {
-    var before = read(version, defaults);
-    var after = transaction(before);
-    write(version, after);
+    var store = read(version, defaults);
+    transaction(store);
+    write(version, store);
 }
 exports.modify = modify;
 function write(version, store) {
@@ -1230,7 +1419,7 @@ function write(version, store) {
     localStorage.setItem(version.toString(), json);
 }
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 "use strict";
 function createQueue(limit) {
     var waiting = [];
@@ -1277,25 +1466,22 @@ function createQueue(limit) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = createQueue;
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 "use strict";
 (function (State) {
     State[State["Loading"] = 0] = "Loading";
-    State[State["NotWelcomed"] = 1] = "NotWelcomed";
-    State[State["AccountPossiblyConnected"] = 2] = "AccountPossiblyConnected";
-    State[State["AccountConnected"] = 3] = "AccountConnected";
-    State[State["AccountNotConnected"] = 4] = "AccountNotConnected";
-    State[State["StartingSession"] = 5] = "StartingSession";
-    State[State["SessionStarted"] = 6] = "SessionStarted";
-    State[State["LibraryLoaded"] = 7] = "LibraryLoaded";
-    State[State["SessionError"] = 8] = "SessionError";
+    State[State["AccountPossiblyConnected"] = 1] = "AccountPossiblyConnected";
+    State[State["AccountConnected"] = 2] = "AccountConnected";
+    State[State["AccountNotConnected"] = 3] = "AccountNotConnected";
+    State[State["StartingSession"] = 4] = "StartingSession";
+    State[State["SessionStarted"] = 5] = "SessionStarted";
+    State[State["LibraryLoaded"] = 6] = "LibraryLoaded";
+    State[State["SessionError"] = 7] = "SessionError";
 })(exports.State || (exports.State = {}));
 var State = exports.State;
 ;
 function transitions(s) {
     if (s === State.Loading)
-        return [State.NotWelcomed, State.AccountPossiblyConnected];
-    if (s === State.NotWelcomed)
         return [State.AccountPossiblyConnected];
     if (s === State.AccountPossiblyConnected)
         return [State.AccountConnected, State.AccountNotConnected];
@@ -1315,7 +1501,7 @@ function transitions(s) {
 }
 exports.transitions = transitions;
 
-},{}],12:[function(require,module,exports){
+},{}],13:[function(require,module,exports){
 "use strict";
 function default_1(appId) {
     var ids = {
@@ -1325,6 +1511,7 @@ function default_1(appId) {
     var urls = {
         files: 'https://www.googleapis.com/drive/v3/files',
         client: 'https://apis.google.com/js/client.js',
+        api: 'https://apis.google.com/js/api.js',
         scope: 'https://www.googleapis.com/auth/drive'
     };
     function downloadMetadata(id) {
@@ -1394,12 +1581,21 @@ function default_1(appId) {
     }
     function loadGoogleApi() {
         return new Promise(function (resolve, reject) {
-            loadScript(urls.client)
-                .then(function () {
-                gapi.load('client', { callback: function () {
-                        resolve();
-                    } });
-            })
+            Promise.all([
+                loadScript(urls.client)
+                    .then(function () {
+                    return new Promise(function (resolve, reject) {
+                        gapi.load('client', { callback: function () { return resolve(); } });
+                    });
+                }),
+                loadScript(urls.api)
+                    .then(function () {
+                    return new Promise(function (resolve, reject) {
+                        gapi.load('drive-share', function () { return resolve(); });
+                    });
+                })
+            ])
+                .then(function () { return resolve(); })
                 .catch(reject);
         });
     }
@@ -1489,7 +1685,48 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 ;
 
-},{}],13:[function(require,module,exports){
+},{}],14:[function(require,module,exports){
+"use strict";
+var dom = require('./document');
+function dialog(element, onClose) {
+    var close = function () {
+        hideDialog();
+        onClose();
+    };
+    dom.on(dom.first('.close', element), 'click', close);
+    dom.on(document, 'keydown', function (event) {
+        if (!element.hidden && dom.key(event.keyCode) === 'Escape') {
+            close();
+        }
+    });
+    dom.on(element.parentNode, 'click', function (event) {
+        if (!element.hidden && event.target === element.parentNode) {
+            close();
+        }
+    });
+}
+exports.dialog = dialog;
+function showDialog(id) {
+    var container = dom.id('dialog');
+    var dialogs = dom.all('.dialog');
+    var active = dialogs.filter(function (d) { return d.id === id; })[0];
+    var inactive = dialogs.filter(function (d) { return d.id !== id; });
+    container.hidden = false;
+    active.hidden = false;
+    inactive.forEach(function (d) { return d.hidden = true; });
+}
+exports.showDialog = showDialog;
+function hideDialog(onClose) {
+    onClose = onClose || (function (x) { });
+    var dialogs = dom.all('.dialog');
+    var dialog = R.find(function (d) { return !d.hidden; }, dialogs);
+    onClose(dialog);
+    var container = dom.id('dialog');
+    container.hidden = true;
+}
+exports.hideDialog = hideDialog;
+
+},{"./document":7}],15:[function(require,module,exports){
 "use strict";
 function bound(min, max, value) {
     var boundedAbove = Math.min(value, max);
@@ -1506,8 +1743,23 @@ function parseNumber(str) {
     }
 }
 exports.parseNumber = parseNumber;
+function parseQuery(location) {
+    var query = {};
+    if (location.search.substring(1) !== '') {
+        location.search.substring(1)
+            .split('&')
+            .forEach(function (s) {
+            var kv = s.split('=').map(decodeURIComponent);
+            var k = kv[0];
+            var v = kv[1];
+            query[k] = v;
+        });
+    }
+    return query;
+}
+exports.parseQuery = parseQuery;
 
-},{}],14:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 "use strict";
 var dom = require('../document');
 function default_1(page, signal) {
@@ -1520,7 +1772,7 @@ function default_1(page, signal) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 
-},{"../document":7}],15:[function(require,module,exports){
+},{"../document":7}],17:[function(require,module,exports){
 "use strict";
 var dom = require('../document');
 function default_1(page) {
@@ -1549,7 +1801,65 @@ function default_1(page) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 
-},{"../document":7}],16:[function(require,module,exports){
+},{"../document":7}],18:[function(require,module,exports){
+"use strict";
+var dom = require('../document');
+var ui = require('../ui');
+function default_1(dialog, signal) {
+    ui.dialog(dialog, function () {
+        if (enterState['current'] === 'joining-session') {
+            enterState('no-session');
+        }
+        signal.dismiss();
+    });
+    var enterState = dom.stateful(dialog, ['no-session', 'joining-session', 'connecting-to-session', 'session-active']);
+    dom.on(dom.id('start-session-form'), 'submit', function (event) {
+        event.preventDefault();
+        enterState('connecting-to-session');
+        signal.startSession();
+    });
+    dom.on(dom.id('join-session-form'), 'submit', function (event) {
+        event.preventDefault();
+        enterState('joining-session');
+    });
+    var joinSessionIdForm = dom.id('join-session-id-form');
+    dom.on(joinSessionIdForm, 'submit', function (event) {
+        event.preventDefault();
+        var url = dom.first('input', joinSessionIdForm).value;
+        var id = idFromUrl(url);
+        enterState('connecting-to-session');
+        signal.joinSession(id);
+    });
+    return {
+        joiningSession: function () {
+            enterState('connecting-to-session');
+        },
+        sessionError: function (message) {
+            enterState('no-session');
+            dom.id('online-play-error').hidden = false;
+            dom.id('online-play-error-message').textContent = message;
+        },
+        sessionJoined: function (url) {
+            enterState('session-active');
+            var link = dom.id('join-session-link');
+            link.href = link.textContent = url;
+        }
+    };
+}
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = default_1;
+function idFromUrl(url) {
+    try {
+        var marker = 'session=';
+        var id = url.substring(url.indexOf(marker) + marker.length);
+        return id;
+    }
+    catch (error) {
+        return url;
+    }
+}
+
+},{"../document":7,"../ui":14}],19:[function(require,module,exports){
 "use strict";
 var dom = require('../document');
 function default_1(page, signal) {
@@ -1568,7 +1878,7 @@ function default_1(page, signal) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 
-},{"../document":7}],17:[function(require,module,exports){
+},{"../document":7}],20:[function(require,module,exports){
 "use strict";
 var dom = require('../document');
 var utils_1 = require('../utils');
@@ -1599,9 +1909,12 @@ function default_1(options) {
                 });
                 node.classList.toggle('with-image', Boolean(firstImage(scene)));
             } },
-        '.scene-title': function (scene) { return scene.name || String.fromCharCode(160); },
+        '.scene-name': function (scene) { return scene.name || String.fromCharCode(160); },
         '.scene-hotkey': function (scene) { return scene.key || ''; },
-        '.scene-button': { on: { click: options.playScene } },
+        '.scene-button': {
+            on: { click: options.playScene },
+            title: function (scene) { return 'Play scene' + (scene.name ? ' ' + scene.name : ''); },
+        },
         '.scene-preview-image': {
             hidden: function (scene) { return !firstImage(scene); },
             on: { load: function (scene, image) { return image.classList.add('loaded'); } },
@@ -1650,22 +1963,36 @@ function default_1(options) {
         options.stopAllScenes();
     });
     var volumeSlider = dom.id('volume-slider');
-    dom.on(dom.id('volume-down'), 'click', function () {
-        var volume = 0;
-        volumeSlider.value = String(volume);
-        options.changeVolume(volume);
+    var mutedVolume = currentVolume();
+    setVolume(currentVolume());
+    dom.on(dom.id('mute'), 'click', function () {
+        setVolume(0);
+        dom.id('unmute').focus();
     });
-    dom.on(dom.id('volume-up'), 'click', function () {
-        var volume = 1;
-        volumeSlider.value = String(volume);
-        options.changeVolume(volume);
+    dom.on(dom.id('unmute'), 'click', function () {
+        setVolume(mutedVolume);
+        dom.id('mute').focus();
     });
     dom.on(dom.id('volume-slider'), 'input', function () {
-        var volume = parseFloat(volumeSlider.value);
-        if (!isNaN(volume)) {
-            options.changeVolume(volume);
+        setVolume(currentVolume());
+    });
+    dom.on(dom.id('volume-slider'), 'change', function () {
+        if (currentVolume() > 0) {
+            mutedVolume = currentVolume();
         }
     });
+    function currentVolume() {
+        return utils_1.parseNumber(volumeSlider.value);
+    }
+    function setVolume(volume) {
+        volumeSlider.value = String(volume);
+        options.changeVolume(volume);
+        allowMute(volume > 0);
+    }
+    function allowMute(canMute) {
+        dom.id('mute').hidden = !canMute;
+        dom.id('unmute').hidden = canMute;
+    }
     (function () {
         var percentages = R.range(1, 20 + 1).map(function (n) { return 1 / n; });
         var nodes = dom.first('.scene-list').children; // Live
@@ -1690,6 +2017,7 @@ function default_1(options) {
         dom.toggleFullscreen();
     });
     dropdown.addEventListener('change', function () { return options.adventureSelected(dropdown.value); });
+    dom.on(dom.id('online-play-button'), 'click', function () { return options.playOnline(); });
     function selectedAdventure() {
         return adventures[dropdown.value];
     }
@@ -1716,16 +2044,19 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 ;
 
-},{"../document":7,"../utils":13}],18:[function(require,module,exports){
+},{"../document":7,"../utils":15}],21:[function(require,module,exports){
 "use strict";
 var dom = require('../document');
+var ui = require('../ui');
 function default_1(page, signal) {
+    ui.dialog(page, signal.dismiss);
     dom.on(dom.first('form', page), 'submit', function (event) {
         event.preventDefault();
-        signal.dismissed();
+        ui.hideDialog();
+        signal.dismiss();
     });
 }
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = default_1;
 
-},{"../document":7}]},{},[8]);
+},{"../document":7,"../ui":14}]},{},[8]);

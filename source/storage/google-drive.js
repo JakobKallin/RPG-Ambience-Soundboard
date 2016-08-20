@@ -7,6 +7,7 @@ function default_1(appId) {
     var urls = {
         files: 'https://www.googleapis.com/drive/v3/files',
         client: 'https://apis.google.com/js/client.js',
+        api: 'https://apis.google.com/js/api.js',
         scope: 'https://www.googleapis.com/auth/drive'
     };
     function downloadMetadata(id) {
@@ -76,12 +77,21 @@ function default_1(appId) {
     }
     function loadGoogleApi() {
         return new Promise(function (resolve, reject) {
-            loadScript(urls.client)
-                .then(function () {
-                gapi.load('client', { callback: function () {
-                        resolve();
-                    } });
-            })
+            Promise.all([
+                loadScript(urls.client)
+                    .then(function () {
+                    return new Promise(function (resolve, reject) {
+                        gapi.load('client', { callback: function () { return resolve(); } });
+                    });
+                }),
+                loadScript(urls.api)
+                    .then(function () {
+                    return new Promise(function (resolve, reject) {
+                        gapi.load('drive-share', function () { return resolve(); });
+                    });
+                })
+            ])
+                .then(function () { return resolve(); })
                 .catch(reject);
         });
     }

@@ -6,18 +6,25 @@ document.addEventListener('DOMContentLoaded', function () {
     var firstPage = pages.filter(function (p) { return p.id === firstPageName; })[0];
     showPage(firstPage ? pages.indexOf(firstPage) : 0);
     dom.on(document, 'keydown', function (event) {
+        var key = event.keyCode;
         var pageNames = pages.map(function (p) { return p.id; });
-        var currentName = location.hash.substring(1);
-        var currentIndex = pageNames.indexOf(currentName);
-        if (event.keyCode === 37) {
-            var nextIndex = currentIndex === 0 ? pageNames.length - 1 : currentIndex - 1;
+        var pageName = location.hash.substring(1);
+        var pageIndex = pageNames.indexOf(pageName);
+        if (key === 37) {
+            var nextIndex = pageIndex === 0 ? pageNames.length - 1 : pageIndex - 1;
             showPage(nextIndex);
         }
-        else if (event.keyCode === 39) {
-            var nextIndex = (currentIndex + 1) % pageNames.length;
+        else if (key === 39) {
+            var nextIndex = (pageIndex + 1) % pageNames.length;
             showPage(nextIndex);
         }
     });
+    function showPage(target) {
+        pages.forEach(function (p, i) {
+            p.hidden = i !== target;
+        });
+        history.pushState('', null, '#' + pages[target].id);
+    }
     dom.all('[data-repeat]').forEach(function (node) {
         var count = Number(node.dataset['repeat']);
         R.range(0, count).reverse().forEach(function (i) {
@@ -49,6 +56,22 @@ document.addEventListener('DOMContentLoaded', function () {
         children.forEach(function (child, i) {
             setTimeout(function () { return parent.insertBefore(child, parent.firstElementChild); }, (i + 1) * 250);
         });
+    });
+    dom.all('[data-cycle]').forEach(function (container) {
+        var classNames = container.dataset['cycle'].split(/\s+/);
+        var elements = classNames.map(function (n) { return container.getElementsByClassName(n)[0]; });
+        elements.forEach(function (e) {
+            dom.on(e, 'click', function (event) { return cycle(); });
+            e.hidden = true;
+        });
+        cycle();
+        function cycle() {
+            var next = elements[elements.indexOf(active()) + 1] || elements[0];
+            elements.forEach(function (e) { return e.hidden = e !== next; });
+        }
+        function active() {
+            return R.find(function (e) { return !e.hidden; }, elements);
+        }
     });
     (function () {
         var url = '/boom.wav';
@@ -96,10 +119,40 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         return element;
     }
-    function showPage(target) {
-        pages.forEach(function (p, i) {
-            p.hidden = i !== target;
+    (function () {
+        var dialogs = dom.all('.dialog').sort(function (a, b) { return a.id.localeCompare(b.id); });
+        hideDialog();
+        dom.on(document, 'keydown', function (event) {
+            var key = event.keyCode;
+            if (key === 40) {
+                showDialog(activeDialog()
+                    ? dialogs[dialogs.indexOf(activeDialog()) - 1]
+                    : dialogs[dialogs.length - 1]);
+            }
+            else if (key === 38) {
+                showDialog(activeDialog()
+                    ? dialogs[dialogs.indexOf(activeDialog()) + 1]
+                    : dialogs[0]);
+            }
         });
-        history.pushState('', null, '#' + pages[target].id);
-    }
+        function showDialog(target) {
+            if (!target) {
+                hideDialog();
+            }
+            else {
+                dom.id('dialog').hidden = false;
+                dialogs.forEach(function (d) { return d.hidden = d !== target; });
+            }
+        }
+        function hideDialog() {
+            dom.id('dialog').hidden = true;
+            dialogs.forEach(function (d) { return d.hidden = true; });
+        }
+        function activeDialog() {
+            return R.find(function (d) { return !d.hidden; }, dialogs);
+        }
+    })();
+});
+document.addEventListener('submit', function (event) {
+    event.preventDefault();
 });

@@ -8,19 +8,27 @@ document.addEventListener('DOMContentLoaded', () => {
     showPage(firstPage ? pages.indexOf(firstPage) : 0);
 
     dom.on(document, 'keydown', event => {
-        const pageNames = pages.map(p => p.id)
-        const currentName = location.hash.substring(1);
-        const currentIndex = pageNames.indexOf(currentName);
+        const key = (<KeyboardEvent>event).keyCode;
+        const pageNames = pages.map(p => p.id);
+        const pageName = location.hash.substring(1);
+        const pageIndex = pageNames.indexOf(pageName);
 
-        if ((<KeyboardEvent>event).keyCode === 37) {
-            const nextIndex = currentIndex === 0 ? pageNames.length - 1 : currentIndex - 1;
+        if (key === 37) {
+            const nextIndex = pageIndex === 0 ? pageNames.length - 1 : pageIndex - 1;
             showPage(nextIndex);
         }
-        else if ((<KeyboardEvent>event).keyCode === 39) {
-            const nextIndex = (currentIndex + 1) % pageNames.length;
+        else if (key === 39) {
+            const nextIndex = (pageIndex + 1) % pageNames.length;
             showPage(nextIndex);
         }
     });
+
+    function showPage(target) {
+        pages.forEach((p, i) => {
+            p.hidden = i !== target;
+        });
+        history.pushState('', null, '#' + pages[target].id);
+    }
 
     dom.all('[data-repeat]').forEach(node => {
         const count = Number(node.dataset['repeat']);
@@ -59,6 +67,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 (i + 1) * 250
             );
         });
+    });
+
+    dom.all('[data-cycle]').forEach(container => {
+        const classNames = container.dataset['cycle'].split(/\s+/);
+        const elements = <HTMLElement[]> classNames.map(n => container.getElementsByClassName(n)[0]);
+        elements.forEach(e => {
+            dom.on(e, 'click', event => cycle());
+            e.hidden = true;
+        });
+        cycle();
+
+        function cycle() {
+            const next = elements[elements.indexOf(active()) + 1] || elements[0];
+            elements.forEach(e => e.hidden = e !== next);
+        }
+
+        function active() {
+            return R.find(e => !e.hidden, elements);
+        }
     });
 
     (() => {
@@ -111,10 +138,48 @@ document.addEventListener('DOMContentLoaded', () => {
         return element;
     }
 
-    function showPage(target) {
-        pages.forEach((p, i) => {
-            p.hidden = i !== target;
+    (() => {
+        const dialogs = dom.all('.dialog').sort((a, b) => a.id.localeCompare(b.id));
+        hideDialog();
+
+        dom.on(document, 'keydown', event => {
+            const key = (<KeyboardEvent>event).keyCode;
+
+            if (key === 40) {
+                showDialog(activeDialog()
+                    ? dialogs[dialogs.indexOf(activeDialog()) - 1]
+                    : dialogs[dialogs.length - 1]
+                );
+            }
+            else if (key === 38) {
+                showDialog(activeDialog()
+                    ? dialogs[dialogs.indexOf(activeDialog()) + 1]
+                    : dialogs[0]
+                );
+            }
         });
-        history.pushState('', null, '#' + pages[target].id);
-    }
+
+        function showDialog(target) {
+            if (!target) {
+                hideDialog();
+            }
+            else {
+                dom.id('dialog').hidden = false;
+                dialogs.forEach(d => d.hidden = d !== target);
+            }
+        }
+
+        function hideDialog() {
+            dom.id('dialog').hidden = true;
+            dialogs.forEach(d => d.hidden = true);
+        }
+
+        function activeDialog() {
+            return R.find(d => !d.hidden, dialogs);
+        }
+    })();
+});
+
+document.addEventListener('submit', event => {
+    event.preventDefault();
 });

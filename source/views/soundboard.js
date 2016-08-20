@@ -28,9 +28,12 @@ function default_1(options) {
                 });
                 node.classList.toggle('with-image', Boolean(firstImage(scene)));
             } },
-        '.scene-title': function (scene) { return scene.name || String.fromCharCode(160); },
+        '.scene-name': function (scene) { return scene.name || String.fromCharCode(160); },
         '.scene-hotkey': function (scene) { return scene.key || ''; },
-        '.scene-button': { on: { click: options.playScene } },
+        '.scene-button': {
+            on: { click: options.playScene },
+            title: function (scene) { return 'Play scene' + (scene.name ? ' ' + scene.name : ''); },
+        },
         '.scene-preview-image': {
             hidden: function (scene) { return !firstImage(scene); },
             on: { load: function (scene, image) { return image.classList.add('loaded'); } },
@@ -79,22 +82,36 @@ function default_1(options) {
         options.stopAllScenes();
     });
     var volumeSlider = dom.id('volume-slider');
-    dom.on(dom.id('volume-down'), 'click', function () {
-        var volume = 0;
-        volumeSlider.value = String(volume);
-        options.changeVolume(volume);
+    var mutedVolume = currentVolume();
+    setVolume(currentVolume());
+    dom.on(dom.id('mute'), 'click', function () {
+        setVolume(0);
+        dom.id('unmute').focus();
     });
-    dom.on(dom.id('volume-up'), 'click', function () {
-        var volume = 1;
-        volumeSlider.value = String(volume);
-        options.changeVolume(volume);
+    dom.on(dom.id('unmute'), 'click', function () {
+        setVolume(mutedVolume);
+        dom.id('mute').focus();
     });
     dom.on(dom.id('volume-slider'), 'input', function () {
-        var volume = parseFloat(volumeSlider.value);
-        if (!isNaN(volume)) {
-            options.changeVolume(volume);
+        setVolume(currentVolume());
+    });
+    dom.on(dom.id('volume-slider'), 'change', function () {
+        if (currentVolume() > 0) {
+            mutedVolume = currentVolume();
         }
     });
+    function currentVolume() {
+        return utils_1.parseNumber(volumeSlider.value);
+    }
+    function setVolume(volume) {
+        volumeSlider.value = String(volume);
+        options.changeVolume(volume);
+        allowMute(volume > 0);
+    }
+    function allowMute(canMute) {
+        dom.id('mute').hidden = !canMute;
+        dom.id('unmute').hidden = canMute;
+    }
     (function () {
         var percentages = R.range(1, 20 + 1).map(function (n) { return 1 / n; });
         var nodes = dom.first('.scene-list').children; // Live
@@ -119,6 +136,7 @@ function default_1(options) {
         dom.toggleFullscreen();
     });
     dropdown.addEventListener('change', function () { return options.adventureSelected(dropdown.value); });
+    dom.on(dom.id('online-play-button'), 'click', function () { return options.playOnline(); });
     function selectedAdventure() {
         return adventures[dropdown.value];
     }
