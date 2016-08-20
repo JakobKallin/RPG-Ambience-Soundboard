@@ -319,23 +319,9 @@ function start() {
 
             const firstImage = scene.media.filter(m => m.type === 'image')[0];
             const firstSound = scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
-            Promise.all([
-                firstImage ? loadFile(firstImage.file) : null,
-                Promise.all(firstSound.tracks.map((t:any) => loadFile(t)))
-            ])
-            .then(files => {
-                const imageFile = files[0];
-                const soundFiles = files[1];
+            Promise.all(firstSound.tracks.map((t:any) => loadFile(t)))
+            .then(soundFiles => {
                 const items:any[] = [];
-                if (imageFile) {
-                    items.push({
-                        type: 'image',
-                        url: imageFile,
-                        style: {
-                            backgroundSize: firstImage.size
-                        }
-                    });
-                }
                 if (soundFiles.length > 0) {
                     items.push({
                         type: 'sound',
