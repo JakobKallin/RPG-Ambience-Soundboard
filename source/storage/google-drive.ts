@@ -195,8 +195,28 @@ export default function(appId) {
         }
     }
 
+    function reauthenticate() {
+        console.log('Reauthenticating...');
+        gapi.auth.authorize(
+            {
+                client_id: ids.client,
+                scope: urls.scope,
+                immediate: true
+            },
+            result => {
+                if (result && !result.error) {
+                    accessToken = result.access_token;
+                    console.log('New access token: ' + accessToken);
+                }
+            }
+        );
+    }
+
     return {
-        authenticate: (immediate:boolean) => loadAccessToken(immediate),
+        authenticate: (immediate:boolean) => {
+            setInterval(reauthenticate, 10 * 60 * 1000);
+            return loadAccessToken(immediate);
+        },
         download: {
             metadata: downloadMetadata,
             contents: downloadContents,
