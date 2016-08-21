@@ -181,27 +181,6 @@ html {
         font-weight: bold;
     }
 
-    h2 {
-        @include heading;
-        text-align: center;
-    }
-
-    li {
-        display: list-item;
-        margin-left: 2rem;
-        margin-right: 2rem;
-    }
-
-    ul, p {
-        margin-top: 1rem;
-        margin-bottom: 1rem;
-    }
-
-    a {
-        color: hsl(200, 100%, 50%);
-        text-decoration: underline;
-    }
-
     form {
         text-align: center;
     }
@@ -215,6 +194,8 @@ html {
         font-size: 0.8rem;
         color: $subtle-text-color;
     }
+
+    @include document;
 }
 
 #welcome {
@@ -603,4 +584,12 @@ html:not(.menu) .menu {
 .other-menu {
     margin-left: 0 !important;
     flex: 1;
+}
+
+#no-adventures {
+    @include document;
+    text-align: center;
+    .content {
+        max-width: 50rem;
+    }
 }

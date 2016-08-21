@@ -7,6 +7,7 @@ $subtle-text-color: hsl(0, 0%, 50%);
 $body-text-font: Georgia, serif;
 $decorative-text-font: Constantia, Georgia, serif;
 $error-color: hsl(0, 50%, 50%);
+$link-color: hsl(200, 100%, 50%);
 
 $black: black;
 $white: white;
@@ -121,5 +122,28 @@ $highlighted-border-color: hsl(220, 50%, 50%);
 
     @if $position == left {
         margin-right: 0.5em;
+    }
+}
+
+@mixin document {
+    h2 {
+        @include heading;
+        text-align: center;
+    }
+
+    li {
+        display: list-item;
+        margin-left: 2rem;
+        margin-right: 2rem;
+    }
+
+    ul, p {
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    a {
+        color: $link-color;
+        text-decoration: underline;
     }
 }
