@@ -1034,6 +1034,13 @@ function start() {
     var queueFileDownload = queue_1.default(3);
     var queuePreviewDownload = queue_1.default(50);
     function startSoundboard(adventures) {
+        if (Object.keys(adventures).length === 0) {
+            showPage('no-adventures', 0.25);
+            return;
+        }
+        else {
+            showPage('soundboard', 0.25);
+        }
         var network = network_1.default(appId, function (event, index) {
             latest.session.pause(function () {
                 if (event.type === 'name')
@@ -1227,9 +1234,7 @@ function start() {
                 showPage('loading-library', 0.25);
                 break;
             case state_machine_1.State.SessionStarted: break;
-            case state_machine_1.State.LibraryLoaded:
-                showPage('soundboard', 0.25);
-                break;
+            case state_machine_1.State.LibraryLoaded: break;
             case state_machine_1.State.SessionError:
                 views.error.error(arg);
                 showPage('session-error', 0.25);
@@ -1670,8 +1675,24 @@ function default_1(appId) {
             return xhr.responseText;
         }
     }
+    function reauthenticate() {
+        console.log('Reauthenticating...');
+        gapi.auth.authorize({
+            client_id: ids.client,
+            scope: urls.scope,
+            immediate: true
+        }, function (result) {
+            if (result && !result.error) {
+                accessToken = result.access_token;
+                console.log('New access token: ' + accessToken);
+            }
+        });
+    }
     return {
-        authenticate: function (immediate) { return loadAccessToken(immediate); },
+        authenticate: function (immediate) {
+            setInterval(reauthenticate, 10 * 60 * 1000);
+            return loadAccessToken(immediate);
+        },
         download: {
             metadata: downloadMetadata,
             contents: downloadContents,

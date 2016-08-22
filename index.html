@@ -7,8 +7,8 @@
         <link rel="stylesheet" href="css/soundboard.css">
         <link rel="icon" type="image/png" href="/images/icon.png">
         <script src="/libraries/ramda.0.19.1.min.js"></script>
-        <!-- <script src="/bundle.prototype.js"></script> -->
         <script src="/bundle.js"></script>
+        <!-- <script src="/bundle.prototype.js"></script> -->
     </head>
     <body>
         <div class="page page-soundboard vertical padding spacing" id="soundboard">
@@ -190,6 +190,12 @@
                 </div>
             </div> -->
         </div>
+        <div class="page page-no-adventures" id="no-adventures">
+            <div class="center content">
+                <h2>It appears you have no RPG Ambience adventures</h2>
+                <p>RPG Ambience Soundboard cannot currently be used to create adventures, only to play them. Please create an adventure using <a href="http://rpg-ambience.com/" target="_blank">RPG Ambience</a>, then reload this page.</p>
+            </div>
+        </div>
         <div class="page page-google-drive" id="google-drive">
             <div class="center">
                 <p>To get started, please sign in to Google Drive</p>
@@ -253,7 +259,7 @@
             </div>
             <div class="dialog" id="online-play">
                 <button type="button" class="close">×</button>
-                <div class="center content" data-cycle="no-session join-session-id connecting-to-session session-active">
+                <div class="center content" data-cycle="no-session joining-session connecting-to-session session-active">
                     <div class="no-session">
                         <p>Use RPG Ambience together with other players who have Google accounts.</p>
                         <div class="horizontal center spacing">

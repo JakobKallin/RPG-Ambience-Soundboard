@@ -158,6 +158,14 @@ function start() {
     const queueFileDownload = createQueue(3);
     const queuePreviewDownload = createQueue(50);
     function startSoundboard(adventures:any):void {
+        if (Object.keys(adventures).length === 0) {
+            showPage('no-adventures', 0.25);
+            return;
+        }
+        else {
+            showPage('soundboard', 0.25);
+        }
+
         const network = Network(appId, (event, index) => {
             latest.session.pause(() => {
                 if (event.type === 'name') playSceneWithName(event.name);
@@ -367,7 +375,7 @@ function start() {
             case State.AccountNotConnected: showPage('google-drive', 0.25); break;
             case State.StartingSession: showPage('loading-library', 0.25); break;
             case State.SessionStarted: break;
-            case State.LibraryLoaded: showPage('soundboard', 0.25); break;
+            case State.LibraryLoaded: break;
             case State.SessionError:
                 views.error.error(<Error> arg);
                 showPage('session-error', 0.25);

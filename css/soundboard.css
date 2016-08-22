@@ -195,6 +195,14 @@ html {
     font-size: 2rem;
     line-height: 1rem;
     font-weight: bold; }
+  #welcome form, #online-play form {
+    text-align: center; }
+  #welcome form button, #welcome form input, #online-play form button, #online-play form input {
+    font-size: 1.5rem;
+    padding: 0.5rem; }
+  #welcome .note, #online-play .note {
+    font-size: 0.8rem;
+    color: gray; }
   #welcome h2, #online-play h2 {
     font-size: 2rem;
     font-family: Constantia, Georgia, serif;
@@ -210,14 +218,6 @@ html {
   #welcome a, #online-play a {
     color: #00aaff;
     text-decoration: underline; }
-  #welcome form, #online-play form {
-    text-align: center; }
-  #welcome form button, #welcome form input, #online-play form button, #online-play form input {
-    font-size: 1.5rem;
-    padding: 0.5rem; }
-  #welcome .note, #online-play .note {
-    font-size: 0.8rem;
-    color: gray; }
 
 #welcome form {
   margin-top: 1rem;
@@ -556,5 +556,25 @@ html:not(.menu) .menu {
 .other-menu {
   margin-left: 0 !important;
   flex: 1; }
+
+#no-adventures {
+  text-align: center; }
+  #no-adventures h2 {
+    font-size: 2rem;
+    font-family: Constantia, Georgia, serif;
+    color: white;
+    text-align: center; }
+  #no-adventures li {
+    display: list-item;
+    margin-left: 2rem;
+    margin-right: 2rem; }
+  #no-adventures ul, #no-adventures p {
+    margin-top: 1rem;
+    margin-bottom: 1rem; }
+  #no-adventures a {
+    color: #00aaff;
+    text-decoration: underline; }
+  #no-adventures .content {
+    max-width: 50rem; }
 
 /*# sourceMappingURL=soundboard.css.map */
