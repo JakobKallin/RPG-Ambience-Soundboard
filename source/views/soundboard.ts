@@ -22,6 +22,7 @@ export default function(options:SoundboardViewCallbacks) {
     })));
     const previews = {};
     const files = {};
+    const scenesPlaying = {};
     const progressCallbacks = [];
 
     dom.replicate(adventures, dropdown, { sort: a => a.title }, {
@@ -46,7 +47,7 @@ export default function(options:SoundboardViewCallbacks) {
                     node.classList.toggle('loading', loading);
                 });
                 node.classList.toggle('with-image', Boolean(firstImage(scene)));
-            } },
+            }, class: { playing: scene => scenesPlaying[scene.name] > 0 } },
             '.scene-name': scene => scene.name || String.fromCharCode(160),
             '.scene-hotkey': scene => scene.key || '',
             '.scene-button': {
@@ -198,6 +199,15 @@ export default function(options:SoundboardViewCallbacks) {
         },
         adventureSelected: id => {
             dropdown.value = id;
+            render(scenes);
+        },
+        sceneStarted: name => {
+            scenesPlaying[name] = scenesPlaying[name] || 0;
+            scenesPlaying[name] += 1;
+            render(scenes);
+        },
+        sceneEnded: name => {
+            scenesPlaying[name] -= 1;
             render(scenes);
         }
     };

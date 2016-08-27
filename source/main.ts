@@ -187,6 +187,7 @@ function start() {
 
         const background = AmbienceStage(AmbienceStageDOM(dom.id('background')));
         const foreground = AmbienceStage(AmbienceStageDOM(dom.id('foreground')));
+        const scenesPlaying = {};
         const soundboard = SoundboardView({
             adventures: adventures,
             dropdown: <HTMLSelectElement> document.getElementById('adventure'),
@@ -358,7 +359,19 @@ function start() {
 
                 const layer = scene.layer === 'foreground' ? foreground : background;
                 latest.fade[scene.layer] = scene.fade.out;
-                layer.start(items, scene.fade.in * 1000);
+                // Timeout to prevent appearance of slow clicks. TODO: Optimize
+                // rendering so it's fast enough to perform here.
+                let ended = false;
+                setTimeout(() => { if (!ended) soundboard.sceneStarted(scene.name) }, 0);
+                layer.start(items, scene.fade.in * 1000).then(() => {
+                    // Timeout to match the one above, to reduce the risk of
+                    // `sceneEnded` taking place before `sceneStarted`. TODO:
+                    // Remove this as well.
+                    setTimeout(() => {
+                        ended = true;
+                        soundboard.sceneEnded(scene.name);
+                    }, 0);
+                });
             });
         }
     }

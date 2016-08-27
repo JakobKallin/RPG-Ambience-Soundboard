@@ -16,10 +16,10 @@ export default function startScene(items, fadeInDuration=0, volume=1, outside) {
         scene: null,
         items: null
     };
-    
+
     let state:SceneState = SceneState.Starting;
     enterState(SceneState.FadingIn);
-    
+
     function validTransition(before:SceneState, after:SceneState) {
         switch(after) {
             case SceneState.FadingIn:
@@ -34,12 +34,12 @@ export default function startScene(items, fadeInDuration=0, volume=1, outside) {
                 throw new Error('Invalid state: ' + after);
         }
     }
-    
+
     function enterState(newState:SceneState) {
         if (!validTransition(state, newState)) {
             throw new Error('Invalid transition: ' + state + ' to ' + newState);
         }
-        
+
         const time = outside.time();
         if (newState === SceneState.FadingIn) {
             started = time;
@@ -93,10 +93,10 @@ export default function startScene(items, fadeInDuration=0, volume=1, outside) {
         else {
             throw new Error('Invalid transition: ' + newState);
         }
-        
+
         state = newState;
     }
-    
+
     function update() {
         const time = outside.time();
         let scenesPlaying:boolean[] = [];
@@ -106,7 +106,7 @@ export default function startScene(items, fadeInDuration=0, volume=1, outside) {
             const fadeInEnding = progress === 1;
             const opacity = progress;
             scenesPlaying = updateHandles(time, opacity);
-            
+
             if (fadeInEnding) {
                 enterState(SceneState.Playing);
             }
@@ -123,7 +123,7 @@ export default function startScene(items, fadeInDuration=0, volume=1, outside) {
             invariant(0 <= progress && progress <= 1, 'Fade-out progress between 0 and 1', progress);
             const opacity = 1 - progress;
             scenesPlaying = updateHandles(time, opacity);
-            
+
             const isEnding = time >= stopped + fadeOutDuration;
             if (isEnding) {
                 enterState(SceneState.Ended);
@@ -132,18 +132,18 @@ export default function startScene(items, fadeInDuration=0, volume=1, outside) {
                 handles.scene.fade.out.step(opacity);
             }
         }
-        
-        if (scenesPlaying.some(p => p === false) && onlySound(items)) {
+
+        if (scenesPlaying.every(p => p === false) && onlySound(items)) {
             end();
         }
     }
-    
+
     function checkForEnd(time:number) {
         if (time >= stopped + fadeOutDuration) {
             enterState(SceneState.Ended);
         }
     }
-    
+
     function updateHandles(time:number, opacity:number) {
         const scenesPlaying:boolean[] = handles.items.map(handle => {
             if (handle.callback.update) {
@@ -158,7 +158,7 @@ export default function startScene(items, fadeInDuration=0, volume=1, outside) {
                 return true;
             }
         });
-        
+
         handles.items.forEach(handle => {
             if (handle.callback.fade) {
                 if (handle.type === 'sound') {
@@ -169,10 +169,10 @@ export default function startScene(items, fadeInDuration=0, volume=1, outside) {
                 }
             }
         });
-        
+
         return scenesPlaying;
     }
-        
+
     const stop = (fadeDuration=0) => {
         if (state === SceneState.FadingIn || state === SceneState.Playing) {
             stopped = outside.time();
@@ -184,7 +184,7 @@ export default function startScene(items, fadeInDuration=0, volume=1, outside) {
             end();
         }
     };
-    
+
     const end = () => {
         if (state !== SceneState.Ended) {
             fadeOutDuration = 0;
@@ -194,7 +194,7 @@ export default function startScene(items, fadeInDuration=0, volume=1, outside) {
             enterState(SceneState.Ended);
         }
     };
-    
+
     return {
         stop: stop,
         volume: (newVolume:number) => {
@@ -202,13 +202,13 @@ export default function startScene(items, fadeInDuration=0, volume=1, outside) {
             update();
         }
     };
-    
+
     function onlySound(items) {
         return items.every(i => i.type === 'sound');
     }
-    
+
     function nothing() {}
-    
+
     function once(callback) {
         let called = false;
         // Function keyword in order to capture arguments.
@@ -222,13 +222,13 @@ export default function startScene(items, fadeInDuration=0, volume=1, outside) {
             }
         };
     }
-    
+
     function bound(min, max, value) {
         invariant(min <= max, 'Lower bound lower than upper bound', min, max);
         const boundedAbove = Math.min(value, max);
         return Math.max(min, boundedAbove);
     }
-    
+
     function invariant(expression, description, ...values) {
         if (expression !== true) {
             throw new Error(

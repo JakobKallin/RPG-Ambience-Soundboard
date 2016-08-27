@@ -77,11 +77,13 @@ export function replicate(table, container, options, mapping?, state?) {
         return instance;
     });
 
-    nodes.forEach((node, index) => {
-        if (node.parent !== container) {
-            container.insertBefore(node, container.children[index]);
-        }
-    });
+    if (state.first) {
+        nodes.forEach((node, index) => {
+            if (node.parent !== container) {
+                container.insertBefore(node, container.children[index]);
+            }
+        });
+    }
 
     state.first = false;
     return (table) => {

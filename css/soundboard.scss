@@ -483,6 +483,12 @@ html {
         height: 100%;
     }
 
+    .scene.playing .scene-button {
+        background-color: $highlighted-background-color;
+        border-color: $highlighted-border-color;
+        color: $white;
+    }
+
     .scene.error .scene-button:before {
         position: absolute;
         right: 0;
