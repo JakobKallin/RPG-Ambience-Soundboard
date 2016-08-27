@@ -274,3 +274,7 @@ export function stateful(container:HTMLElement, states:string[]):(s:string) => v
     enterState(states[0]);
     return enterState;
 }
+
+export function isControl(element:HTMLElement) {
+    return ['input', 'textarea', 'select', 'button'].indexOf(element.tagName.toLowerCase()) !== -1;
+}

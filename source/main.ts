@@ -13,7 +13,7 @@ import AmbienceStageDOM from '../libraries/ambience-stage/dom';
 import { State, transitions } from './state-machine';
 import createQueue from './queue';
 import * as Persistence from './persistence';
-import Network, {Session as NetworkSession} from './network';
+import joinNetworkSession, { Session as NetworkSession } from './network';
 import { parseQuery } from './utils';
 declare var R:any;
 
@@ -44,12 +44,11 @@ function start() {
     const latest:{fade:any, session:NetworkSession} = {
         fade: {
             background: 0,
-            foreground: 0
+            foreground: 0,
         },
         session: {
             id: null,
             trigger: () => {},
-            pause: () => {}
         }
     };
 
@@ -166,14 +165,6 @@ function start() {
             showPage('soundboard', 0.25);
         }
 
-        const network = Network(appId, (event, index) => {
-            latest.session.pause(() => {
-                if (event.type === 'name') playSceneWithName(event.name);
-                if (event.type === 'hotkey') playSceneWithHotkey(event.hotkey);
-                if (event.type === 'stop') stopAllScenes();
-            });
-        });
-
         const previews = {};
         const files = {};
         const loadFile = R.memoize((id:string) => {
@@ -212,25 +203,47 @@ function start() {
             },
             playOnline: () => ui.showDialog('online-play')
         });
-        const joinSession = (id?) => {
-            (id ? network.joinSession(id) : network.startSession(Storage.read().session)).then(session => {
+        const playOnline = (id:string) => {
+            return joinNetworkSession(id, {
+                peerCountChanged: count => {
+                    dom.id('player-count-number').textContent = count;
+                },
+                event: event => {
+                    if (event.type === 'name') playSceneWithName(event.name);
+                    if (event.type === 'hotkey') playSceneWithHotkey(event.hotkey);
+                    if (event.type === 'stop') stopAllScenes();
+                }
+            })
+            .then(session => {
                 latest.session = session;
                 const url = location.protocol + '//' + location.host + '/?session=' + encodeURIComponent(session.id);
                 onlinePlayView.sessionJoined(url);
-                Storage.modify(store => store.session = session.id);
+                document.documentElement.classList.add('online');
             })
-            .catch(error => onlinePlayView.sessionError(error.message))
-        }
+            .catch(error => onlinePlayView.sessionError(error.message));
+        };
         const onlinePlayView = OnlinePlayView(dom.id('online-play'), {
-            startSession: joinSession,
-            joinSession: joinSession,
+            startSession: () => {
+                const id =
+                    Storage.read().session ||
+                    // Generate a session ID based on the current timestamp and
+                    // a random number. This is not intended to be secure but
+                    // simply to reduce the risk of random collisions to a
+                    // reasonable level.
+                    Date.now().toString(36) + Math.random().toString(36).replace(/\./g, '').substring(0, 8);
+                playOnline(id).then(() => {
+                    Storage.modify(store => store.session = id);
+                });
+            },
+            joinSession: id => playOnline(id),
             dismiss: () => {}
         });
 
         if (sessionInUrl()) {
             ui.showDialog('online-play');
             onlinePlayView.joiningSession();
-            joinSession(sessionInUrl());
+            playOnline(sessionInUrl())
+            .then(() => ui.hideDialog());
         }
 
         selectAdventure(
@@ -239,11 +252,13 @@ function start() {
             R.sortBy(id => adventures[id].title, Object.keys(adventures))[0]
         );
 
-        dom.on(document, 'keydown', (event:any):void => {
+        dom.on(document, 'keydown', (event:KeyboardEvent):void => {
+            if (dom.isControl(<HTMLElement> event.target)) return;
             playSceneWithHotkey(dom.key(event.keyCode));
         });
 
-        dom.on(document, 'keypress', (event:any):void => {
+        dom.on(document, 'keypress', (event:KeyboardEvent):void => {
+            if (dom.isControl(<HTMLElement> event.target)) return;
             playSceneWithHotkey(dom.key(event.charCode));
         });
 

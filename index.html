@@ -18,10 +18,8 @@
                         <option data-repeat="10">Some Adventure</option>
                     </select>
                     <button type="button" id="fullscreen" title="Fullscreen">Fullscreen</button>
-                    <button type="button" id="online-play-button" title="Play Online">
-                        <img src="/images/google-drive.png" alt="" class="icon">
-                        <span class="label">Play Online</span>
-                    </button>
+                    <button type="button" id="online-play-button" title="Play Online">Play Online</button>
+                    <span id="player-count">Players connected: <span id="player-count-number"></span></span>
                 </div>
                 <div>
                     <button type="button" id="zoom-out" title="Zoom out"></button>
@@ -261,7 +259,7 @@
                 <button type="button" class="close">×</button>
                 <div class="center content" data-cycle="no-session joining-session connecting-to-session session-active">
                     <div class="no-session">
-                        <p>Use RPG Ambience together with other players who have Google accounts.</p>
+                        <h2>Play Online</h2>
                         <div class="horizontal center spacing">
                             <form id="start-session-form">
                                 <button type="submit">Start session</button>
@@ -274,10 +272,6 @@
                             <p>There was an error connecting to the session:</p>
                             <p id="online-play-error-message">Error message</p>
                         </div>
-                        <p class="note">
-                            Online play is implemented using the
-                            <a href="https://developers.google.com/google-apps/realtime/overview" target="_blank">Google Realtime API</a>.
-                        </p>
                     </div>
                     <div class="joining-session">
                         <p>Please enter the URL received from the host:</p>

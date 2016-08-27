@@ -208,6 +208,10 @@ html {
 #online-play {
     text-align: center;
 
+    h2 {
+        margin-bottom: 1rem;
+    }
+
     #online-play-error-message {
         display: inline-block;
         white-space: pre;
@@ -236,20 +240,12 @@ html {
         font-size: 1.5rem;
 
         p:before {
+            @include icon($fa-var-cog, left);
             display: inline-block;
-            content: "";
-            vertical-align: middle;
-            width: 3rem;
-            height: 3rem;
-            background-image: url("/images/google-drive.png");
-            background-repeat: no-repeat;
-            background-size: cover;
-            animation-duration: 1s;
+            animation-duration: 3s;
             animation-name: spin;
             animation-iteration-count: infinite;
             animation-timing-function: linear;
-            transform-origin: center;
-            margin-right: 1rem;
         }
 
         @keyframes spin {
@@ -322,14 +318,19 @@ html {
         }
 
         #fullscreen:before { @include icon($fa-var-arrows-alt, left) }
+        #online-play-button:before { @include icon($fa-var-users, left) }
         #zoom-out:before { @include icon($fa-var-search-minus) }
         #zoom-in:before { @include icon($fa-var-search-plus) }
         #mute:before { @include icon($fa-var-volume-off) }
         #unmute:before { @include icon($fa-var-volume-up) }
 
-        .icon {
-            vertical-align: middle;
-            height: 1rem;
+        #player-count {
+            @include box;
+            padding: 0.5rem;
+        }
+
+        html:not(.online) & #player-count {
+            display: none;
         }
     }
 
