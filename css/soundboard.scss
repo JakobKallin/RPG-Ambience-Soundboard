@@ -484,6 +484,17 @@ html {
         height: 100%;
     }
 
+    .scene.playing .scene-preview:before {
+        @include icon($fa-var-play-circle);
+        position: absolute;
+        left: 0.5rem;
+        top: 0.5rem;
+        z-index: 1;
+        line-height: 1em;
+        color: white;
+        text-shadow: 0 0 1rem black;
+    }
+
     .scene.playing .scene-button {
         background-color: $highlighted-background-color;
         border-color: $highlighted-border-color;
