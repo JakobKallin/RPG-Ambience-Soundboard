@@ -143,7 +143,11 @@ $highlighted-border-color: hsl(220, 50%, 50%);
     }
 
     a {
-        color: $link-color;
-        text-decoration: underline;
+        @include link;
     }
+}
+
+@mixin link {
+    color: $link-color;
+    text-decoration: underline;
 }

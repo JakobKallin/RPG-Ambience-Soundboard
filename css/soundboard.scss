@@ -325,7 +325,8 @@ html {
         #unmute:before { @include icon($fa-var-volume-up) }
 
         #player-count {
-            @include box;
+            @include reset-control;
+            @include box-button;
             padding: 0.5rem;
         }
 

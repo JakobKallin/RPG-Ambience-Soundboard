@@ -179,6 +179,7 @@ export default function(options:SoundboardViewCallbacks) {
     dropdown.addEventListener('change', () => options.adventureSelected(dropdown.value));
 
     dom.on(dom.id('online-play-button'), 'click', () => options.playOnline());
+    dom.on(dom.id('player-count'), 'click', () => options.playOnline());
 
     function selectedAdventure() {
         return adventures[dropdown.value];
