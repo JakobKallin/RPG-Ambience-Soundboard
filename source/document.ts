@@ -48,13 +48,20 @@ export function toggleClass(node, table) {
     });
 }
 
-export function replicate(table, container, options, mapping?, state?) {
+export function replicate(container, table, userState, options, createMapping, state?) {
     if (!state) {
         state = {
             template: container.removeChild(container.firstElementChild),
             nodes: {},
-            first: true
+            first: true,
+            mappings: {}
         };
+    }
+
+    if (state.first) {
+        R.mapObjIndexed((value, key) => {
+            state.mappings[key] = createMapping(value);
+        }, table);
     }
 
     R.mapObjIndexed((node, key) => {
@@ -72,7 +79,9 @@ export function replicate(table, container, options, mapping?, state?) {
             ? state.nodes[key]
             : state.template.cloneNode(true);
         instance.hidden = !filter(object);
-        map(mapping, object, instance, state.first);
+        if (state.first || !instance.hidden) {
+            map(state.mappings[key], instance, state.first, userState);
+        }
         state.nodes[key] = instance;
         return instance;
     });
@@ -86,12 +95,12 @@ export function replicate(table, container, options, mapping?, state?) {
     }
 
     state.first = false;
-    return (table) => {
-        return replicate(table, container, options, mapping, state);
+    return (userState) => {
+        return replicate(container, table, userState, options, createMapping, state);
     };
 }
 
-function map(selectors, object, ancestor, first) {
+function map(selectors, ancestor, first, state) {
     R.mapObjIndexed((values, selector) => {
         if (typeof values !== 'object') {
             values = { text: values };
@@ -102,46 +111,55 @@ function map(selectors, object, ancestor, first) {
         );
 
         matching.forEach(node => {
-            R.mapObjIndexed((createValue, key) => {
+            R.mapObjIndexed((value, key) => {
                 if (key === 'text') {
-                    const value = createValue(object);
-                    if (node.textContent !== value) {
-                        node.textContent = value;
-                    }
+                    update(v => set.property(node, 'textContent', v), value, first, state);
                 }
                 else if (key === 'class') {
                     R.mapObjIndexed((active, className) => {
-                        node.classList.toggle(className, active(object));
-                    }, createValue);
+                        update(v => set.class(node, className, v), active, first, state);
+                    }, value);
                 }
                 else if (key === 'style') {
-                    R.mapObjIndexed((createCssValue, cssKey) => {
-                        const cssValue = createCssValue(object);
-                        if (node.style[cssKey] !== cssValue) {
-                            node.style[cssKey] = cssValue;
-                        }
-                    }, createValue);
+                    R.mapObjIndexed((cssValue, cssKey) => {
+                        update(v => set.style(node, cssKey, v), cssValue, first, state);
+                    }, value);
                 }
                 else if (key === 'on') {
                     if (first) {
                         R.mapObjIndexed((callback, eventName) => {
-                            node.addEventListener(eventName, () => callback(object, node));
-                        }, createValue);
+                            node.addEventListener(eventName, callback);
+                        }, value);
                     }
-                }
-                else if (key === 'node') {
-                    if (first) createValue(node, object);
                 }
                 else {
-                    const value = createValue(object);
-                    if (node[key] !== value) {
-                        node[key] = value;
-                    }
+                    update(v => set.property(node, key, v), value, first, state);
                 }
             }, values);
         });
     }, selectors);
 }
+
+function update(callback, value, first, state) {
+    if (first || typeof value === 'function') {
+        if (typeof value === 'function') {
+            value = value(state);
+        }
+        callback(value);
+    }
+}
+
+const set = {
+    class: (node, key, value) => {
+        node.classList.toggle(key, value);
+    },
+    style: (node, key, value) => {
+        if (node.style[key] !== value) node.style[key] = value;
+    },
+    property: (node, key, value) => {
+        if (node[key] != value) node[key] = value;
+    }
+};
 
 export function matches(element, selector) {
     if ( element.matches ) {

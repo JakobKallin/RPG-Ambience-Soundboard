@@ -20,91 +20,76 @@ export default function(options:SoundboardViewCallbacks) {
     const scenes = R.fromPairs(R.unnest(R.values(adventures).map(adventure => {
         return adventure.scenes.map((scene, i) => [adventure.id + '/' + i, scene]);
     })));
-    const previews = {};
-    const files = {};
-    const scenesPlaying = {};
-    const progressCallbacks = [];
 
-    dom.replicate(adventures, dropdown, { sort: a => a.title }, {
+    dom.replicate(dropdown, adventures, {}, { sort: a => a.title }, adventure => ({
         'option': {
-            text: adventure => adventure.title,
-            value: adventure => adventure.id
+            text: adventure.title,
+            value: adventure.id
         }
-    });
+    }));
 
     const render = dom.replicate(
-        scenes,
         dom.first('.scene-list'),
+        scenes,
+        { previews: {}, files: {}, playing: {} },
         {
             sort: scene => selectedAdventure().scenes.indexOf(scene),
             filter: scene => selectedAdventure().scenes.indexOf(scene) !== -1
         },
-        {
-            '.scene': { node: (node, scene) => {
-                node.classList.add('loading');
-                progressCallbacks.push(allFiles => {
-                    const loading = sceneFiles(scene).some(f => !(f in allFiles) || typeof allFiles[f] === 'number');
-                    node.classList.toggle('loading', loading);
-                });
-                node.classList.toggle('with-image', Boolean(firstImage(scene)));
-            }, class: { playing: scene => scenesPlaying[scene.name] > 0 } },
-            '.scene-name': scene => scene.name || String.fromCharCode(160),
-            '.scene-hotkey': scene => scene.key || '',
+        scene => ({
+            '.scene': {
+                class: {
+                    'loading': state => sceneProgress(scene, state.files) < 1,
+                    'with-image': hasImage(scene),
+                    'playing': state => state.playing[scene.name] > 0
+                }
+            },
+            '.scene-name': scene.name || String.fromCharCode(160),
+            '.scene-hotkey': scene.key || '',
             '.scene-button': {
-                on: { click: options.playScene },
-                title: scene => 'Play scene' + (scene.name ? ' ' + scene.name : ''),
+                on: { click: () => options.playScene(scene) },
+                title: 'Play scene' + (scene.name ? ' ' + scene.name : ''),
             },
             '.scene-preview-image': {
-                hidden: scene => !firstImage(scene),
-                on: { load: (scene, image) => image.classList.add('loaded') },
-                src: scene => hasImagePreview(scene)
-                    ? previews[firstImage(scene).file]
+                hidden: !hasImage(scene),
+                on: { load: event => event.target.classList.add('loaded') },
+                src: state => hasImagePreview(scene, state.previews)
+                    ? state.previews[firstImage(scene).file]
                     : ''
             },
-            'progress': { node: (node, scene) => {
-                progressCallbacks.push(allFiles => {
-                    node.value = combinedProgress(sceneFiles(scene), allFiles);
-                });
-            } }
-        }
+            'progress': {
+                value: state => sceneProgress(scene, state.files)
+            }
+        })
     );
-
-    function sceneFiles(scene) {
-        return firstSound(scene).tracks;
-    }
 
     function firstImage(scene) {
         return scene.media.filter(m => m.type === 'image')[0];
+    }
+
+    function hasImage(scene) {
+        return Boolean(firstImage(scene));
     }
 
     function firstSound(scene) {
         return scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };
     }
 
-    function hasImagePreview(scene) {
-        return firstImage(scene) && typeof previews[firstImage(scene).file] === 'string';
+    function hasImagePreview(scene, previews) {
+        return hasImage(scene) && typeof previews[firstImage(scene).file] === 'string';
     }
 
-    function renderProgress() {
-        progressCallbacks.forEach(callback => callback(files));
-    }
-
-    function combinedProgress(sceneFiles, allFiles) {
+    function sceneProgress(scene, files) {
+        const sceneFiles = firstSound(scene).tracks;
         return sceneFiles.length === 0
             ? 1
-            : R.sum(sceneFiles.map(t => singleProgress(allFiles[t]))) / sceneFiles.length;
+            : R.sum(sceneFiles.map(t => fileProgress(files[t]))) / sceneFiles.length;
     }
 
-    function singleProgress(progress) {
-        if (typeof progress === 'string') {
-            return 1;
-        }
-        else if (typeof progress === 'number') {
-            return progress;
-        }
-        else {
-            return 0;
-        }
+    function fileProgress(progress) {
+        if (typeof progress === 'string') return 1;
+        else if (typeof progress === 'number') return progress;
+        else return 0;
     }
 
     dom.on(dom.id('stop-button'), 'click', () => {
@@ -185,31 +170,38 @@ export default function(options:SoundboardViewCallbacks) {
         return adventures[dropdown.value];
     }
 
-    return {
-        previewLoaded: (id, url) => {
-            previews[id] = url;
-            render(scenes);
-        },
-        fileProgress: (id, ratio) => {
-            files[id] = ratio;
-            renderProgress();
-        },
-        fileLoaded: (id, url) => {
-            files[id] = url;
-            renderProgress();
-        },
-        adventureSelected: id => {
-            dropdown.value = id;
-            render(scenes);
-        },
-        sceneStarted: name => {
-            scenesPlaying[name] = scenesPlaying[name] || 0;
-            scenesPlaying[name] += 1;
-            render(scenes);
-        },
-        sceneEnded: name => {
-            scenesPlaying[name] -= 1;
-            render(scenes);
-        }
-    };
+    return (() => {
+        const state = {
+            previews: {},
+            files: {},
+            playing: {},
+        };
+        return {
+            previewLoaded: (id, url) => {
+                state.previews[id] = url;
+                render(state);
+            },
+            fileProgress: (id, ratio) => {
+                state.files[id] = ratio;
+                render(state);
+            },
+            fileLoaded: (id, url) => {
+                state.files[id] = url;
+                render(state);
+            },
+            adventureSelected: id => {
+                dropdown.value = id;
+                render(state);
+            },
+            sceneStarted: name => {
+                state.playing[name] = state.playing[name] || 0;
+                state.playing[name] += 1;
+                render(state);
+            },
+            sceneEnded: name => {
+                state.playing[name] -= 1;
+                render(state);
+            }
+        };
+    })();
 };
