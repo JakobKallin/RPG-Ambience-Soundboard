@@ -165,6 +165,12 @@ function start() {
             showPage('soundboard', 0.25);
         }
 
+        R.mapObjIndexed((adventure, id) => {
+            adventure.scenes.forEach((scene, i) => {
+                scene.id = adventure.id + '/' + i;
+            });
+        }, adventures);
+
         const previews = {};
         const files = {};
         const loadFile = R.memoize((id:string) => {
@@ -191,7 +197,7 @@ function start() {
         const soundboard = SoundboardView({
             adventures: adventures,
             dropdown: <HTMLSelectElement> document.getElementById('adventure'),
-            playScene: playScene,
+            playScene: playSceneWithId,
             stopAllScenes: stopAllScenes,
             adventureSelected: (id:string) => selectAdventure(id),
             changeVolume: volume => {
@@ -210,8 +216,7 @@ function start() {
                     dom.id('player-count-number').textContent = count;
                 },
                 event: event => {
-                    if (event.type === 'name') playSceneWithName(event.name);
-                    if (event.type === 'hotkey') playSceneWithHotkey(event.hotkey);
+                    if (event.type === 'scene') playSceneWithId(event.id);
                     if (event.type === 'stop') stopAllScenes();
                 }
             })
@@ -320,11 +325,11 @@ function start() {
             scenes.forEach(playScene);
         }
 
-        function playSceneWithName(name:string):void {
-            if (!selectedAdventure) return;
-
-            const scenes = selectedAdventure.scenes.filter((s:any) => s.name === name);
-            scenes.forEach(playScene);
+        function playSceneWithId(id:string):void {
+            const adventureId = id.split('/')[0];
+            const sceneIndex = id.split('/')[1];
+            const scene = adventures[adventureId].scenes[sceneIndex];
+            playScene(scene);
         }
 
         function stopAllScenes():void {
@@ -334,12 +339,7 @@ function start() {
         }
 
         function playScene(scene:any):void {
-            if (scene.name) {
-                latest.session.trigger({ type: 'name', name: scene.name });
-            }
-            else if (scene.hotkey) {
-                latest.session.trigger({ type: 'hotkey', name: scene.hotkey });
-            }
+            latest.session.trigger({ type: 'scene', id: scene.id });
 
             const firstImage = scene.media.filter(m => m.type === 'image')[0];
             const firstSound = scene.media.filter(m => m.type === 'sound')[0] || { tracks: [] };

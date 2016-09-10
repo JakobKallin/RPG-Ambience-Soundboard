@@ -5,7 +5,7 @@ declare var R:any;
 interface SoundboardViewCallbacks {
     dropdown: HTMLSelectElement,
     adventures: any,
-    playScene: (scene:any) => void,
+    playScene: (id:string) => void,
     stopAllScenes: () => void,
     adventureSelected: (s:string) => void,
     changeVolume: (volume:number) => void,
@@ -18,7 +18,7 @@ export default function(options:SoundboardViewCallbacks) {
     const dropdown = options.dropdown;
     const adventures = options.adventures;
     const scenes = R.fromPairs(R.unnest(R.values(adventures).map(adventure => {
-        return adventure.scenes.map((scene, i) => [adventure.id + '/' + i, scene]);
+        return adventure.scenes.map((scene, i) => [scene.id, scene]);
     })));
 
     dom.replicate(dropdown, adventures, {}, { sort: a => a.title }, adventure => ({
@@ -47,7 +47,7 @@ export default function(options:SoundboardViewCallbacks) {
             '.scene-name': scene.name || String.fromCharCode(160),
             '.scene-hotkey': scene.key || '',
             '.scene-button': {
-                on: { click: () => options.playScene(scene) },
+                on: { click: () => options.playScene(scene.id) },
                 title: 'Play scene' + (scene.name ? ' ' + scene.name : ''),
             },
             '.scene-preview-image': {
