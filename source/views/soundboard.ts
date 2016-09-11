@@ -32,12 +32,10 @@ export default function(options:SoundboardViewCallbacks) {
         dom.first('.scene-list'),
         scenes,
         { previews: {}, files: {}, playing: {} },
-        {
-            sort: scene => selectedAdventure().scenes.indexOf(scene),
-            filter: scene => selectedAdventure().scenes.indexOf(scene) !== -1
-        },
+        { sort: scene => selectedAdventure().scenes.indexOf(scene) },
         scene => ({
             '.scene': {
+                data: { key: scene.id },
                 class: {
                     'loading': state => sceneProgress(scene, state.files) < 1,
                     'with-image': hasImage(scene),
@@ -191,7 +189,10 @@ export default function(options:SoundboardViewCallbacks) {
             },
             adventureSelected: id => {
                 dropdown.value = id;
-                render(state);
+                Array.from(dom.first('.scene-list').children).forEach(node => {
+                    const adventure = node.dataset.key.split('/')[0];
+                    node.hidden = adventure !== id;
+                });
             },
             sceneStarted: name => {
                 state.playing[name] = state.playing[name] || 0;

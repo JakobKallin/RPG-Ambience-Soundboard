@@ -72,16 +72,12 @@ export function replicate(container, table, userState, options, createMapping, s
 
     const keys = Object.keys(table);
     const order = options.sort || R.identity;
-    const filter = options.filter || (() => true);
     const nodes = R.sortBy(key => order(table[key]), keys).map(key => {
         const object = table[key];
         const instance = key in state.nodes
             ? state.nodes[key]
             : state.template.cloneNode(true);
-        instance.hidden = !filter(object);
-        if (state.first || !instance.hidden) {
-            map(state.mappings[key], instance, state.first, userState);
-        }
+        map(state.mappings[key], instance, state.first, userState);
         state.nodes[key] = instance;
         return instance;
     });
@@ -118,6 +114,11 @@ function map(selectors, ancestor, first, state) {
                 else if (key === 'class') {
                     R.mapObjIndexed((active, className) => {
                         update(v => set.class(node, className, v), active, first, state);
+                    }, value);
+                }
+                else if (key === 'data') {
+                    R.mapObjIndexed((dataValue, dataKey) => {
+                        update(v => set.data(node, dataKey, v), dataValue, first, state);
                     }, value);
                 }
                 else if (key === 'style') {
@@ -158,6 +159,9 @@ const set = {
     },
     property: (node, key, value) => {
         if (node[key] != value) node[key] = value;
+    },
+    data: (node, key, value) => {
+        if (node.dataset[key] != value) node.dataset[key] = value;
     }
 };
 
