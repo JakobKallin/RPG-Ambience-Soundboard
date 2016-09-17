@@ -6,6 +6,7 @@ import GoogleDriveView from './views/google-drive';
 import SessionErrorView from './views/session-error';
 import WelcomeView from './views/welcome';
 import OnlinePlayView from './views/online-play';
+import MenuView from './views/menu';
 import * as dom from './document';
 import * as ui from './ui';
 import AmbienceStage from '../libraries/ambience-stage/stage';
@@ -244,6 +245,11 @@ function start() {
             joinSession: id => playOnline(id),
             dismiss: () => {}
         });
+        const menuView = MenuView(dom.id('menu'), {
+            sortAdventuresByTitle: soundboard.sortAdventuresByTitle,
+            sortAdventuresByCreationDate: soundboard.sortAdventuresByCreationDate,
+            sortAdventuresByModificationDate: soundboard.sortAdventuresByModificationDate,
+        });
 
         if (sessionInUrl()) {
             ui.showDialog('online-play');
@@ -270,6 +276,10 @@ function start() {
 
         dom.on(window, 'popstate', () => {
             onPageChange(location.pathname);
+        });
+
+        dom.on(dom.id('menu-button'), 'click', () => {
+            ui.showDialog('menu');
         });
 
         function selectAdventure(id:string):void {

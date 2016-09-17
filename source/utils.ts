@@ -27,3 +27,7 @@ export function parseQuery(location:Location):{} {
     }
     return query;
 }
+
+export function shallowlyEqual(a:any[], b:any[]) {
+    return a.length === b.length && a.every((v, i) => a[i] === b[i]);
+}

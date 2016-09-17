@@ -62,6 +62,10 @@ html {
     margin: auto;
 }
 
+.inline-center {
+    text-align: center;
+}
+
 .page-loading-error {
     padding: 1rem;
     text-align: center;
@@ -166,7 +170,7 @@ html {
     }
 }
 
-#welcome, #online-play {
+#welcome, #menu, #online-play {
     width: 100%;
     max-width: 50rem;
 
@@ -196,11 +200,48 @@ html {
     }
 
     @include document;
+
+    table {
+        display: inline-block;
+
+        th {
+            text-align: right;
+            padding-right: 0.25em;
+        }
+
+        td {
+            padding-left: 0.25em;
+            text-align: left;
+        }
+
+        th, td {
+            height: 2rem;
+        }
+
+        select, button {
+            padding: 0.25em 0.5em;
+        }
+
+        select, button, input {
+            vertical-align: middle;
+        }
+
+        input {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+    }
 }
 
 #welcome {
     form {
         margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+}
+
+#menu {
+    h2 {
         margin-bottom: 1rem;
     }
 }
@@ -317,6 +358,7 @@ html {
             vertical-align: middle;
         }
 
+        #menu-button:before { @include icon($fa-var-bars, left) }
         #fullscreen:before { @include icon($fa-var-arrows-alt, left) }
         #online-play-button:before { @include icon($fa-var-users, left) }
         #zoom-out:before { @include icon($fa-var-search-minus) }

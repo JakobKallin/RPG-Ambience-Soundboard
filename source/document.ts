@@ -1,3 +1,4 @@
+import {shallowlyEqual} from './utils';
 declare var R:any;
 
 export function clear(node) {
@@ -77,16 +78,17 @@ export function replicate(container, table, userState, options, createMapping, s
         const instance = key in state.nodes
             ? state.nodes[key]
             : state.template.cloneNode(true);
-        map(state.mappings[key], instance, state.first, userState);
+        if (!instance.hidden) {
+            map(state.mappings[key], instance, state.first, userState);
+        }
         state.nodes[key] = instance;
         return instance;
     });
 
-    if (state.first) {
+    const orderChanged = !shallowlyEqual(nodes, Array.from(container.children));
+    if (orderChanged) {
         nodes.forEach((node, index) => {
-            if (node.parent !== container) {
-                container.insertBefore(node, container.children[index]);
-            }
+            container.insertBefore(node, container.children[index]);
         });
     }
 

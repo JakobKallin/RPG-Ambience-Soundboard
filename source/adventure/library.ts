@@ -12,8 +12,13 @@ export default function(backend) {
             const adventures = {};
             return Promise.all(ids.map(function(id) {
                 signal.adventureDownloadStarted(id);
-                return backend.download.contents(id).then(function(adventureToUpgrade) {
+                return Promise.all([backend.download.metadata(id), backend.download.contents(id)])
+                .then(function(results) {
+                    const adventureMetadata = results[0];
+                    const adventureToUpgrade = results[1];
                     const adventure = upgradeAdventure(adventureToUpgrade);
+                    adventure.created = adventureMetadata.created;
+                    adventure.modified = adventureMetadata.modified;
                     signal.adventureDownloadFinished(id);
                     adventure.id = id;
                     adventures[id] = adventure;

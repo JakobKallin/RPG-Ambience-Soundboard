@@ -14,6 +14,7 @@
         <div class="page page-soundboard vertical padding spacing" id="soundboard">
             <div id="top-menu" class="horizontal">
                 <div class="flex">
+                    <button type="button" id="menu-button" title="Menu">Menu</button>
                     <select class="adventure" id="adventure">
                         <option data-repeat="10">Some Adventure</option>
                     </select>
@@ -253,6 +254,38 @@
                     <form>
                         <button type="submit">Start!</a>
                     </form>
+                </div>
+            </div>
+            <div class="dialog" id="menu">
+                <button type="button" class="close">×</button>
+                <div class="center content">
+                    <h2>Menu</h2>
+                    <div class="inline-center">
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <th>
+                                        <label for="adventure-sort-order">Sort adventures by</label>
+                                    </th>
+                                    <td>
+                                        <select id="adventure-sort-order">
+                                            <option value="title">Name</option>
+                                            <option value="created">Creation date</option>
+                                            <option value="modified">Last modified</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>
+                                        <label for="scene-layer-grouping">Group scenes by layer</label>
+                                    </th>
+                                    <td>
+                                        <input type="checkbox" id="scene-layer-grouping">
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             <div class="dialog" id="online-play">

@@ -1,7 +1,8 @@
 import * as dom from './document';
 declare var R:any;
 
-export function dialog(element:HTMLElement, onClose:() => void):void {
+export function dialog(element:HTMLElement, onClose?:() => void):void {
+    onClose = onClose || (() => {});
     const close = () => {
         hideDialog();
         onClose();

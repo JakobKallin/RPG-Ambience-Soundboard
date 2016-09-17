@@ -14,8 +14,12 @@ export default function(appId) {
     };
 
     function downloadMetadata(id) {
-        const url = urls.files + '/' + id + '?fields=thumbnailLink';
-        return request('GET', url);
+        const url = urls.files + '/' + id + '?fields=thumbnailLink,createdTime,modifiedTime';
+        return request('GET', url).then((result:any) => ({
+            thumbnail: result.thumbnailLink,
+            created: new Date(result.createdTime),
+            modified: new Date(result.modifiedTime),
+        }));
     }
 
     function downloadContents(id) {
@@ -29,9 +33,7 @@ export default function(appId) {
     }
 
     function downloadPreview(id) {
-        return downloadMetadata(id).then((metadata:any) => {
-            return metadata.thumbnailLink
-        });
+        return downloadMetadata(id).then((metadata:any) => metadata.thumbnail);
     }
 
     function search(options) {

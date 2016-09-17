@@ -21,12 +21,19 @@ export default function(options:SoundboardViewCallbacks) {
         return adventure.scenes.map((scene, i) => [scene.id, scene]);
     })));
 
-    dom.replicate(dropdown, adventures, {}, { sort: a => a.title }, adventure => ({
-        'option': {
-            text: adventure.title,
-            value: adventure.id
-        }
-    }));
+    let adventureSortProperty = a => a.title;
+    const renderAdventureDropdown = dom.replicate(
+        dropdown,
+        adventures,
+        {},
+        { sort: a => adventureSortProperty(a) },
+        adventure => ({
+            'option': {
+                text: adventure.title,
+                value: adventure.id
+            }
+        })
+    );
 
     const render = dom.replicate(
         dom.first('.scene-list'),
@@ -193,6 +200,10 @@ export default function(options:SoundboardViewCallbacks) {
                     const adventure = node.dataset.key.split('/')[0];
                     node.hidden = adventure !== id;
                 });
+                // We don't have to call render here to update the previously
+                // hidden scenes, as the `fileLoaded` callback is already called
+                // whenever an adventure is selected (assuming that adventure
+                // has files).
             },
             sceneStarted: name => {
                 state.playing[name] = state.playing[name] || 0;
@@ -202,7 +213,19 @@ export default function(options:SoundboardViewCallbacks) {
             sceneEnded: name => {
                 state.playing[name] -= 1;
                 render(state);
-            }
+            },
+            sortAdventuresByTitle: () => {
+                adventureSortProperty = a => a.title;
+                renderAdventureDropdown({});
+            },
+            sortAdventuresByCreationDate: () => {
+                adventureSortProperty = a => -a.created.getTime();
+                renderAdventureDropdown({});
+            },
+            sortAdventuresByModificationDate: () => {
+                adventureSortProperty = a => -a.modified.getTime();
+                renderAdventureDropdown({});
+            },
         };
     })();
 };
