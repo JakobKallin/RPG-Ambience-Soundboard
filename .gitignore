@@ -2,6 +2,7 @@
 css/**/*.css
 css/**/*.css.map
 source/**/*.js
+tests/specs/*.js
 libraries/ambience-stage/*.js
 bundle.js
 bundle.prototype.js

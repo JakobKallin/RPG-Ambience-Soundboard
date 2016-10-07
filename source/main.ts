@@ -21,12 +21,18 @@ declare var R:any;
 const version = 0;
 
 interface Store {
-    adventure?:string,
-    welcomed?:boolean,
-    zoom?:number,
-    session?:string
+    adventure?:string;
+    welcomed?:boolean;
+    zoom?:number;
+    session?:string;
+    adventureOrder?:string;
+    groupScenesByLayer?:boolean;
 }
-const defaultStore:Store = {};
+const defaultStore:Store = {
+    welcomed: false,
+    adventureOrder: 'title',
+    groupScenesByLayer: false,
+};
 
 namespace Storage {
     export function read():Store {
@@ -245,11 +251,31 @@ function start() {
             joinSession: id => playOnline(id),
             dismiss: () => {}
         });
-        const menuView = MenuView(dom.id('menu'), {
-            sortAdventuresByTitle: soundboard.sortAdventuresByTitle,
-            sortAdventuresByCreationDate: soundboard.sortAdventuresByCreationDate,
-            sortAdventuresByModificationDate: soundboard.sortAdventuresByModificationDate,
-        });
+        const menuView = MenuView(
+            dom.id('menu'),
+            {
+                adventureOrder: Storage.read().adventureOrder,
+                groupScenesByLayer: Storage.read().groupScenesByLayer,
+            },
+            {
+                sortAdventuresByTitle: () => {
+                    soundboard.sortAdventuresByTitle();
+                    Storage.modify(store => store.adventureOrder = 'title');
+                },
+                sortAdventuresByCreationDate: () => {
+                    soundboard.sortAdventuresByCreationDate();
+                    Storage.modify(store => store.adventureOrder = 'created');
+                },
+                sortAdventuresByModificationDate: () => {
+                    soundboard.sortAdventuresByModificationDate();
+                    Storage.modify(store => store.adventureOrder = 'modified');
+                },
+                groupScenesByLayer: active => {
+                    soundboard.groupScenesByLayer(active);
+                    Storage.modify(store => store.groupScenesByLayer = active);
+                }
+            }
+        );
 
         if (sessionInUrl()) {
             ui.showDialog('online-play');

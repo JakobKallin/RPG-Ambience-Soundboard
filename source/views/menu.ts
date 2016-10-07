@@ -2,18 +2,25 @@ import * as dom from '../document';
 import * as ui from '../ui';
 
 interface Callbacks {
-    sortAdventuresByTitle: () => void,
-    sortAdventuresByCreationDate: () => void,
-    sortAdventuresByModificationDate: () => void,
+    sortAdventuresByTitle: () => void
+    sortAdventuresByCreationDate: () => void
+    sortAdventuresByModificationDate: () => void
+    groupScenesByLayer: (boolean) => void
 }
 
-export default function(dialog:HTMLElement, signal:Callbacks) {
+interface Values {
+    groupScenesByLayer:boolean;
+    adventureOrder:string;
+}
+
+export default function(dialog:HTMLElement, initial:Values, signal:Callbacks) {
     ui.dialog(dialog);
-    const adventureSortOrderDropdown = <HTMLSelectElement> dom.id('adventure-sort-order');
-    dom.on(adventureSortOrderDropdown, 'change', event => {
-        const value = adventureSortOrderDropdown.value;
-        if (value === 'title') signal.sortAdventuresByTitle();
-        if (value === 'created') signal.sortAdventuresByCreationDate();
-        if (value === 'modified') signal.sortAdventuresByModificationDate();
+
+    dom.sync.select(<HTMLSelectElement> dom.id('adventure-sort-order'), initial.adventureOrder, {
+        title: signal.sortAdventuresByTitle,
+        created: signal.sortAdventuresByCreationDate,
+        modified: signal.sortAdventuresByModificationDate,
     });
+
+    dom.sync.checkbox(<HTMLInputElement> dom.id('scene-layer-grouping'), initial.groupScenesByLayer, signal.groupScenesByLayer);
 }

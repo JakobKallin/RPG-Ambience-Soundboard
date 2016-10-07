@@ -49,13 +49,178 @@ export function toggleClass(node, table) {
     });
 }
 
+type ShorthandSelectorMapping = {[selector:string]:ElementValues|string}
+type SelectorMapping = {[selector:string]:ElementValues}
+type RenderState = {[selector:string]:SelectorState}
+type SelectorState = ListSelectorState | SingletonSelectorState;
+interface ListSelectorState {
+    template: HTMLElement
+    placeholder: Comment
+    children: {[key:string]:SingletonSelectorState}
+    order: HTMLElement[]
+}
+interface SingletonSelectorState {
+    element: HTMLElement
+    nested: RenderState
+    first: boolean
+}
+
+function selectorMapping(shorthandMapping:ShorthandSelectorMapping) {
+    return R.mapObjIndexed((values, selector) => {
+        if (Array.isArray(values)) {
+            return values.map(v => v.nested ? Object.assign(v, { nested: selectorMapping(v.nested) }) : v);
+        }
+        else if (typeof values === 'object') {
+            return values.nested
+                ? Object.assign(values, { nested: selectorMapping(values.nested) })
+                : values;
+        }
+        else {
+            return { text: values };
+        }
+    }, shorthandMapping);
+}
+
+export function render(root:HTMLElement, shorthandMapping:ShorthandSelectorMapping) {
+    const mapping = selectorMapping(shorthandMapping);
+    const initialState = initialRenderState(root, mapping);
+    let state = renderWithState(mapping, initialState);
+
+    return function renderAgain(newShorthandMapping:ShorthandSelectorMapping) {
+        const newMapping = selectorMapping(newShorthandMapping);
+        state = renderWithState(newMapping, state);
+        return renderAgain;
+    };
+}
+
+function initialRenderState(root:HTMLElement, mapping:SelectorMapping):RenderState {
+    const state = {};
+    R.mapObjIndexed((values, selector) => {
+        const element = <HTMLElement> root.querySelector(selector);
+        if (Array.isArray(values)) {
+            const placeholder = document.createComment(' template: ' + selector + ' ');
+            element.parentNode.insertBefore(placeholder, element);
+            element.parentNode.removeChild(element);
+            state[selector] = {
+                template: element,
+                placeholder: placeholder,
+                children: {},
+                order: [],
+            };
+        }
+        else {
+            state[selector] = {
+                element: element,
+                nested: {},
+                first: true,
+            };
+        }
+    }, mapping);
+    return state;
+}
+
+function renderWithState(mapping:SelectorMapping, state:RenderState):RenderState {
+    const newState = {};
+    R.mapObjIndexed((values, selector) => {
+        if (Array.isArray(values)) {
+            newState[selector] = setListValues(values, <ListSelectorState> state[selector]);
+        }
+        else {
+            newState[selector] = setValues(values, <SingletonSelectorState> state[selector]);
+        }
+    }, mapping);
+    return newState;
+}
+
+type ElementValues = {[key:string]:any};
+export function setValues(values:ElementValues|ElementValues[], state:SingletonSelectorState):SingletonSelectorState {
+    const element = state.element;
+    const newState = {
+        element: element,
+        first: false,
+        nested: {}
+    };
+    R.mapObjIndexed((value, key) => {
+        if (key === 'nested') {
+            if (Object.keys(state.nested).length === 0) {
+                state.nested = initialRenderState(element, value);
+            }
+            newState.nested = renderWithState(value, state.nested);
+        }
+        else if (key === 'text') {
+            element.textContent = values['text'];
+        }
+        else if (key === 'class') {
+            R.mapObjIndexed((active, className) => {
+                element.classList.toggle(className, active);
+            }, value);
+        }
+        else if (key === 'data') {
+            R.mapObjIndexed((dataValue, dataKey) => {
+                element.dataset[dataKey] = dataValue;
+            }, value);
+        }
+        else if (key === 'style') {
+            R.mapObjIndexed((cssValue, cssKey) => {
+                element.style[cssKey] = cssValue;
+            }, value);
+        }
+        else if (key === 'on') {
+            if (state.first) {
+                R.mapObjIndexed((callback, event) => {
+                    element.addEventListener(event, callback);
+                }, value);
+            }
+        }
+        else if (key !== 'key') {
+            element[key] = values[key];
+        }
+    }, values);
+    return newState;
+}
+
+function setListValues(values:ElementValues[], state:ListSelectorState):ListSelectorState {
+    let newState = {
+        template: state.template,
+        placeholder: state.placeholder,
+        children: Object.assign({}, state.children),
+        order: [],
+    };
+
+    values.slice().reverse().forEach(subvalues => {
+        const key = subvalues['key'];
+        if (!key) {
+            throw new Error('No key: ' + JSON.stringify(subvalues));
+        }
+        const nestedState = key in state.children
+            ? { element: <HTMLElement> state.children[key].element, nested: state.children[key].nested, first: false }
+            : { element: <HTMLElement> state.template.cloneNode(true), nested: {}, first: true };
+        newState.children[key] = setValues(subvalues, nestedState);
+        newState.order.push(nestedState.element);
+    });
+
+    if (!shallowlyEqual(state.order, newState.order)) {
+        newState.order.forEach(node => {
+            newState.placeholder.parentNode.insertBefore(node, newState.placeholder.nextSibling);
+        });
+        state.order.forEach(node => {
+            if (newState.order.indexOf(node) === -1) {
+                newState.placeholder.parentNode.removeChild(node);
+            }
+        });
+    }
+
+    return newState;
+}
+
 export function replicate(container, table, userState, options, createMapping, state?) {
     if (!state) {
         state = {
             template: container.removeChild(container.firstElementChild),
-            nodes: {},
+            nodeTable: {},
+            nodeList: [],
             first: true,
-            mappings: {}
+            mappings: {},
         };
     }
 
@@ -69,30 +234,32 @@ export function replicate(container, table, userState, options, createMapping, s
         if (!(key in table)) {
             node.remove();
         }
-    }, state.nodes);
+    }, state.nodeTable);
 
     const keys = Object.keys(table);
     const order = options.sort || R.identity;
     const nodes = R.sortBy(key => order(table[key]), keys).map(key => {
         const object = table[key];
-        const instance = key in state.nodes
-            ? state.nodes[key]
+        const instance = key in state.nodeTable
+            ? state.nodeTable[key]
             : state.template.cloneNode(true);
         if (!instance.hidden) {
             map(state.mappings[key], instance, state.first, userState);
         }
-        state.nodes[key] = instance;
+        state.nodeTable[key] = instance;
         return instance;
     });
 
-    const orderChanged = !shallowlyEqual(nodes, Array.from(container.children));
+    const orderChanged = !shallowlyEqual(state.nodeList, nodes);
     if (orderChanged) {
+        console.log('order changed');
         nodes.forEach((node, index) => {
             container.insertBefore(node, container.children[index]);
         });
     }
 
     state.first = false;
+    state.nodeList = nodes;
     return (userState) => {
         return replicate(container, table, userState, options, createMapping, state);
     };
@@ -304,3 +471,27 @@ export function stateful(container:HTMLElement, states:string[]):(s:string) => v
 export function isControl(element:HTMLElement) {
     return ['input', 'textarea', 'select', 'button'].indexOf(element.tagName.toLowerCase()) !== -1;
 }
+
+export function isHidden(node:Node) {
+    return node === document.documentElement
+        ? node['hidden']
+        : ('hidden' in node && node['hidden']) || isHidden(node.parentNode);
+}
+
+export const sync = {
+    checkbox: (element:HTMLInputElement, initial:boolean, onChange:(boolean) => void) => {
+        on(element, 'change', event => onChange(element.checked));
+        if (element.checked !== initial) element.checked = initial;
+        onChange(initial);
+    },
+    select: (element:HTMLSelectElement, initial:string, onChange:{[value:string]: () => void}) => {
+        on(element, 'change', event => notify(element.value));
+        if (element.value !== initial) element.value = initial;
+        notify(initial);
+
+        function notify(value:string) {
+            if (value in onChange) onChange[value]();
+            else throw new Error('No change listener for option: ' + value);
+        }
+    }
+};

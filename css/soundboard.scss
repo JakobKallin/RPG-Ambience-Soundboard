@@ -463,24 +463,28 @@ html {
         }
     }
 
-    .scene-view {
+    .adventure {
         position: relative;
         flex: 1;
-        @include flex(column,
-            $horizontal: stretch
-        );
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+        margin-bottom: -0.5rem;
         overflow: auto;
     }
 
-    .scene-view .grouped,
-    .scene-view .ungrouped {
-        flex: 1;
-        overflow-y: auto;
-        overflow-x: hidden;
+    .scene-group-title {
+        font-family: $decorative-text-font;
+        color: $white;
+        text-align: center;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .scene-group:first-child .scene-group-title {
+        margin-top: 0;
     }
 
     .scene-list {
-        margin: -0.5rem;
         @include flex(row,
             $multiline: true,
             $horizontal: center,
@@ -620,17 +624,6 @@ html {
     }
     .scene-hotkey:not(:empty):after {
         content: ")";
-    }
-
-    .group-title {
-        font-family: $decorative-text-font;
-        color: $white;
-        text-align: center;
-        margin-top: 1rem;
-        margin-bottom: 1rem;
-        &:first-child {
-            margin-top: 0;
-        }
     }
 }
 

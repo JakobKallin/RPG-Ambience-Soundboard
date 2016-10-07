@@ -1,5 +1,5 @@
 import * as dom from '../document';
-import { bound, parseNumber } from '../utils';
+import { bound, capitalize, parseNumber } from '../utils';
 declare var R:any;
 
 interface SoundboardViewCallbacks {
@@ -15,11 +15,17 @@ interface SoundboardViewCallbacks {
 }
 
 export default function(options:SoundboardViewCallbacks) {
+    const state = {
+        adventure: null,
+        previews: {},
+        files: {},
+        playing: {},
+        groupScenesByLayer: false,
+        zoomLevel: options.zoomLevel
+    };
+
     const dropdown = options.dropdown;
     const adventures = options.adventures;
-    const scenes = R.fromPairs(R.unnest(R.values(adventures).map(adventure => {
-        return adventure.scenes.map((scene, i) => [scene.id, scene]);
-    })));
 
     let adventureSortProperty = a => a.title;
     const renderAdventureDropdown = dom.replicate(
@@ -35,38 +41,70 @@ export default function(options:SoundboardViewCallbacks) {
         })
     );
 
-    const render = dom.replicate(
-        dom.first('.scene-list'),
-        scenes,
-        { previews: {}, files: {}, playing: {} },
-        { sort: scene => selectedAdventure().scenes.indexOf(scene) },
-        scene => ({
-            '.scene': {
-                data: { key: scene.id },
-                class: {
-                    'loading': state => sceneProgress(scene, state.files) < 1,
-                    'with-image': hasImage(scene),
-                    'playing': state => state.playing[scene.name] > 0
+    function adventureMapping(adventure, state) {
+        const groups = state.groupScenesByLayer ? R.uniq(adventure.scenes.map(s => s.layer)) : ['all'];
+        return {
+            '.scene-group': groups.map(group => ({
+                key: group,
+                nested: {
+                    '.scene-group-title': groups.length > 1 ? capitalize(group) : { hidden: true },
+                    '.scene': adventure.scenes.filter(s => state.groupScenesByLayer ? s.layer === group : true).map(scene => ({
+                        key: scene.id,
+                        class: {
+                            'loading': sceneProgress(scene, state.files) < 1,
+                            'with-image': hasImage(scene),
+                            'playing': state.playing[scene.name] > 0
+                        },
+                        nested: {
+                            '.scene-name': scene.name || String.fromCharCode(160),
+                            '.scene-hotkey': scene.key || '',
+                            '.scene-button': {
+                                on: { click: () => options.playScene(scene.id) },
+                                title: 'Play scene' + (scene.name ? ' ' + scene.name : ''),
+                            },
+                            '.scene-preview-image': {
+                                hidden: !hasImage(scene),
+                                on: { load: event => event.target.classList.add('loaded') },
+                                src: hasImagePreview(scene, state.previews)
+                                    ? state.previews[firstImage(scene).file]
+                                    : ''
+                            },
+                            'progress': {
+                                value: sceneProgress(scene, state.files)
+                            }
+                        }
+                    }))
                 }
-            },
-            '.scene-name': scene.name || String.fromCharCode(160),
-            '.scene-hotkey': scene.key || '',
-            '.scene-button': {
-                on: { click: () => options.playScene(scene.id) },
-                title: 'Play scene' + (scene.name ? ' ' + scene.name : ''),
-            },
-            '.scene-preview-image': {
-                hidden: !hasImage(scene),
-                on: { load: event => event.target.classList.add('loaded') },
-                src: state => hasImagePreview(scene, state.previews)
-                    ? state.previews[firstImage(scene).file]
-                    : ''
-            },
-            'progress': {
-                value: state => sceneProgress(scene, state.files)
-            }
-        })
-    );
+            }))
+        };
+    }
+
+    const adventureTemplate = dom.first('.adventure');
+    const adventureViews = {};
+    const renderAdventure = {};
+    R.mapObjIndexed((adventure, id) => {
+        adventureViews[id] = adventureTemplate.cloneNode(true);
+        adventureTemplate.parentNode.insertBefore(adventureViews[id], adventureTemplate);
+        renderAdventure[id] = dom.render(
+            adventureViews[id],
+            adventureMapping(adventure, {
+                previews: {},
+                files: {},
+                playing: {},
+            })
+        );
+    }, adventures);
+    adventureTemplate.remove();
+
+    const render = state => {
+        R.mapObjIndexed((adventure, id) => {
+            adventureViews[id].hidden = id !== state.adventure;
+        }, adventures);
+        if (state.adventure) {
+            renderAdventure[state.adventure](adventureMapping(adventures[state.adventure], state));
+        }
+        zoom(state.zoomLevel);
+    };
 
     function firstImage(scene) {
         return scene.media.filter(m => m.type === 'image')[0];
@@ -139,29 +177,6 @@ export default function(options:SoundboardViewCallbacks) {
         dom.id('unmute').hidden = canMute;
     }
 
-    (() => {
-        const percentages = R.range(1, 20+1).map(n => 1 / n);
-        const nodes = dom.first('.scene-list').children; // Live
-        dom.on(dom.id('zoom-out'), 'click', () => zoom(zoomLevel() + 1));
-        dom.on(dom.id('zoom-in'), 'click', () => zoom(zoomLevel() - 1));
-        zoom(options.zoomLevel - 1);
-
-        function zoom(level) {
-            const boundedLevel = bound(0, percentages.length - 1, level);
-            const newPercentage = percentages[boundedLevel];
-            Array.from(nodes).forEach(n => n.style.width = (newPercentage * 100) + '%');
-            options.zoomed(boundedLevel + 1);
-        }
-
-        function zoomLevel() {
-            const reference = R.find(n => !n.hidden, nodes);
-            const percentage = reference.getBoundingClientRect().width / reference.parentNode.getBoundingClientRect().width;
-            const closestPercentage = R.sortBy(p => Math.abs(percentage - p), percentages)[0];
-            const level = percentages.indexOf(closestPercentage);
-            return level;
-        }
-    })();
-
     dom.on(dom.id('fullscreen'), 'click', () => {
         dom.toggleFullscreen();
     });
@@ -171,61 +186,87 @@ export default function(options:SoundboardViewCallbacks) {
     dom.on(dom.id('online-play-button'), 'click', () => options.playOnline());
     dom.on(dom.id('player-count'), 'click', () => options.playOnline());
 
+    let zoom;
+    let zoomLevel;
+    (() => {
+        const percentages = R.range(1, 20+1).map(n => 1 / n);
+        dom.on(dom.id('zoom-out'), 'click', () => zoom(zoomLevel() + 1));
+        dom.on(dom.id('zoom-in'), 'click', () => zoom(zoomLevel() - 1));
+
+        function nodes() {
+            return R.flatten(Array.from(dom.all('.scene-list')).map(n => Array.from(n.children)));
+        }
+
+        zoom = function(level) {
+            const boundedLevel = bound(0, percentages.length - 1, level);
+            const newPercentage = percentages[boundedLevel];
+            Array.from(nodes()).forEach(n => n.style.width = (newPercentage * 100) + '%');
+            options.zoomed(boundedLevel + 1);
+            state.zoomLevel = boundedLevel;
+        }
+
+        zoomLevel = function() {
+            const reference = R.find(n => !dom.isHidden(n), nodes());
+            const percentage = reference.getBoundingClientRect().width / reference.parentNode.getBoundingClientRect().width;
+            const closestPercentage = R.sortBy(p => Math.abs(percentage - p), percentages)[0];
+            const level = percentages.indexOf(closestPercentage);
+            return level;
+        }
+    })();
+    zoom(options.zoomLevel - 1);
+
     function selectedAdventure() {
         return adventures[dropdown.value];
     }
 
-    return (() => {
-        const state = {
-            previews: {},
-            files: {},
-            playing: {},
-        };
-        return {
-            previewLoaded: (id, url) => {
+    return {
+        previewLoaded: (id, url) => {
+            if (state.previews[id] !== url) {
                 state.previews[id] = url;
                 render(state);
-            },
-            fileProgress: (id, ratio) => {
+            }
+        },
+        fileProgress: (id, ratio) => {
+            if (state.files[id] !== ratio) {
                 state.files[id] = ratio;
                 render(state);
-            },
-            fileLoaded: (id, url) => {
+            }
+        },
+        fileLoaded: (id, url) => {
+            if (state.files[id] !== url) {
                 state.files[id] = url;
                 render(state);
-            },
-            adventureSelected: id => {
-                dropdown.value = id;
-                Array.from(dom.first('.scene-list').children).forEach(node => {
-                    const adventure = node.dataset.key.split('/')[0];
-                    node.hidden = adventure !== id;
-                });
-                // We don't have to call render here to update the previously
-                // hidden scenes, as the `fileLoaded` callback is already called
-                // whenever an adventure is selected (assuming that adventure
-                // has files).
-            },
-            sceneStarted: name => {
-                state.playing[name] = state.playing[name] || 0;
-                state.playing[name] += 1;
-                render(state);
-            },
-            sceneEnded: name => {
-                state.playing[name] -= 1;
-                render(state);
-            },
-            sortAdventuresByTitle: () => {
-                adventureSortProperty = a => a.title;
-                renderAdventureDropdown({});
-            },
-            sortAdventuresByCreationDate: () => {
-                adventureSortProperty = a => -a.created.getTime();
-                renderAdventureDropdown({});
-            },
-            sortAdventuresByModificationDate: () => {
-                adventureSortProperty = a => -a.modified.getTime();
-                renderAdventureDropdown({});
-            },
-        };
-    })();
+            }
+        },
+        adventureSelected: id => {
+            state.adventure = id;
+            dropdown.value = id;
+            render(state);
+        },
+        sceneStarted: name => {
+            state.playing[name] = state.playing[name] || 0;
+            state.playing[name] += 1;
+            render(state);
+        },
+        sceneEnded: name => {
+            state.playing[name] -= 1;
+            render(state);
+        },
+        sortAdventuresByTitle: () => {
+            adventureSortProperty = a => a.title;
+            renderAdventureDropdown({});
+        },
+        sortAdventuresByCreationDate: () => {
+            adventureSortProperty = a => -a.created.getTime();
+            renderAdventureDropdown({});
+        },
+        sortAdventuresByModificationDate: () => {
+            adventureSortProperty = a => -a.modified.getTime();
+            renderAdventureDropdown({});
+        },
+        groupScenesByLayer: active => {
+            state.groupScenesByLayer = active;
+            render(state);
+        }
+    };
 };

@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+import sys
+
+html = sys.stdin.read()
+print(html.replace(
+    '<script src="/bundle.js"></script>',
+    '<script src="/bundle.prototype.js"></script>'
+))

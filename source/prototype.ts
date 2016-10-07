@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
         history.pushState('', null, '#' + pages[target].id);
     }
 
-    dom.all('[data-repeat]').forEach(node => {
+    dom.all('[data-repeat]').reverse().forEach(node => {
         const count = Number(node.dataset['repeat']);
         R.range(0, count).reverse().forEach((i) => {
             const clone = node.cloneNode(true);

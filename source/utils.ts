@@ -31,3 +31,7 @@ export function parseQuery(location:Location):{} {
 export function shallowlyEqual(a:any[], b:any[]) {
     return a.length === b.length && a.every((v, i) => a[i] === b[i]);
 }
+
+export function capitalize(string:string) {
+    return string.substring(0, 1).toUpperCase() + string.substring(1);
+}

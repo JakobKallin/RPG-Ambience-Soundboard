@@ -2,5 +2,7 @@
 DIR=$(dirname "$0")
 ntsc
 browserify "$DIR/source/main.js" > "$DIR/bundle.js"
-browserify "$DIR/source/prototype.js" > bundle.prototype.js
+browserify "$DIR/source/prototype.js" > "$DIR/bundle.prototype.js"
+browserify "$DIR/tests/main.js" > "$DIR/tests/bundle.js"
+"$DIR/create-prototype-html" < "$DIR/index.html" > "$DIR/index.prototype.html"
 sass --update "$DIR/css"
