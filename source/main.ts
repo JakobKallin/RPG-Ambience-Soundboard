@@ -398,14 +398,14 @@ function start() {
                 // Timeout to prevent appearance of slow clicks. TODO: Optimize
                 // rendering so it's fast enough to perform here.
                 let ended = false;
-                setTimeout(() => { if (!ended) soundboard.sceneStarted(scene.name) }, 0);
+                setTimeout(() => { if (!ended) soundboard.sceneStarted(scene.id) }, 0);
                 layer.start(items, scene.fade.in * 1000).then(() => {
                     // Timeout to match the one above, to reduce the risk of
                     // `sceneEnded` taking place before `sceneStarted`. TODO:
                     // Remove this as well.
                     setTimeout(() => {
                         ended = true;
-                        soundboard.sceneEnded(scene.name);
+                        soundboard.sceneEnded(scene.id);
                     }, 0);
                 });
             });

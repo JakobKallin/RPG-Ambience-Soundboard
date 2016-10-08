@@ -53,7 +53,7 @@ export default function(options:SoundboardViewCallbacks) {
                         class: {
                             'loading': sceneProgress(scene, state.files) < 1,
                             'with-image': hasImage(scene),
-                            'playing': state.playing[scene.name] > 0
+                            'playing': state.playing[scene.id]
                         },
                         nested: {
                             '.scene-name': scene.name || String.fromCharCode(160),
@@ -243,13 +243,12 @@ export default function(options:SoundboardViewCallbacks) {
             dropdown.value = id;
             render(state);
         },
-        sceneStarted: name => {
-            state.playing[name] = state.playing[name] || 0;
-            state.playing[name] += 1;
+        sceneStarted: id => {
+            state.playing[id] = true;
             render(state);
         },
-        sceneEnded: name => {
-            state.playing[name] -= 1;
+        sceneEnded: id => {
+            state.playing[id] = false;
             render(state);
         },
         sortAdventuresByTitle: () => {

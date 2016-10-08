@@ -152,7 +152,7 @@ export function setValues(values:ElementValues|ElementValues[], state:SingletonS
         }
         else if (key === 'class') {
             R.mapObjIndexed((active, className) => {
-                element.classList.toggle(className, active);
+                element.classList.toggle(className, Boolean(active));
             }, value);
         }
         else if (key === 'data') {
