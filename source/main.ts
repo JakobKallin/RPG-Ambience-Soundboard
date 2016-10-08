@@ -395,18 +395,9 @@ function start() {
 
                 const layer = scene.layer === 'foreground' ? foreground : background;
                 latest.fade[scene.layer] = scene.fade.out;
-                // Timeout to prevent appearance of slow clicks. TODO: Optimize
-                // rendering so it's fast enough to perform here.
-                let ended = false;
-                setTimeout(() => { if (!ended) soundboard.sceneStarted(scene.id) }, 0);
+                soundboard.sceneStarted(scene.id);
                 layer.start(items, scene.fade.in * 1000).then(() => {
-                    // Timeout to match the one above, to reduce the risk of
-                    // `sceneEnded` taking place before `sceneStarted`. TODO:
-                    // Remove this as well.
-                    setTimeout(() => {
-                        ended = true;
-                        soundboard.sceneEnded(scene.id);
-                    }, 0);
+                    soundboard.sceneEnded(scene.id);
                 });
             });
         }
